@@ -50,8 +50,16 @@ shot() {
   local locale=ja_JP
   [ "$lang" = en ] && locale=en_US
   xcrun simctl launch "$UDID" "$BUNDLE_ID" -AppleLanguages "($lang)" -AppleLocale "$locale" -HikidashiDemo "$@" >/dev/null
-  sleep 5
+  sleep 7
   xcrun simctl io "$UDID" screenshot "$OUT/$name.png" >/dev/null
+  # 起動画面（真っ白）のまま撮れたときは小さなファイルになる。待って撮り直す
+  local tries=0
+  while [ "$(stat -f%z "$OUT/$name.png")" -lt 300000 ] && [ $tries -lt 4 ]; do
+    tries=$((tries + 1))
+    echo "retry $name ($tries)"
+    sleep 4
+    xcrun simctl io "$UDID" screenshot "$OUT/$name.png" >/dev/null
+  done
   echo "saved $OUT/$name.png"
 }
 

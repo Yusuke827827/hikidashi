@@ -209,7 +209,8 @@ struct WallpaperBackground: View {
                     RadialGradient(colors: [Color(hex: 0x8FAE86), Color(hex: 0x4D6E52), Color(hex: 0x1F3327)],
                                    center: UnitPoint(x: 0.15, y: 0), startRadius: 0, endRadius: r * 1.1)
                 case .dusk:
-                    LinearGradient(colors: [Color(hex: 0x2F2752), Color(hex: 0x6A3F6B), Color(hex: 0xC46A5C), Color(hex: 0xF2B27C)],
+                    // 下端まで暗めに保ち、明るい文字が読めるようにする
+                    LinearGradient(colors: [Color(hex: 0x2F2752), Color(hex: 0x5A3763), Color(hex: 0x8E4A62), Color(hex: 0xA85A58)],
                                    startPoint: UnitPoint(x: 0.6, y: 0), endPoint: UnitPoint(x: 0.4, y: 1))
                 case .washi:
                     RadialGradient(colors: [Color(hex: 0xF4EFE3), Color(hex: 0xEBE3D1), Color(hex: 0xDDD2BB)],
