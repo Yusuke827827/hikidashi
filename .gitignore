@@ -1,0 +1,10 @@
+.DS_Store
+.build/
+.swiftpm/
+DerivedData/
+xcuserdata/
+App/Hikidashi.xcodeproj/
+App/Info.plist
+App/Hikidashi.entitlements
+App/ShareExtension/Info.plist
+App/ShareExtension/HikidashiShare.entitlements

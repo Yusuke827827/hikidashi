@@ -1,0 +1,36 @@
+# Mac でビルドとテストを行う。
+#   test: 共通処理（HikidashiCore）のテスト
+#   app:  アプリ本体と共有シートの拡張機能（App）を iOS シミュレーター向けにビルドする（署名なし）
+name: iOS
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: swift --version
+      - run: swift test
+        working-directory: HikidashiCore
+
+  app:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: xcodebuild -version
+      - run: brew install xcodegen
+      - run: xcodegen generate
+        working-directory: App
+      - run: >
+          xcodebuild build
+          -project Hikidashi.xcodeproj -scheme Hikidashi
+          -destination 'generic/platform=iOS Simulator'
+          CODE_SIGNING_ALLOWED=NO
+        working-directory: App

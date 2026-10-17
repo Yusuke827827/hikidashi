@@ -1,0 +1,96 @@
+# Xcode のプロジェクトは XcodeGen でこのファイルから作る（Hikidashi.xcodeproj はリポジトリに入れない）。
+#   brew install xcodegen
+#   cd App && xcodegen generate && open Hikidashi.xcodeproj
+#
+# アプリ本体（Hikidashi）と共有シートの拡張機能（HikidashiShare）は、App Group で保存フォルダを共有する。
+# Apple Developer Program に登録したら、BUNDLE_PREFIX と APP_GROUP を自分のものに変える。
+name: Hikidashi
+options:
+  deploymentTarget:
+    iOS: "17.0"
+  developmentLanguage: ja
+settings:
+  base:
+    # 仮の ID。App Store / TestFlight に出す前に、Apple Developer Program で登録する ID に変える
+    BUNDLE_PREFIX: app.hikidashi
+    APP_GROUP: group.app.hikidashi
+    MARKETING_VERSION: 0.1.0
+    CURRENT_PROJECT_VERSION: 1
+    SWIFT_VERSION: "5.0"
+    # 自分の Apple ID のチームを Xcode の「Signing & Capabilities」で選ぶ
+    CODE_SIGN_STYLE: Automatic
+packages:
+  HikidashiCore:
+    path: ../HikidashiCore
+targets:
+  Hikidashi:
+    type: application
+    platform: iOS
+    sources:
+      - Sources
+    dependencies:
+      - package: HikidashiCore
+        product: HikidashiUI
+      - package: HikidashiCore
+        product: HikidashiKit
+      - target: HikidashiShare
+    entitlements:
+      path: Hikidashi.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - $(APP_GROUP)
+    info:
+      path: Info.plist
+      properties:
+        CFBundleDisplayName: Hikidashi
+        CFBundleDevelopmentRegion: ja
+        CFBundleLocalizations: [ja, en]
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        HikidashiAppGroup: $(APP_GROUP)
+        UILaunchScreen: {}
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: false
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+        UISupportedInterfaceOrientations~ipad: [UIInterfaceOrientationPortrait, UIInterfaceOrientationPortraitUpsideDown, UIInterfaceOrientationLandscapeLeft, UIInterfaceOrientationLandscapeRight]
+        NSMicrophoneUsageDescription: 声でメモを入力するときにマイクを使います。
+        NSSpeechRecognitionUsageDescription: 話した内容を文字にしてメモに入れます。
+        ITSAppUsesNonExemptEncryption: false
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(BUNDLE_PREFIX)
+        TARGETED_DEVICE_FAMILY: "1,2"
+    scheme: {}
+
+  HikidashiShare:
+    type: app-extension
+    platform: iOS
+    sources:
+      - ShareExtension
+    dependencies:
+      - package: HikidashiCore
+        product: HikidashiKit
+    entitlements:
+      path: ShareExtension/HikidashiShare.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - $(APP_GROUP)
+    info:
+      path: ShareExtension/Info.plist
+      properties:
+        CFBundleDisplayName: Hikidashi
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        HikidashiAppGroup: $(APP_GROUP)
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.share-services
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).ShareViewController
+          NSExtensionAttributes:
+            NSExtensionActivationRule:
+              NSExtensionActivationSupportsText: true
+              NSExtensionActivationSupportsWebURLWithMaxCount: 1
+              NSExtensionActivationSupportsImageWithMaxCount: 1
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(BUNDLE_PREFIX).share
+        TARGETED_DEVICE_FAMILY: "1,2"
