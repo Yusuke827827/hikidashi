@@ -56,6 +56,14 @@ Xcode の「Signing & Capabilities」で、Hikidashi と HikidashiShare の両�
 3. Xcode で両方のターゲットに App Groups の機能があり、同じグループが選ばれていることを確認する。
 4. iPhone をつないで実行する。
 
+### 画面写真
+
+```sh
+scripts/screenshots.sh   # screenshots/ に PNG ができる
+```
+
+シミュレーターでアプリを見本モード（`-HikidashiDemo`。一時フォルダに見本のメモを入れて起動し、本物のメモには触れない）で開き、壁紙・明暗・言語を変えて撮ります。GitHub Actions でも push のたびに撮り、実行結果の成果物「screenshots」から取り出せます。
+
 ### テスト
 
 ```sh

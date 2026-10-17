@@ -27,7 +27,7 @@ public struct HikidashiRootView: View {
 
     @MainActor
     public init() {
-        _librarian = State(initialValue: Librarian(store: NoteStore()))
+        _librarian = State(initialValue: DemoMode.isOn ? DemoMode.makeLibrarian() : Librarian(store: NoteStore()))
     }
 
     private var store: NoteStore { librarian.store }
@@ -78,6 +78,11 @@ public struct HikidashiRootView: View {
     }
 
     private func refresh() async {
+        if DemoMode.isOn {
+            if let q = DemoMode.recallQuery, recall == nil { recall = await librarian.recall(q) }
+            if DemoMode.opensSettings { showSettings = true }
+            return
+        }
         let n = librarian.ingestInbox()
         if n > 0 { show(L("共有シートから \(n) 件届きました。", "\(n) items arrived from the share sheet.")) }
         await librarian.fileAll()

@@ -1,6 +1,7 @@
 # Mac でビルドとテストを行う。
 #   test: 共通処理（HikidashiCore）のテスト
-#   app:  アプリ本体と共有シートの拡張機能（App）を iOS シミュレーター向けにビルドする（署名なし）
+#   app:  アプリ本体と共有シートの拡張機能（App）を iOS シミュレーター向けにビルドし、
+#         見本モードで起動して画面写真を撮る（scripts/screenshots.sh）。写真は成果物「screenshots」に入る
 name: iOS
 
 on:
@@ -26,11 +27,10 @@ jobs:
       - uses: actions/checkout@v4
       - run: xcodebuild -version
       - run: brew install xcodegen
-      - run: xcodegen generate
-        working-directory: App
-      - run: >
-          xcodebuild build
-          -project Hikidashi.xcodeproj -scheme Hikidashi
-          -destination 'generic/platform=iOS Simulator'
-          CODE_SIGNING_ALLOWED=NO
-        working-directory: App
+      - run: bash scripts/screenshots.sh screenshots
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: screenshots
+          path: screenshots/*.png
+          if-no-files-found: warn

@@ -8,3 +8,5 @@ App/Info.plist
 App/Hikidashi.entitlements
 App/ShareExtension/Info.plist
 App/ShareExtension/HikidashiShare.entitlements
+build/
+screenshots/
