@@ -204,7 +204,8 @@ struct WallpaperBackground: View {
                     RadialGradient(colors: [Color(hex: 0xF7C9D4), .clear], center: UnitPoint(x: 0.8, y: 0.1), startRadius: 0, endRadius: r * 0.5)
                     RadialGradient(colors: [Color(hex: 0xF3D6DE), .clear], center: UnitPoint(x: 0.1, y: 0.9), startRadius: 0, endRadius: r * 0.45)
                 case .sea:
-                    LinearGradient(colors: [Color(hex: 0xBFE0EA), Color(hex: 0x6FA9C2), Color(hex: 0x23566F)], startPoint: .top, endPoint: .bottom)
+                    // 明るい壁紙なので、下端まで明るめに保って濃い文字を読めるようにする
+                    LinearGradient(colors: [Color(hex: 0xCDE7EF), Color(hex: 0x9CCADB), Color(hex: 0x6FA9C2)], startPoint: .top, endPoint: .bottom)
                 case .forest:
                     RadialGradient(colors: [Color(hex: 0x8FAE86), Color(hex: 0x4D6E52), Color(hex: 0x1F3327)],
                                    center: UnitPoint(x: 0.15, y: 0), startRadius: 0, endRadius: r * 1.1)
