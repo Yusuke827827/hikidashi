@@ -1,11 +1,13 @@
 # Mac でビルドとテストを行う。
 #   test: 共通処理（HikidashiCore）のテスト
 #   app:  アプリ本体と共有シートの拡張機能（App）を iOS シミュレーター向けにビルドし、
-#         見本モードで起動して画面写真を撮る（scripts/screenshots.sh）。写真は成果物「screenshots」に入る
+#         見本モードで起動して画面写真を撮る（scripts/screenshots.sh）。写真は成果物「screenshots」に入り、
+#         main のときは screenshots ブランチにも置く
 name: iOS
 
 on:
   push:
+    branches-ignore: [screenshots]
   pull_request:
   workflow_dispatch:
 
@@ -23,6 +25,8 @@ jobs:
 
   app:
     runs-on: macos-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
       - run: xcodebuild -version
@@ -34,3 +38,18 @@ jobs:
           name: screenshots
           path: screenshots/*.png
           if-no-files-found: warn
+      # main の写真は screenshots ブランチにも置く（ブラウザや git からそのまま見られるように）
+      - name: Publish to screenshots branch
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          set -e
+          SHA=$(git rev-parse --short HEAD)
+          rm -rf /tmp/shots && mkdir /tmp/shots && cp screenshots/*.png /tmp/shots/
+          cd /tmp/shots
+          printf '# 画面写真\n\nmain の %s から自動で撮影。\n\n' "$SHA" > README.md
+          for f in *.png; do printf '### %s\n<img src="%s" width="300">\n\n' "${f%.png}" "$f" >> README.md; done
+          git init -q -b screenshots
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A && git commit -q -m "画面写真（main $SHA）"
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" screenshots
