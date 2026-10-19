@@ -45,7 +45,7 @@ struct SettingsView: View {
                     Text("Claude")
                 } footer: {
                     Text(L("キーはこの端末のキーチェーンにだけ保存されます。整理と取り出しのたびに、あなたの Anthropic アカウントに少額の利用料がかかります。キーが無くても、簡易の整理とキーワード検索で使えます。",
-                           "The key stays in this device's keychain. Each filing or recall is billed to your Anthropic account. Without a key, Hikidashi uses basic filing and keyword search."))
+                           "The key stays in this device's keychain. Each filing or recall is billed to your Anthropic account. Without a key, Mindrawer uses basic filing and keyword search."))
                 }
 
                 Section(L("壁紙", "Wallpaper")) {
@@ -81,13 +81,13 @@ struct SettingsView: View {
                 } header: {
                     Text(L("データ", "Data"))
                 } footer: {
-                    Text(L("Web 版（claude.ai）の Hikidashi で書き出したファイルも読み込めます。書き出したファイルは Web 版にも読み込めます。",
+                    Text(L("Web 版（claude.ai）の Mindrawer で書き出したファイルも読み込めます。書き出したファイルは Web 版にも読み込めます。",
                            "Files exported from the web version can be imported here, and vice versa."))
                 }
 
                 Section(L("共有シートから保存する", "Save from the share sheet")) {
-                    Text(L("X・Safari・写真などで共有ボタンを押し、「Hikidashi」を選ぶと保存できます。出てこないときは、共有シートの一番右の「その他」から追加してください。保存したものは、次にアプリを開いたときに整理されます。",
-                           "Tap Share in X, Safari, Photos and more, then pick Hikidashi. If it isn't listed, add it from More at the end of the app row. Shared items are filed the next time you open the app."))
+                    Text(L("X・Safari・写真などで共有ボタンを押し、「Mindrawer」を選ぶと保存できます。出てこないときは、共有シートの一番右の「その他」から追加してください。保存したものは、次にアプリを開いたときに整理されます。",
+                           "Tap Share in X, Safari, Photos and more, then pick Mindrawer. If it isn't listed, add it from More at the end of the app row. Shared items are filed the next time you open the app."))
                         .font(.footnote)
                 }
             }
@@ -104,7 +104,7 @@ struct SettingsView: View {
                     let n = try librarian.store.importData(Data(contentsOf: url))
                     message = L("\(n) 件を読み込みました。", "Imported \(n) notes.")
                 } catch {
-                    message = L("Hikidashi の書き出しファイルではないようです。", "That file isn't a Hikidashi export.")
+                    message = L("Mindrawer の書き出しファイルではないようです。", "That file isn't a Mindrawer export.")
                 }
             }
             .task { exportURL = writeExport() }

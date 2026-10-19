@@ -1,15 +1,17 @@
-# Hikidashi（引出）
+# Mindrawer（頭の引き出し）
+
+> 名前は mind（頭）と drawer（引き出し）を合わせた造語。リポジトリ名やプログラム内部の名前（HikidashiCore など）は旧名の Hikidashi のまま。
 
 X や日常で見つけた Tips・備忘録をしまっておき、必要なときに取り出す iOS アプリです。
 
-- **共有シートから保存**：X・Safari・写真などで「共有 → Hikidashi」を選ぶと保存できます。ひとこと書き足すこともできます。
+- **共有シートから保存**：X・Safari・写真などで「共有 → Mindrawer」を選ぶと保存できます。ひとこと書き足すこともできます。
 - **AI が整理**：Claude がタイトル・要約・フォルダ・使う場面・タグを付けます。日付が書いてあればリマインドにも入ります。スクショは文字を読み取ります。
 - **ひきだす**：「これから洗濯する」「プレゼン前に緊張する」のように、行動・困りごと・質問を書くと、役立つメモを選んで短い助言と一緒に出します。
 - **フォルダ**：分類別と月別を切り替えられます。ピン留め、「役立った」、関連メモ、今日のひとつ、絞り込みもあります。
 - **リマインド通知**：リマインド日の朝 9 時に通知が届き、押すとそのメモが開きます（端末の中だけで動き、サーバーは使いません）。
 - **編集・声で入力**：すべての項目を直せます。マイクボタンで話した内容を文字にできます。
 - **壁紙**：Flowa と同じ和紙・羊皮紙・セピア・夜空・オーロラに加え、朝焼け・桜・海・森・夕暮れ。
-- **Web 版とデータをやりとり**：claude.ai の Hikidashi で書き出した JSON を読み込めます。逆も同じです。
+- **Web 版とデータをやりとり**：claude.ai の Mindrawer で書き出した JSON を読み込めます。逆も同じです。
 
 API キーが無くても、簡易の整理（キーワードでのフォルダ分け）とキーワード検索で使えます。
 
@@ -52,7 +54,7 @@ Xcode の「Signing & Capabilities」で、Hikidashi と HikidashiShare の両�
 
 共有シートの拡張機能とアプリ本体でデータを共有するため、App Group が必要です。
 
-1. `App/project.yml` の `BUNDLE_PREFIX` と `APP_GROUP` を自分のものに変える（例: `com.yourname.hikidashi` と `group.com.yourname.hikidashi`）。
+1. `App/project.yml` の `BUNDLE_PREFIX` と `APP_GROUP` を自分のものに変える（例: `com.yourname.mindrawer` と `group.com.yourname.mindrawer`）。
 2. `xcodegen generate` をやり直す。
 3. Xcode で両方のターゲットに App Groups の機能があり、同じグループが選ばれていることを確認する。
 4. iPhone をつないで実行する。

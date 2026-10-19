@@ -1,4 +1,4 @@
-// 共有シートの拡張機能。X・Safari・写真などで「共有 → Hikidashi」を選ぶと開く。
+// 共有シートの拡張機能。X・Safari・写真などで「共有 → Mindrawer」を選ぶと開く。
 // 共有された文・URL・画像を受け取り、ひとこと書き足して「しまう」と、App Group の Inbox/ に置く。
 // AI での整理は、次にアプリ本体を開いたときに行う（拡張機能はメモリと時間の制限が厳しいため）。
 
@@ -154,7 +154,7 @@ struct ShareView: View {
                 .padding(16)
             }
             .background(bg)
-            .navigationTitle(L("Hikidashi にしまう", "Save to Hikidashi"))
+            .navigationTitle(L("Mindrawer にしまう", "Save to Mindrawer"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button(L("キャンセル", "Cancel"), action: onCancel) }

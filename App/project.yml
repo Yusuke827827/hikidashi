@@ -12,8 +12,8 @@ options:
 settings:
   base:
     # 仮の ID。App Store / TestFlight に出す前に、Apple Developer Program で登録する ID に変える
-    BUNDLE_PREFIX: app.hikidashi
-    APP_GROUP: group.app.hikidashi
+    BUNDLE_PREFIX: app.mindrawer
+    APP_GROUP: group.app.mindrawer
     MARKETING_VERSION: 0.1.0
     CURRENT_PROJECT_VERSION: 1
     SWIFT_VERSION: "5.0"
@@ -42,7 +42,7 @@ targets:
     info:
       path: Info.plist
       properties:
-        CFBundleDisplayName: Hikidashi
+        CFBundleDisplayName: Mindrawer
         CFBundleDevelopmentRegion: ja
         CFBundleLocalizations: [ja, en]
         CFBundleShortVersionString: $(MARKETING_VERSION)
@@ -78,7 +78,7 @@ targets:
     info:
       path: ShareExtension/Info.plist
       properties:
-        CFBundleDisplayName: Hikidashi
+        CFBundleDisplayName: Mindrawer
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         HikidashiAppGroup: $(APP_GROUP)

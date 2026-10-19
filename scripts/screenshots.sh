@@ -10,7 +10,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 OUT="${1:-screenshots}"
 mkdir -p "$OUT"
-BUNDLE_ID=app.hikidashi
+BUNDLE_ID=app.mindrawer
 
 # 使える iPhone のシミュレーターを 1 台選ぶ（新しい iOS を優先）
 UDID=$(xcrun simctl list devices available -j | python3 -c '

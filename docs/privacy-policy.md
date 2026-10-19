@@ -4,7 +4,7 @@
 
 ## 日本語
 
-Hikidashi（以下「本アプリ」）は、利用者のメモを利用者の端末の中に保存します。開発者が利用者の情報を集めることはありません。
+Mindrawer（以下「本アプリ」）は、利用者のメモを利用者の端末の中に保存します。開発者が利用者の情報を集めることはありません。
 
 ### 保存する情報
 - 利用者が保存したメモ、スクショ、設定は、利用者の iPhone の中（本アプリと共有シートの拡張機能が使う保存領域）にだけ保存されます。
@@ -30,7 +30,7 @@ GitHub の Issues（https://github.com/Yusuke827827/hikidashi/issues）からご
 
 ## English
 
-Hikidashi ("the app") keeps your notes on your device. The developer does not collect any of your information.
+Mindrawer ("the app") keeps your notes on your device. The developer does not collect any of your information.
 
 ### What is stored
 - Notes, screenshots and settings you save stay on your iPhone, in storage shared only by the app and its share extension.

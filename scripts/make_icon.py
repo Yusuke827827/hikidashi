@@ -1,6 +1,6 @@
 """アプリアイコン（1024x1024）を描く。引き出しから紙片が少しのぞく形。
    python3 scripts/make_icon.py  →  App/Sources/Assets.xcassets/AppIcon.appiconset/AppIcon.png
-   配色は Flowa / Hikidashi と同じ朱色と生成り。角丸は iOS がかけるので、ここでは四角のまま描く。"""
+   配色は Flowa / Mindrawer と同じ朱色と生成り。角丸は iOS がかけるので、ここでは四角のまま描く。"""
 from PIL import Image, ImageDraw, ImageFilter
 import os
 

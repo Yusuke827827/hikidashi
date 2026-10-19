@@ -1,4 +1,4 @@
-// Hikidashi の iOS アプリ本体。画面はすべて HikidashiUI（HikidashiCore）にある。
+// Mindrawer の iOS アプリ本体。画面はすべて HikidashiUI（HikidashiCore）にある。
 
 import HikidashiUI
 import SwiftUI

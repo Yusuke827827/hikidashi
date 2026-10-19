@@ -5,7 +5,7 @@
 import Foundation
 
 public enum SharedContainer {
-    public static let defaultAppGroup = "group.app.hikidashi"
+    public static let defaultAppGroup = "group.app.mindrawer"
 
     public static var appGroup: String {
         (Bundle.main.object(forInfoDictionaryKey: "HikidashiAppGroup") as? String).flatMap { $0.isEmpty ? nil : $0 } ?? defaultAppGroup

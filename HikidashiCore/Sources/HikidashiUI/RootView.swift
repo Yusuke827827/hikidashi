@@ -116,7 +116,7 @@ public struct HikidashiRootView: View {
 
     private var header: some View {
         HStack(alignment: .firstTextBaseline, spacing: 8) {
-            Text("Hikidashi").font(Fonts.mincho(26)).foregroundStyle(palette.text)
+            Text("Mindrawer").font(Fonts.mincho(26)).foregroundStyle(palette.text)
             Text("引出").font(.caption.weight(.bold)).tracking(3).foregroundStyle(palette.accent)
             Spacer()
             Text(librarian.hasKey ? L("AI 整理", "AI on") : L("簡易整理", "Basic"))
@@ -304,8 +304,8 @@ public struct HikidashiRootView: View {
     private var emptyState: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text(L("ひきだしはまだ空です", "Your drawer is empty")).font(.headline).foregroundStyle(palette.text)
-            Text(L("上の欄に Tips を貼って「しまう」を押すか、X や Safari の共有ボタンから「Hikidashi」を選んでください。AI がフォルダ分けし、「ひきだす」で必要なときに取り出せます。",
-                   "Paste a tip above and tap Save, or pick Hikidashi from the share sheet in X or Safari. Claude files it, and Recall hands it back when you need it."))
+            Text(L("上の欄に Tips を貼って「しまう」を押すか、X や Safari の共有ボタンから「Mindrawer」を選んでください。AI がフォルダ分けし、「ひきだす」で必要なときに取り出せます。",
+                   "Paste a tip above and tap Save, or pick Mindrawer from the share sheet in X or Safari. Claude files it, and Recall hands it back when you need it."))
                 .font(.subheadline).foregroundStyle(palette.muted)
             Button(L("見本の 3 件を入れて試す", "Add 3 examples to try it")) { librarian.addExamples() }
                 .buttonStyle(PrimaryButtonStyle())
