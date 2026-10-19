@@ -65,6 +65,13 @@ scripts/screenshots.sh   # screenshots/ に PNG ができる
 
 シミュレーターでアプリを見本モード（`-HikidashiDemo`。一時フォルダに見本のメモを入れて起動し、本物のメモには触れない）で開き、壁紙・明暗・言語を変えて撮ります。GitHub Actions でも push のたびに撮り、実行結果の成果物「screenshots」から取り出せます。main の写真は `screenshots` ブランチにも置かれ、GitHub 上でそのまま見られます。
 
+### App Store に出す準備
+
+- アイコン: `App/Sources/Assets.xcassets/AppIcon.appiconset/AppIcon.png`（`python3 scripts/make_icon.py` で描き直せる）
+- プライバシー情報: `App/Sources/PrivacyInfo.xcprivacy`（データ収集なし・追跡なし）
+- プライバシーポリシー: `docs/privacy-policy.md`（日本語・英語）
+- ストアの説明文と提出前チェック: `docs/app-store.md`
+
 ### テスト
 
 ```sh
