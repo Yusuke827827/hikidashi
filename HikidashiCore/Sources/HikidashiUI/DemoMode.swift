@@ -19,6 +19,15 @@ enum DemoMode {
         return arguments[i + 1]
     }
 
+    /// 見本モードの「ひきだす」で見せる、Claude の答えの見本（見本モードは API キーなしで動くため）
+    static var recallAnswer: String {
+        // 見本のポイントのメモのリマインド日（3 日後）に合わせる
+        let c = Calendar.current.dateComponents([.month, .day], from: Date().addingTimeInterval(3 * 86400))
+        let due = "\(c.month ?? 1)/\(c.day ?? 1)"
+        return L("荷造りは、着る順に服を 1 日ずつ袋に分けておくと、朝に迷わずに済みます。出張の準備でも同じやり方が使えます。旅先でポイントを使う予定があれば、期限が \(due) なので先に使い切っておきましょう。",
+                 "Pack one bag per day, in the order you'll wear things, so mornings are quick. It works for business trips too. Your reward points expire on \(due), so spend them before you go.")
+    }
+
     @MainActor
     static func makeLibrarian() -> Librarian {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent("HikidashiDemo-\(UUID().uuidString)")

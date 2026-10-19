@@ -73,5 +73,11 @@ shot 07-night         light ja -wallpaper night
 shot 08-dusk          light ja -wallpaper dusk
 shot 09-settings      light ja -wallpaper plain -HikidashiDemoSettings
 shot 10-english       light en -wallpaper dawn
+# 英語版の App Store 用（scripts/store_shots.py が使う）
+shot 11-en-light      light en -wallpaper plain
+shot 12-en-recall     light en -wallpaper plain -HikidashiDemoRecall "Packing for a trip"
+shot 13-en-washi      light en -wallpaper washi
+shot 14-en-night      light en -wallpaper night
+shot 15-en-settings   light en -wallpaper plain -HikidashiDemoSettings
 
 xcrun simctl terminate "$UDID" "$BUNDLE_ID" 2>/dev/null || true

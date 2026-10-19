@@ -90,7 +90,11 @@ public struct HikidashiRootView: View {
 
     private func refresh() async {
         if DemoMode.isOn {
-            if let q = DemoMode.recallQuery, recall == nil { recall = await librarian.recall(q) }
+            if let q = DemoMode.recallQuery, recall == nil {
+                var r = await librarian.recall(q)
+                r.answer = DemoMode.recallAnswer
+                recall = r
+            }
             if DemoMode.opensSettings { showSettings = true }
             return
         }

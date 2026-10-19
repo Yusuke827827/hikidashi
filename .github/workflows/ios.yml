@@ -32,11 +32,16 @@ jobs:
       - run: xcodebuild -version
       - run: brew install xcodegen
       - run: bash scripts/screenshots.sh screenshots
+      # App Store 用の宣伝画像（見出し付き）を作る
+      - run: |
+          python3 -m venv /tmp/venv
+          /tmp/venv/bin/pip install --quiet pillow
+          /tmp/venv/bin/python scripts/store_shots.py screenshots screenshots/store
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: screenshots
-          path: screenshots/*.png
+          path: screenshots
           if-no-files-found: warn
       # main の写真は screenshots ブランチにも置く（ブラウザや git からそのまま見られるように）
       - name: Publish to screenshots branch
@@ -44,9 +49,16 @@ jobs:
         run: |
           set -e
           SHA=$(git rev-parse --short HEAD)
-          rm -rf /tmp/shots && mkdir /tmp/shots && cp screenshots/*.png /tmp/shots/
+          rm -rf /tmp/shots && mkdir /tmp/shots && cp -R screenshots/. /tmp/shots/
           cd /tmp/shots
           printf '# 画面写真\n\nmain の %s から自動で撮影。\n\n' "$SHA" > README.md
+          for lang in ja en; do
+            [ -d "store/$lang" ] || continue
+            printf '## App Store 用（%s）\n\n' "$lang" >> README.md
+            for f in store/$lang/*.png; do printf '<img src="%s" width="200"> ' "$f" >> README.md; done
+            printf '\n\n' >> README.md
+          done
+          printf '## 画面\n\n' >> README.md
           for f in *.png; do printf '### %s\n<img src="%s" width="300">\n\n' "${f%.png}" "$f" >> README.md; done
           git init -q -b screenshots
           git config user.name "github-actions[bot]"

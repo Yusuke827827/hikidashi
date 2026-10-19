@@ -73,6 +73,7 @@ scripts/screenshots.sh   # screenshots/ に PNG ができる
 - プライバシー情報: `App/Sources/PrivacyInfo.xcprivacy`（データ収集なし・追跡なし）
 - プライバシーポリシー: `docs/privacy-policy.md`（日本語・英語）
 - ストアの説明文と提出前チェック: `docs/app-store.md`
+- ストア用の宣伝画像（見出し付き、日本語・英語 5 枚ずつ）: `python3 scripts/store_shots.py`。GitHub Actions でも毎回作り、`screenshots` ブランチの `store/` に置く
 
 ### テスト
 
