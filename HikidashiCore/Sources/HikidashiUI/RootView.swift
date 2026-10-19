@@ -4,6 +4,7 @@
 #if os(iOS)
 import HikidashiKit
 import SwiftUI
+import UserNotifications
 
 public struct HikidashiRootView: View {
     enum FolderMode: Hashable { case topic, date }
@@ -28,6 +29,7 @@ public struct HikidashiRootView: View {
     @MainActor
     public init() {
         _librarian = State(initialValue: DemoMode.isOn ? DemoMode.makeLibrarian() : Librarian(store: NoteStore()))
+        UNUserNotificationCenter.current().delegate = NotificationRouter.shared
     }
 
     private var store: NoteStore { librarian.store }
@@ -72,6 +74,15 @@ public struct HikidashiRootView: View {
             SettingsView(librarian: librarian, wallpaperRaw: $wallpaperRaw).environment(\.palette, palette).tint(palette.accent)
         }
         .task { await refresh() }
+        // リマインド日・タイトルが変わったときだけ、通知を予約し直す
+        .task(id: Reminders.signature(store.notes)) {
+            if !DemoMode.isOn { await Reminders.sync(store.notes) }
+        }
+        .onChange(of: NotificationRouter.shared.openNoteID) { _, id in
+            guard let id, let note = store.note(id) else { return }
+            NotificationRouter.shared.openNoteID = nil
+            jump(note)
+        }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { Task { await refresh() } }
         }
@@ -82,6 +93,11 @@ public struct HikidashiRootView: View {
             if let q = DemoMode.recallQuery, recall == nil { recall = await librarian.recall(q) }
             if DemoMode.opensSettings { showSettings = true }
             return
+        }
+        // アプリが閉じた状態から通知を押して起動したとき
+        if let id = NotificationRouter.shared.openNoteID, let note = store.note(id) {
+            NotificationRouter.shared.openNoteID = nil
+            jump(note)
         }
         let n = librarian.ingestInbox()
         if n > 0 { show(L("共有シートから \(n) 件届きました。", "\(n) items arrived from the share sheet.")) }

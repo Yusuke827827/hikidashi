@@ -118,6 +118,19 @@ final class HeuristicsTests: XCTestCase {
         let far = Note(text: "", title: "far", remindAt: "2026-12-01")
         XCTAssertEqual(Heuristics.upcoming([far, soon], now: now).map(\.title), ["soon"])
     }
+
+    func testReminderSchedule() {
+        // 10/17 の 10 時。当日 9 時はもう過ぎている
+        let now = Calendar.current.date(bySettingHour: 10, minute: 0, second: 0, of: Heuristics.dayFormatter.date(from: "2026-10-17")!)!
+        let past = Note(text: "", title: "today", remindAt: "2026-10-17")
+        let later = Note(text: "", title: "later", remindAt: "2026-12-01")
+        let next = Note(text: "", title: "next", remindAt: "2026-10-18")
+        let none = Note(text: "", title: "none")
+        let plan = Heuristics.reminderSchedule([later, past, none, next], now: now)
+        XCTAssertEqual(plan.map(\.note.title), ["next", "later"])
+        XCTAssertEqual(Calendar.current.component(.hour, from: plan[0].fireAt), 9)
+        XCTAssertEqual(Heuristics.reminderSchedule([later, next], now: now, limit: 1).map(\.note.title), ["next"])
+    }
 }
 
 final class ClaudeClientTests: XCTestCase {

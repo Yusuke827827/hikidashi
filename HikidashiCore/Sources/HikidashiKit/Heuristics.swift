@@ -115,6 +115,21 @@ public enum Heuristics {
         .map(\.0)
     }
 
+    /// 通知を出すメモと日時（リマインド日の朝 hour 時。過ぎたものは除き、近い順に最大 limit 件）。
+    /// iOS が一度に予約できる通知は 64 件までなので、多すぎるときは近いものだけにする
+    public static func reminderSchedule(_ notes: [Note], now: Date = Date(), hour: Int = 9, limit: Int = 60) -> [(note: Note, fireAt: Date)] {
+        notes.compactMap { n -> (note: Note, fireAt: Date)? in
+            guard let r = n.remindAt, let day = dayFormatter.date(from: r),
+                  let fire = Calendar.current.date(bySettingHour: hour, minute: 0, second: 0, of: day),
+                  fire > now
+            else { return nil }
+            return (n, fire)
+        }
+        .sorted { $0.fireAt < $1.fireAt }
+        .prefix(limit)
+        .map { $0 }
+    }
+
     public static let dayFormatter: DateFormatter = {
         let f = DateFormatter()
         f.calendar = Calendar(identifier: .gregorian)
