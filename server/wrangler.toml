@@ -1,0 +1,16 @@
+# Cloudflare Workers の設定。公開の手順は server/README.md。
+name = "mindrawer-server"
+main = "src/index.ts"
+compatibility_date = "2026-10-01"
+
+[vars]
+BUNDLE_ID = "app.mindrawer"
+PRODUCT_IDS = "app.mindrawer.plus.monthly"
+MONTHLY_LIMIT = "1500"
+
+# 月の利用回数を数える保存場所。`npx wrangler kv namespace create USAGE` で作った id に置き換える
+[[kv_namespaces]]
+binding = "USAGE"
+id = "REPLACE_WITH_KV_NAMESPACE_ID"
+
+# ANTHROPIC_API_KEY は秘密の値なのでここには書かない: `npx wrangler secret put ANTHROPIC_API_KEY`
