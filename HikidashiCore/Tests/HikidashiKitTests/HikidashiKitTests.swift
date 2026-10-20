@@ -72,7 +72,7 @@ final class StoreTests: XCTestCase {
         let root = try makeRoot()
         try Inbox.put(text: "ポイントは月末に失効する", url: "https://x.com/a/status/1", comment: "要チェック", image: Data([0xFF, 0xD8]), root: root)
         let store = NoteStore(root: root)
-        let lib = Librarian(store: store, keyProvider: { nil })
+        let lib = Librarian(store: store, credentialProvider: { nil })
         XCTAssertEqual(lib.ingestInbox(), 1)
         let n = try XCTUnwrap(store.notes.first)
         XCTAssertEqual(n.text, "要チェック\n\nポイントは月末に失効する")
@@ -87,7 +87,7 @@ final class StoreTests: XCTestCase {
     func testKeywordRecallWithoutKey() async throws {
         let root = try makeRoot()
         let store = NoteStore(root: root)
-        let lib = Librarian(store: store, keyProvider: { nil })
+        let lib = Librarian(store: store, credentialProvider: { nil })
         lib.addExamples()
         let r = await lib.recall(AppLanguage.current == .ja ? "洗濯" : "laundry")
         XCTAssertTrue(r.keywordOnly)
@@ -163,6 +163,29 @@ final class ClaudeClientTests: XCTestCase {
         }
         XCTAssertThrowsError(try ClaudeClient.parse(RecallResult.self, data: Data(#"{"stop_reason":"refusal","content":[]}"#.utf8), status: 200)) {
             XCTAssertEqual($0 as? ClaudeError, .refused)
+        }
+    }
+
+    /// 購読者は API キーを送らず、購読の証明を付けて中継サーバーに送る
+    func testSubscriptionRequest() throws {
+        let server = URL(string: "https://mindrawer.example.workers.dev")!
+        let client = ClaudeClient(credential: .subscription(server: server, transaction: "jws-token"))
+        let req = try client.request(prompt: "hi", schema: Prompts.recallSchema, effort: .low, maxTokens: 100)
+        XCTAssertEqual(req.url?.absoluteString, "https://mindrawer.example.workers.dev/v1/messages")
+        XCTAssertEqual(req.value(forHTTPHeaderField: "x-mindrawer-transaction"), "jws-token")
+        XCTAssertNil(req.value(forHTTPHeaderField: "x-api-key"))
+    }
+
+    func testSubscriptionErrors() {
+        let limit = Data(#"{"type":"error","error":{"type":"rate_limit_error","message":"Monthly limit reached"}}"#.utf8)
+        XCTAssertThrowsError(try ClaudeClient.parse(RecallResult.self, data: limit, status: 429, subscription: true)) {
+            XCTAssertEqual($0 as? ClaudeError, .monthlyLimit)
+        }
+        XCTAssertThrowsError(try ClaudeClient.parse(RecallResult.self, data: Data("{}".utf8), status: 403, subscription: true)) {
+            XCTAssertEqual($0 as? ClaudeError, .subscriptionInvalid)
+        }
+        XCTAssertThrowsError(try ClaudeClient.parse(RecallResult.self, data: Data("{}".utf8), status: 429, subscription: true)) {
+            XCTAssertEqual($0 as? ClaudeError, .busy)
         }
     }
 

@@ -15,6 +15,10 @@ X や日常で見つけた Tips・備忘録をしまっておき、必要なと�
 
 API キーが無くても、簡易の整理（キーワードでのフォルダ分け）とキーワード検索で使えます。
 
+## 販売（Mindrawer Plus）
+
+月額の購読をした人は、API キーなしで AI を使える。アプリは購読の証明を付けて中継サーバー（`server/`、Cloudflare Workers）に送り、サーバーが証明を確かめてから運営側のキーで Claude を呼ぶ。`App/project.yml` の `SERVER_URL` が空のあいだは購読の機能は出ない。公開の手順は `server/README.md`。
+
 ## 構成
 
 ```

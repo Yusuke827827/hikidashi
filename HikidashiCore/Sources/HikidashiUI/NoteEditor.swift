@@ -65,7 +65,7 @@ struct NoteEditor: View {
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
                 }
-                if librarian.hasKey {
+                if librarian.hasAI {
                     Section {
                         Button(L("保存して AI で再整理", "Save & re-file with AI")) { commit(refile: true) }
                     } footer: {

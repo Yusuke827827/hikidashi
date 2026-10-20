@@ -1,6 +1,6 @@
 # プライバシーポリシー / Privacy Policy
 
-最終更新日: 2026 年 10 月 19 日 / Last updated: October 19, 2026
+最終更新日: 2026 年 10 月 20 日 / Last updated: October 20, 2026
 
 ## 日本語
 
@@ -12,7 +12,8 @@ Mindrawer（以下「本アプリ」）は、利用者のメモを利用者の�
 
 ### 外部に送る情報
 - 利用者が API キーを設定した場合に限り、メモの整理と取り出しのために、メモの本文・タイトル・タグなどと、添付したスクショを Anthropic, PBC の Claude API に送ります。送信には利用者自身の API キーを使います。送られた情報の扱いは Anthropic のプライバシーポリシーと商用利用規約に従います（https://www.anthropic.com/legal/privacy）。
-- API キーを設定しない場合、本アプリは外部と通信しません。
+- Mindrawer Plus（月額の購読）を利用している場合は、同じ内容を本アプリの中継サーバー（Cloudflare 上）を経由して Claude API に送ります。中継サーバーは購読の確認と月の利用回数を数えるためだけに使い、メモの内容は保存しません。利用回数は App Store の購読番号（original transaction ID）ごとに数え、約 40 日で消えます。
+- API キーも購読も使わない場合、本アプリは外部と通信しません。
 
 ### 集めない情報
 - 開発者は、分析、広告、追跡のための情報を一切集めません。アカウント登録もありません。
@@ -38,7 +39,8 @@ Mindrawer ("the app") keeps your notes on your device. The developer does not co
 
 ### What is sent
 - Only if you set an API key, the app sends note text, titles, tags and attached screenshots to Anthropic, PBC's Claude API to file and recall your notes, using your own key. Anthropic handles that data under its privacy policy and commercial terms (https://www.anthropic.com/legal/privacy).
-- Without an API key, the app does not connect to any server.
+- If you subscribe to Mindrawer Plus, the same content is sent to the Claude API through the app's relay server (on Cloudflare). The relay only checks your subscription and counts monthly usage; it does not store your notes. Usage is counted per App Store original transaction ID and expires after about 40 days.
+- Without an API key or a subscription, the app does not connect to any server.
 
 ### What is not collected
 - The developer collects no analytics, advertising or tracking data. There are no accounts.

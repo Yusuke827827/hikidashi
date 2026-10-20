@@ -8,6 +8,8 @@ import Foundation
 public enum ClaudeError: Error, Equatable, LocalizedError {
     case noKey
     case invalidKey
+    case subscriptionInvalid
+    case monthlyLimit
     case busy
     case refused
     case truncated
@@ -18,6 +20,8 @@ public enum ClaudeError: Error, Equatable, LocalizedError {
         switch self {
         case .noKey: return L("API キーが設定されていません。", "No API key is set.")
         case .invalidKey: return L("API キーが正しくないようです。設定を確認してください。", "The API key was rejected. Check it in Settings.")
+        case .subscriptionInvalid: return L("購読を確認できませんでした。設定の「購入を復元」をお試しください。", "Couldn't confirm your subscription. Try Restore Purchases in Settings.")
+        case .monthlyLimit: return L("今月の AI の利用回数の上限に達しました。来月にまた使えます。", "You've reached this month's AI limit. It resets next month.")
         case .busy: return L("Claude が混み合っています。少し待ってからもう一度お試しください。", "Claude is busy. Try again in a moment.")
         case .refused: return L("このメモは整理できませんでした。", "Claude declined to process this note.")
         case .truncated: return L("返事が途中で切れました。もう一度お試しください。", "The reply was cut off. Try again.")
@@ -42,12 +46,28 @@ public struct ClaudeClient: Sendable {
         }
     }
 
-    public var apiKey: String
+    /// 呼び方。自分の API キーで直接呼ぶか、購読者として中継サーバー（server/）を通すか
+    public enum Credential: Sendable, Equatable {
+        case apiKey(String)
+        /// server: 中継サーバーの URL。transaction: App Store の購読の証明（signed transaction）
+        case subscription(server: URL, transaction: String)
+    }
+
+    public var credential: Credential
     public var model: String
 
-    public init(apiKey: String, model: String = ClaudeClient.defaultModel) {
-        self.apiKey = apiKey
+    public init(credential: Credential, model: String = ClaudeClient.defaultModel) {
+        self.credential = credential
         self.model = model
+    }
+
+    public init(apiKey: String, model: String = ClaudeClient.defaultModel) {
+        self.init(credential: .apiKey(apiKey), model: model)
+    }
+
+    var isSubscription: Bool {
+        if case .subscription = credential { return true }
+        return false
     }
 
     /// 送る内容を組み立てる（通信はしない。テストで中身を確かめられるよう分けている）
@@ -66,11 +86,18 @@ public struct ClaudeClient: Sendable {
             ],
             "messages": [["role": "user", "content": content]],
         ]
-        var req = URLRequest(url: Self.endpoint)
+        var req: URLRequest
+        switch credential {
+        case let .apiKey(key):
+            req = URLRequest(url: Self.endpoint)
+            req.setValue(key, forHTTPHeaderField: "x-api-key")
+        case let .subscription(server, transaction):
+            req = URLRequest(url: server.appendingPathComponent("v1/messages"))
+            req.setValue(transaction, forHTTPHeaderField: "x-mindrawer-transaction")
+        }
         req.httpMethod = "POST"
         req.timeoutInterval = 180
         req.setValue("application/json", forHTTPHeaderField: "content-type")
-        req.setValue(apiKey, forHTTPHeaderField: "x-api-key")
         req.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
         req.setValue("server-side-fallback-2026-07-01", forHTTPHeaderField: "anthropic-beta")
         req.httpBody = try JSONSerialization.data(withJSONObject: body)
@@ -78,12 +105,13 @@ public struct ClaudeClient: Sendable {
     }
 
     /// 返ってきた内容を読む
-    public static func parse<T: Decodable>(_ type: T.Type, data: Data, status: Int) throws -> T {
+    public static func parse<T: Decodable>(_ type: T.Type, data: Data, status: Int, subscription: Bool = false) throws -> T {
         let obj = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any]
         guard (200..<300).contains(status) else {
             let message = ((obj?["error"] as? [String: Any])?["message"] as? String) ?? ""
             switch status {
-            case 401, 403: throw ClaudeError.invalidKey
+            case 401, 403: throw subscription ? ClaudeError.subscriptionInvalid : ClaudeError.invalidKey
+            case 429 where subscription && message.contains("Monthly limit"): throw ClaudeError.monthlyLimit
             case 429, 529: throw ClaudeError.busy
             default: throw ClaudeError.http(status, message)
             }
@@ -106,10 +134,10 @@ public struct ClaudeClient: Sendable {
     }
 
     public func json<T: Decodable>(_ type: T.Type, prompt: String, schema: [String: Any], images: [Image] = [], effort: Effort, maxTokens: Int = 8000) async throws -> T {
-        guard !apiKey.isEmpty else { throw ClaudeError.noKey }
+        if case let .apiKey(key) = credential, key.isEmpty { throw ClaudeError.noKey }
         let req = try request(prompt: prompt, schema: schema, images: images, effort: effort, maxTokens: maxTokens)
         let (data, response) = try await URLSession.shared.data(for: req)
         let status = (response as? HTTPURLResponse)?.statusCode ?? 0
-        return try Self.parse(T.self, data: data, status: status)
+        return try Self.parse(T.self, data: data, status: status, subscription: isSubscription)
     }
 }

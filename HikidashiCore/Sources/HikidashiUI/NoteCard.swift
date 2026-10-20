@@ -120,7 +120,7 @@ struct NoteCard: View {
             .accessibilityLabel(L("役立った", "Helpful"))
             Menu {
                 Button { onEdit(note) } label: { Label(L("編集", "Edit"), systemImage: "pencil") }
-                if librarian.hasKey {
+                if librarian.hasAI {
                     Button { Task { await librarian.file(note.id) } } label: { Label(L("AI で再整理", "Re-file with AI"), systemImage: "sparkles") }
                 }
                 if let s = note.url, let url = URL(string: s) {

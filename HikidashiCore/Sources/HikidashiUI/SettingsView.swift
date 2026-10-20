@@ -48,6 +48,8 @@ struct SettingsView: View {
                            "The key stays in this device's keychain. Each filing or recall is billed to your Anthropic account. Without a key, Mindrawer uses basic filing and keyword search."))
                 }
 
+                if Subscription.isAvailable { plusSection }
+
                 Section(L("壁紙", "Wallpaper")) {
                     LazyVGrid(columns: [GridItem(.adaptive(minimum: 72), spacing: 12)], spacing: 14) {
                         ForEach(Wallpaper.allCases) { w in
@@ -108,6 +110,40 @@ struct SettingsView: View {
                 }
             }
             .task { exportURL = writeExport() }
+        }
+    }
+
+    // MARK: Mindrawer Plus
+
+    private var plusSection: some View {
+        let sub = Subscription.shared
+        return Section {
+            if sub.isActive {
+                Label(L("購読中", "Subscribed"), systemImage: "checkmark.seal.fill")
+                if let e = sub.expires {
+                    Text(L("次の更新日: ", "Renews: ") + e.formatted(date: .abbreviated, time: .omitted))
+                        .font(.footnote).foregroundStyle(.secondary)
+                }
+                Link(L("購読を管理する", "Manage subscription"), destination: URL(string: "https://apps.apple.com/account/subscriptions")!)
+            } else {
+                Button {
+                    Task { await sub.purchase() }
+                } label: {
+                    HStack {
+                        Text(L("購読する", "Subscribe"))
+                        Spacer()
+                        if sub.purchasing { ProgressView() } else if let p = sub.product { Text(p.displayPrice + L(" / 月", " / month")).foregroundStyle(.secondary) }
+                    }
+                }
+                .disabled(sub.purchasing)
+            }
+            Button(L("購入を復元", "Restore purchases")) { Task { await sub.restore() } }
+            if let m = sub.message { Text(m).font(.footnote).foregroundStyle(.secondary) }
+        } header: {
+            Text("Mindrawer Plus")
+        } footer: {
+            Text(L("API キーを用意しなくても、AI での整理と取り出しが使えます。メモは整理のために Mindrawer のサーバーを経由して Claude に送られますが、サーバーには保存されません。自分の API キーを設定している場合は、そちらが優先されます。",
+                   "Use AI filing and recall without your own API key. Notes pass through Mindrawer's server to Claude for filing and are not stored there. If you set your own API key, it's used instead."))
         }
     }
 

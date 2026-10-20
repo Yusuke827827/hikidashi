@@ -19,18 +19,27 @@ public final class Librarian {
     /// 整理中のメモの id
     public private(set) var filing: Set<String> = []
     public private(set) var lastError: String?
-    public var hasKey: Bool { !(keyProvider() ?? "").isEmpty }
+    /// AI（Claude）を使えるか。自分の API キーか、購読があれば true
+    public var hasAI: Bool { credentialProvider() != nil }
 
-    private let keyProvider: @Sendable () -> String?
+    private let credentialProvider: @MainActor () -> ClaudeClient.Credential?
 
-    public init(store: NoteStore, keyProvider: @escaping @Sendable () -> String? = { APIKeyStore.load() }) {
+    /// credentialProvider: Claude の呼び方を返す（無ければ nil で、簡易の整理とキーワード検索になる）
+    public init(store: NoteStore, credentialProvider: @escaping @MainActor () -> ClaudeClient.Credential? = Librarian.apiKeyCredential) {
         self.store = store
-        self.keyProvider = keyProvider
+        self.credentialProvider = credentialProvider
+    }
+
+    /// 端末に保存した自分の API キーを使う
+    public static func apiKeyCredential() -> ClaudeClient.Credential? {
+        guard let key = APIKeyStore.load(), !key.isEmpty else { return nil }
+        return .apiKey(key)
     }
 
     var filer: Filer? {
-        guard let key = keyProvider(), !key.isEmpty else { return nil }
-        return Filer(client: ClaudeClient(apiKey: key))
+        guard let credential = credentialProvider() else { return nil }
+        if case let .apiKey(key) = credential, key.isEmpty { return nil }
+        return Filer(client: ClaudeClient(credential: credential))
     }
 
     static var today: String { Heuristics.dayFormatter.string(from: Date()) }

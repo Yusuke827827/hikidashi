@@ -28,7 +28,7 @@ public struct HikidashiRootView: View {
 
     @MainActor
     public init() {
-        _librarian = State(initialValue: DemoMode.isOn ? DemoMode.makeLibrarian() : Librarian(store: NoteStore()))
+        _librarian = State(initialValue: DemoMode.isOn ? DemoMode.makeLibrarian() : Librarian(store: NoteStore(), credentialProvider: Subscription.credential))
         UNUserNotificationCenter.current().delegate = NotificationRouter.shared
     }
 
@@ -74,6 +74,11 @@ public struct HikidashiRootView: View {
             SettingsView(librarian: librarian, wallpaperRaw: $wallpaperRaw).environment(\.palette, palette).tint(palette.accent)
         }
         .task { await refresh() }
+        .task { if !DemoMode.isOn { await Subscription.shared.start() } }
+        // 購読が始まったら、たまっている未整理のメモを整理する
+        .onChange(of: Subscription.shared.isActive) { _, active in
+            if active { Task { await librarian.fileAll() } }
+        }
         // リマインド日・タイトルが変わったときだけ、通知を予約し直す
         .task(id: Reminders.signature(store.notes)) {
             if !DemoMode.isOn { await Reminders.sync(store.notes) }
@@ -123,7 +128,7 @@ public struct HikidashiRootView: View {
             Text("Mindrawer").font(Fonts.mincho(26)).foregroundStyle(palette.text)
             Text("引出").font(.caption.weight(.bold)).tracking(3).foregroundStyle(palette.accent)
             Spacer()
-            Text(librarian.hasKey ? L("AI 整理", "AI on") : L("簡易整理", "Basic"))
+            Text(librarian.hasAI ? L("AI 整理", "AI on") : L("簡易整理", "Basic"))
                 .font(.caption.monospaced())
                 .foregroundStyle(palette.muted)
             Button { showSettings = true } label: {

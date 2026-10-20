@@ -14,6 +14,9 @@ settings:
     # 仮の ID。App Store / TestFlight に出す前に、Apple Developer Program で登録する ID に変える
     BUNDLE_PREFIX: app.mindrawer
     APP_GROUP: group.app.mindrawer
+    # 購読者向けの中継サーバー（server/）の URL。空なら購読の機能は出さない（例: https://mindrawer-server.yourname.workers.dev）
+    SERVER_URL: ""
+    PLUS_PRODUCT_ID: $(BUNDLE_PREFIX).plus.monthly
     MARKETING_VERSION: 0.1.0
     CURRENT_PROJECT_VERSION: 1
     SWIFT_VERSION: "5.0"
@@ -48,6 +51,8 @@ targets:
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         HikidashiAppGroup: $(APP_GROUP)
+        MindrawerServerURL: $(SERVER_URL)
+        MindrawerPlusProductID: $(PLUS_PRODUCT_ID)
         UILaunchScreen: {}
         UIApplicationSceneManifest:
           UIApplicationSupportsMultipleScenes: false
