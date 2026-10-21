@@ -22,10 +22,43 @@ final class Subscription {
         (Bundle.main.object(forInfoDictionaryKey: "MindrawerPlusProductID") as? String) ?? "app.mindrawer.plus.monthly"
     }
 
-    /// 購読の機能を使える設定か
-    static var isAvailable: Bool { serverURL != nil }
+    /// 購読の機能を使える設定か（見本モードでは画面写真のために出す）
+    static var isAvailable: Bool { serverURL != nil || DemoMode.isOn }
+
+    /// プライバシーポリシー（購読の画面に載せることが App Store の審査で求められる）
+    static var privacyURL: URL {
+        (Bundle.main.object(forInfoDictionaryKey: "MindrawerPrivacyURL") as? String).flatMap { $0.isEmpty ? nil : URL(string: $0) }
+            ?? URL(string: "https://github.com/Yusuke827827/hikidashi/blob/main/docs/privacy-policy.md")!
+    }
+
+    /// 利用規約。Apple の標準の規約（EULA）を使う
+    static let termsURL = URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!
 
     private(set) var product: Product?
+    /// 無料のお試しを使えるか（初めての購読のときだけ）
+    private(set) var trialEligible = false
+
+    /// 「¥480 / 月」のような値段。商品を読み込めていなければ nil
+    var priceText: String? {
+        if let product { return product.displayPrice + L(" / 月", " / month") }
+        return DemoMode.isOn ? L("¥480 / 月", "$3.99 / month") : nil
+    }
+
+    /// 「1 週間 無料」のようなお試しの説明。使えなければ nil
+    var trialText: String? {
+        if DemoMode.isOn { return L("1 週間 無料でお試し", "1-week free trial") }
+        guard trialEligible, let offer = product?.subscription?.introductoryOffer, offer.paymentMode == .freeTrial else { return nil }
+        let p = offer.period
+        let unit: String
+        switch p.unit {
+        case .day: unit = L("日", p.value == 1 ? " day" : " days")
+        case .week: unit = L("週間", p.value == 1 ? " week" : " weeks")
+        case .month: unit = L("か月", p.value == 1 ? " month" : " months")
+        case .year: unit = L("年", p.value == 1 ? " year" : " years")
+        @unknown default: return nil
+        }
+        return L("\(p.value) \(unit) 無料でお試し", "\(p.value)\(unit) free trial")
+    }
     /// 有効な購読の証明（App Store が署名したもの）。購読していなければ nil
     private(set) var transactionJWS: String?
     private(set) var expires: Date?
@@ -47,6 +80,7 @@ final class Subscription {
             }
         }
         product = try? await Product.products(for: [Self.productID]).first
+        trialEligible = await product?.subscription?.isEligibleForIntroOffer ?? false
         await refresh()
     }
 
@@ -89,6 +123,7 @@ final class Subscription {
             message = L("購入できませんでした。", "The purchase didn't go through.")
         }
         await refresh()
+        trialEligible = await product.subscription?.isEligibleForIntroOffer ?? false
     }
 
     func restore() async {

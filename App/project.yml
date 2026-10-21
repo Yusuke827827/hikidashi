@@ -17,6 +17,8 @@ settings:
     # 購読者向けの中継サーバー（server/）の URL。空なら購読の機能は出さない（例: https://mindrawer-server.yourname.workers.dev）
     SERVER_URL: ""
     PLUS_PRODUCT_ID: $(BUNDLE_PREFIX).plus.monthly
+    # プライバシーポリシーを公開した URL。空なら GitHub 上の docs/privacy-policy.md を使う（リポジトリが公開のときだけ見られる）
+    PRIVACY_URL: ""
     MARKETING_VERSION: 0.1.0
     CURRENT_PROJECT_VERSION: 1
     SWIFT_VERSION: "5.0"
@@ -53,6 +55,7 @@ targets:
         HikidashiAppGroup: $(APP_GROUP)
         MindrawerServerURL: $(SERVER_URL)
         MindrawerPlusProductID: $(PLUS_PRODUCT_ID)
+        MindrawerPrivacyURL: $(PRIVACY_URL)
         UILaunchScreen: {}
         UIApplicationSceneManifest:
           UIApplicationSupportsMultipleScenes: false
@@ -65,7 +68,9 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: $(BUNDLE_PREFIX)
         TARGETED_DEVICE_FAMILY: "1,2"
-    scheme: {}
+    scheme:
+      # Xcode で実行したとき、App Store Connect なしで購読を試せる（Mindrawer.storekit）
+      storeKitConfiguration: Mindrawer.storekit
 
   HikidashiShare:
     type: app-extension

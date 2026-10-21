@@ -4,7 +4,7 @@ import "reflect-metadata";
 import * as x509 from "@peculiar/x509";
 import * as jose from "jose";
 import { beforeAll, describe, expect, it } from "vitest";
-import { handle, sanitize, type Env } from "../src/index";
+import { costUSD, handle, sanitize, type Env } from "../src/index";
 import { OID_INTERMEDIATE, OID_LEAF, verifyTransaction } from "../src/verify";
 
 x509.cryptoProvider.set(crypto);
@@ -130,6 +130,13 @@ describe("sanitize", () => {
   });
 });
 
+describe("costUSD", () => {
+  it("prices tokens", () => {
+    expect(costUSD({ input_tokens: 1_000_000, output_tokens: 100_000 })).toBeCloseTo(6);
+    expect(costUSD(undefined)).toBe(0);
+  });
+});
+
 describe("handle", () => {
   function memoryKV(): KVNamespace {
     const m = new Map<string, string>();
@@ -162,6 +169,23 @@ describe("handle", () => {
     expect((await handle(withTx(), e, deps)).status).toBe(200);
     expect((await handle(withTx(), e, deps)).status).toBe(429); // 月 2 回の上限
     expect(sent.length).toBe(2);
+  });
+
+  it("stops when the monthly budget is used up", async () => {
+    const deps = {
+      now: () => NOW,
+      rootSha256: chain.rootSha256,
+      // 1 回で 0.5 ドル（入力 5 万 + 出力 1.5 万トークン）
+      fetch: (async () => new Response(JSON.stringify({ stop_reason: "end_turn", content: [], usage: { input_tokens: 50_000, output_tokens: 15_000 } }), { status: 200 })) as unknown as typeof fetch,
+    };
+    const e = { ...env(), MONTHLY_LIMIT: "100", MONTHLY_BUDGET_USD: "1" };
+    const jws = await sign(chain, goodPayload);
+    const req = () => new Request("https://w.example/v1/messages", { method: "POST", body, headers: { "x-mindrawer-transaction": jws } });
+    expect((await handle(req(), e, deps)).status).toBe(200);
+    expect((await handle(req(), e, deps)).status).toBe(200);
+    const third = await handle(req(), e, deps);
+    expect(third.status).toBe(429);
+    expect(await third.text()).toContain("Monthly limit");
   });
 
   it("refuses requests without a valid subscription", async () => {

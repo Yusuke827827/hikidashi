@@ -7,6 +7,8 @@ compatibility_date = "2026-10-01"
 BUNDLE_ID = "app.mindrawer"
 PRODUCT_IDS = "app.mindrawer.plus.monthly"
 MONTHLY_LIMIT = "1500"
+# 1 人あたり月の Claude の料金の上限（米ドル）。月額から Apple の手数料（15%）を引いた額より小さくする
+MONTHLY_BUDGET_USD = "3"
 
 # 月の利用回数を数える保存場所。`npx wrangler kv namespace create USAGE` で作った id に置き換える
 [[kv_namespaces]]

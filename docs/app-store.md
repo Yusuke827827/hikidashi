@@ -9,9 +9,9 @@ App Store Connect に入力する文の下書き。文字数は App Store の上
 | アプリ名 | Mindrawer |
 | カテゴリ | 仕事効率化（Productivity）／サブ: ライフスタイル |
 | 年齢区分 | 4+ |
-| 価格 | 無料（API キーは利用者が用意する。販売時はサーバー経由の月額に切り替える予定） |
+| 価格 | 無料（アプリ内課金: Mindrawer Plus 月額。自分の API キーを入れれば Plus なしでも AI が使える） |
 | プライバシーポリシー URL | docs/privacy-policy.md を公開した URL（例: GitHub Pages） |
-| App のプライバシー（栄養ラベル） | 「データの収集なし」。Claude に送る内容は利用者の API キーで利用者自身が送るもので、開発者は受け取らない |
+| App のプライバシー（栄養ラベル） | 「データの収集なし」。Plus のときはメモが中継サーバーを通るが、その場で Claude に渡すだけで保存しない（Apple の定義ではリアルタイムの処理のみの送信は「収集」に当たらない）。自分の API キーのときは開発者を通らない |
 
 ## 日本語
 
@@ -40,7 +40,14 @@ X、Safari、写真などの共有ボタンから「Mindrawer」を選ぶだけ�
 和紙・羊皮紙・夜空・オーロラ・桜・海など 11 種類の壁紙。編集、ピン留め、「役立った」、関連メモ、声での入力にも対応。
 
 ● プライバシー
-メモは端末の中にだけ保存されます。AI を使うときは、あなた自身の Anthropic API キーで Claude に送ります。開発者があなたのデータを受け取ることはありません。API キーが無くても、キーワードでの整理と検索で使えます。
+メモは端末の中にだけ保存されます。AI で整理するときだけ Claude に送られ、Mindrawer のサーバーには保存されません。AI なしでも、キーワードでの整理と検索で使えます。
+
+● Mindrawer Plus（月額）
+AI での整理と取り出しが、設定なしですぐ使えます。初回は 1 週間無料。Anthropic の API キーをお持ちなら、Plus なしでもそのキーで AI を使えます。
+
+お支払いは Apple ID に請求されます。期間が終わる 24 時間前までに解約しない限り、自動で更新されます。解約は App Store の設定からいつでもできます。
+利用規約: https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
+プライバシーポリシー: （公開した URL）
 
 **キーワード**（100 バイト以内、カンマ区切り）
 メモ,Tips,備忘録,ブックマーク,スクショ,整理,AI,リマインド,共有
@@ -72,7 +79,14 @@ Today's Pick resurfaces one stored note each day, and reminders arrive on the mo
 Eleven wallpapers including washi, parchment, night sky, aurora, sakura and sea. Edit anything, pin, mark as helpful, see related notes, or dictate.
 
 • Private by design
-Notes stay on your device. When Claude is used, your notes are sent with your own Anthropic API key; the developer never receives your data. Without a key, Mindrawer still files and searches by keyword.
+Notes stay on your device. They're sent to Claude only for filing and recall, and never stored on Mindrawer's server. Without AI, Mindrawer still files and searches by keyword.
+
+• Mindrawer Plus (monthly)
+AI filing and recall, no setup needed. Try it free for one week. Have an Anthropic API key? Use it instead, no subscription required.
+
+Payment is charged to your Apple ID. The subscription renews automatically unless canceled at least 24 hours before the end of the period. Cancel anytime in App Store settings.
+Terms of Use: https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
+Privacy Policy: (your published URL)
 
 **Keywords** (100 bytes)
 notes,tips,bookmarks,screenshot,organize,AI,reminder,share,lifehack,memo
@@ -82,4 +96,22 @@ notes,tips,bookmarks,screenshot,organize,AI,reminder,share,lifehack,memo
 - [ ] `App/project.yml` の `BUNDLE_PREFIX` と `APP_GROUP` を自分のものに変える
 - [ ] プライバシーポリシーを公開して URL を用意する
 - [ ] ストア用の画面写真（6.9 インチ）を用意する。`scripts/screenshots.sh` の写真を元にできる
-- [ ] 審査メモに「AI 機能は利用者自身の Anthropic API キーで動く。キーなしでもキーワード検索で使える」と書く
+- [ ] App Store Connect で自動更新サブスクリプションを作る（下の「Mindrawer Plus」）
+- [ ] `App/project.yml` の `SERVER_URL` と `PRIVACY_URL` を入れる
+- [ ] 審査メモに「AI 機能は Mindrawer Plus（購読）か、利用者自身の Anthropic API キーで動く。どちらも無くてもキーワード検索で使える。購読はサンドボックスのアカウントで試せる」と書く
+
+## Mindrawer Plus（App Store Connect に入れる内容）
+
+| 項目 | 内容 |
+|---|---|
+| 種類 | 自動更新サブスクリプション |
+| サブスクリプショングループ | Mindrawer Plus |
+| 商品 ID | `app.mindrawer.plus.monthly`（`BUNDLE_PREFIX` に合わせる） |
+| 期間 | 1 か月 |
+| 値段（おすすめ） | 980 円 / 6.99 ドル。根拠は `server/README.md` の「料金の目安」 |
+| お試し（導入オファー） | 1 週間無料 |
+| 表示名 | Mindrawer Plus |
+| 説明（45 文字以内） | AI がメモを整理し、必要なときに取り出す / AI files your notes and brings them back |
+| 審査用の画面写真 | 設定画面の「Mindrawer Plus」の部分（`screenshots` ブランチの 09-settings） |
+
+Xcode で実行すると `App/Mindrawer.storekit` の内容で購読を試せる（App Store Connect に登録する前でも動く。ただし `SERVER_URL` が空だと購読の項目は出ない）。

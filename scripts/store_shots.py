@@ -25,14 +25,14 @@ SETS = {
         ("03-recall", "「これから〇〇する」で", "役立つメモが出てくる", 0x3C5A8A, 0x23395E),
         ("04-washi", "AI がフォルダと", "使う場面を自動で付ける", 0x8A6A3C, 0x5E4626),
         ("07-night", "11 種類の壁紙で", "自分好みに", 0x1B2A55, 0x0B1430),
-        ("09-settings", "メモは端末の中だけ", "あなたの API キーで動く", 0x3B5E4A, 0x24402F),
+        ("09-settings", "面倒な設定なし", "Plus ですぐ AI が使える", 0x3B5E4A, 0x24402F),
     ],
     "en": [
         ("11-en-light", "Save it once.", "It finds you when it matters.", 0xD86348, 0xB0402A),
         ("12-en-recall", "Say what you're doing.", "Get the tips that help.", 0x3C5A8A, 0x23395E),
         ("13-en-washi", "Filed for you:", "folders, moments, reminders", 0x8A6A3C, 0x5E4626),
         ("14-en-night", "Eleven wallpapers", "to make it yours", 0x1B2A55, 0x0B1430),
-        ("15-en-settings", "Private by design.", "Runs on your own API key.", 0x3B5E4A, 0x24402F),
+        ("15-en-settings", "No setup needed.", "Plus turns on AI instantly.", 0x3B5E4A, 0x24402F),
     ],
 }
 

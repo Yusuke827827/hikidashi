@@ -13,6 +13,8 @@ export interface Env {
   PRODUCT_IDS: string;
   /** 1 人あたり月の上限回数 */
   MONTHLY_LIMIT?: string;
+  /** 1 人あたり月の Claude の料金の上限（米ドル）。売上から Apple の手数料を引いた額より小さくする */
+  MONTHLY_BUDGET_USD?: string;
   USAGE: KVNamespace;
 }
 
@@ -21,6 +23,21 @@ const ALLOWED_MODELS = ["claude-opus-5-5"];
 const ALLOWED_BETAS = ["server-side-fallback-2026-07-01"];
 const MAX_TOKENS = 8000;
 const MAX_BODY_BYTES = 8 * 1024 * 1024;
+/** claude-opus-5-5 の料金（100 万トークンあたりの米ドル） */
+const PRICE_PER_MTOK = { input: 4, output: 20, cacheRead: 0.2, cacheWrite: 5 };
+
+/** 応答の usage から料金（米ドル）を出す */
+export function costUSD(usage: unknown): number {
+  if (!usage || typeof usage !== "object") return 0;
+  const u = usage as Record<string, unknown>;
+  const n = (k: string) => (typeof u[k] === "number" ? (u[k] as number) : 0);
+  return (
+    n("input_tokens") * PRICE_PER_MTOK.input +
+    n("output_tokens") * PRICE_PER_MTOK.output +
+    n("cache_read_input_tokens") * PRICE_PER_MTOK.cacheRead +
+    n("cache_creation_input_tokens") * PRICE_PER_MTOK.cacheWrite
+  ) / 1_000_000;
+}
 
 export interface Deps {
   fetch: typeof fetch;
@@ -86,13 +103,17 @@ export async function handle(request: Request, env: Env, deps: Deps): Promise<Re
   const body = sanitize(parsed);
   if (!body) return error(400, "invalid_request_error", "Request not allowed");
 
-  // 月の利用回数（KV は厳密ではないが、使いすぎ防止には足りる）
+  // 月の利用回数と料金（KV は厳密ではないが、使いすぎ防止には足りる）
   const month = deps.now().toISOString().slice(0, 7);
   const usageKey = `usage:${originalId}:${month}`;
+  const costKey = `cost:${originalId}:${month}`;
+  const ttl = { expirationTtl: 60 * 60 * 24 * 40 };
   const used = Number((await env.USAGE.get(usageKey)) ?? "0");
+  const spent = Number((await env.USAGE.get(costKey)) ?? "0");
   const limit = Number(env.MONTHLY_LIMIT ?? "1500");
-  if (used >= limit) return error(429, "rate_limit_error", "Monthly limit reached");
-  await env.USAGE.put(usageKey, String(used + 1), { expirationTtl: 60 * 60 * 24 * 40 });
+  const budget = Number(env.MONTHLY_BUDGET_USD ?? "3");
+  if (used >= limit || spent >= budget) return error(429, "rate_limit_error", "Monthly limit reached");
+  await env.USAGE.put(usageKey, String(used + 1), ttl);
 
   const beta = request.headers.get("anthropic-beta");
   const headers: Record<string, string> = {
@@ -102,7 +123,15 @@ export async function handle(request: Request, env: Env, deps: Deps): Promise<Re
   };
   if (beta && ALLOWED_BETAS.includes(beta)) headers["anthropic-beta"] = beta;
   const upstream = await deps.fetch(ANTHROPIC_URL, { method: "POST", headers, body: JSON.stringify(body) });
-  return new Response(upstream.body, { status: upstream.status, headers: { "content-type": "application/json" } });
+  const result = await upstream.text();
+  let cost = 0;
+  try {
+    cost = costUSD((JSON.parse(result) as { usage?: unknown }).usage);
+  } catch {
+    // JSON でない応答（障害時など）は料金なしとして扱う
+  }
+  if (cost > 0) await env.USAGE.put(costKey, String(spent + cost), ttl);
+  return new Response(result, { status: upstream.status, headers: { "content-type": "application/json" } });
 }
 
 export default {

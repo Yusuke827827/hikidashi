@@ -1,0 +1,56 @@
+{
+  "identifier" : "4F1C2A7E",
+  "nonRenewingSubscriptions" : [ ],
+  "products" : [ ],
+  "settings" : {
+    "_failTransactionsEnabled" : false,
+    "_locale" : "ja_JP",
+    "_storefront" : "JPN",
+    "_storeKitErrors" : [ ]
+  },
+  "subscriptionGroups" : [
+    {
+      "id" : "21500001",
+      "localizations" : [ ],
+      "name" : "Mindrawer Plus",
+      "subscriptions" : [
+        {
+          "adHocOffers" : [ ],
+          "codeOffers" : [ ],
+          "displayPrice" : "980",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "6750000001",
+          "introductoryOffer" : {
+            "internalID" : "6750000002",
+            "numberOfPeriods" : 1,
+            "paymentMode" : "free",
+            "subscriptionPeriod" : "P1W"
+          },
+          "localizations" : [
+            {
+              "description" : "AI がメモを整理し、必要なときに取り出す",
+              "displayName" : "Mindrawer Plus",
+              "locale" : "ja"
+            },
+            {
+              "description" : "AI files your notes and brings them back",
+              "displayName" : "Mindrawer Plus",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "app.mindrawer.plus.monthly",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "Mindrawer Plus Monthly",
+          "subscriptionGroupID" : "21500001",
+          "type" : "RecurringSubscription",
+          "winbackOffers" : [ ]
+        }
+      ]
+    }
+  ],
+  "version" : {
+    "major" : 4,
+    "minor" : 0
+  }
+}

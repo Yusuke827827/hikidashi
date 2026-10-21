@@ -126,13 +126,25 @@ struct SettingsView: View {
                 }
                 Link(L("購読を管理する", "Manage subscription"), destination: URL(string: "https://apps.apple.com/account/subscriptions")!)
             } else {
+                VStack(alignment: .leading, spacing: 6) {
+                    Label(L("AI が自動で整理", "AI files every note for you"), systemImage: "folder.badge.gearshape")
+                    Label(L("問いかけに合うメモを取り出す", "Ask, and get the right notes back"), systemImage: "sparkles")
+                    Label(L("スクショの文字も読み取る", "Reads text in screenshots"), systemImage: "text.viewfinder")
+                }
+                .font(.subheadline)
+                .padding(.vertical, 4)
                 Button {
                     Task { await sub.purchase() }
                 } label: {
                     HStack {
-                        Text(L("購読する", "Subscribe"))
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(sub.trialText ?? L("購読する", "Subscribe")).fontWeight(.semibold)
+                            if sub.trialText != nil, let price = sub.priceText {
+                                Text(L("その後 \(price)", "then \(price)")).font(.caption).foregroundStyle(.secondary)
+                            }
+                        }
                         Spacer()
-                        if sub.purchasing { ProgressView() } else if let p = sub.product { Text(p.displayPrice + L(" / 月", " / month")).foregroundStyle(.secondary) }
+                        if sub.purchasing { ProgressView() } else if sub.trialText == nil, let price = sub.priceText { Text(price).foregroundStyle(.secondary) }
                     }
                 }
                 .disabled(sub.purchasing)
@@ -142,8 +154,16 @@ struct SettingsView: View {
         } header: {
             Text("Mindrawer Plus")
         } footer: {
-            Text(L("API キーを用意しなくても、AI での整理と取り出しが使えます。メモは整理のために Mindrawer のサーバーを経由して Claude に送られますが、サーバーには保存されません。自分の API キーを設定している場合は、そちらが優先されます。",
-                   "Use AI filing and recall without your own API key. Notes pass through Mindrawer's server to Claude for filing and are not stored there. If you set your own API key, it's used instead."))
+            VStack(alignment: .leading, spacing: 8) {
+                Text(L("API キーを用意しなくても、AI での整理と取り出しが使えます。メモは整理のために Mindrawer のサーバーを経由して Claude に送られますが、サーバーには保存されません。自分の API キーを設定している場合は、そちらが優先されます。",
+                       "Use AI filing and recall without your own API key. Notes pass through Mindrawer's server to Claude for filing and are not stored there. If you set your own API key, it's used instead."))
+                Text(L("Mindrawer Plus は 1 か月ごとに自動で更新される購読です。料金は Apple ID に請求され、期間が終わる 24 時間前までに解約しない限り自動で更新されます。解約は App Store の「サブスクリプション」からいつでもできます。無料のお試しの残りは、購読すると無くなります。",
+                       "Mindrawer Plus is an auto-renewing monthly subscription. Payment is charged to your Apple ID and renews automatically unless canceled at least 24 hours before the end of the period. Cancel anytime in App Store subscriptions. Any unused part of a free trial ends when you subscribe."))
+                HStack(spacing: 16) {
+                    Link(L("利用規約", "Terms of Use"), destination: Subscription.termsURL)
+                    Link(L("プライバシーポリシー", "Privacy Policy"), destination: Subscription.privacyURL)
+                }
+            }
         }
     }
 
