@@ -21,7 +21,7 @@ public enum ClaudeError: Error, Equatable, LocalizedError {
         case .noKey: return L("API キーが設定されていません。", "No API key is set.")
         case .invalidKey: return L("API キーが正しくないようです。設定を確認してください。", "The API key was rejected. Check it in Settings.")
         case .subscriptionInvalid: return L("購読を確認できませんでした。設定の「購入を復元」をお試しください。", "Couldn't confirm your subscription. Try Restore Purchases in Settings.")
-        case .monthlyLimit: return L("今月の AI の利用回数の上限に達しました。来月にまた使えます。", "You've reached this month's AI limit. It resets next month.")
+        case .monthlyLimit: return L("今月の AI の利用上限に達しました。来月にまた使えます（自分の API キーを入れればすぐ使えます）。", "You've reached this month's AI limit. It resets next month, or add your own API key to keep going.")
         case .busy: return L("Claude が混み合っています。少し待ってからもう一度お試しください。", "Claude is busy. Try again in a moment.")
         case .refused: return L("このメモは整理できませんでした。", "Claude declined to process this note.")
         case .truncated: return L("返事が途中で切れました。もう一度お試しください。", "The reply was cut off. Try again.")
