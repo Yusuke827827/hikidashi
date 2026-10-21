@@ -21,6 +21,8 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             Form {
+                if Subscription.isAvailable { plusSection }
+
                 Section {
                     if hasKey {
                         Label(L("API キーを設定済み", "API key saved"), systemImage: "checkmark.seal")
@@ -42,13 +44,12 @@ struct SettingsView: View {
                     Link(L("API キーを取得する（Anthropic Console）", "Get an API key (Anthropic Console)"),
                          destination: URL(string: "https://console.anthropic.com/settings/keys")!)
                 } header: {
-                    Text("Claude")
+                    Text(Subscription.isAvailable ? L("自分の API キーを使う", "Use your own API key") : "Claude")
                 } footer: {
                     Text(L("キーはこの端末のキーチェーンにだけ保存されます。整理と取り出しのたびに、あなたの Anthropic アカウントに少額の利用料がかかります。キーが無くても、簡易の整理とキーワード検索で使えます。",
                            "The key stays in this device's keychain. Each filing or recall is billed to your Anthropic account. Without a key, Mindrawer uses basic filing and keyword search."))
                 }
 
-                if Subscription.isAvailable { plusSection }
 
                 Section(L("壁紙", "Wallpaper")) {
                     LazyVGrid(columns: [GridItem(.adaptive(minimum: 72), spacing: 12)], spacing: 14) {

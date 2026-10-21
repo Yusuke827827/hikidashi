@@ -41,7 +41,7 @@ final class Subscription {
     /// 「¥480 / 月」のような値段。商品を読み込めていなければ nil
     var priceText: String? {
         if let product { return product.displayPrice + L(" / 月", " / month") }
-        return DemoMode.isOn ? L("¥480 / 月", "$3.99 / month") : nil
+        return DemoMode.isOn ? L("¥980 / 月", "$6.99 / month") : nil
     }
 
     /// 「1 週間 無料」のようなお試しの説明。使えなければ nil
