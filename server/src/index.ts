@@ -3,6 +3,7 @@
 // ここで証明を確かめ、月の利用回数を数え、運営側の API キーで Claude を呼んで結果をそのまま返す。
 // 送ってよい内容は絞る（モデル・max_tokens・本文の大きさ）。メモの中身は保存しない。
 
+import { PRIVACY_HTML, SUPPORT_HTML } from "./pages.generated";
 import { VerificationError, verifyTransaction } from "./verify";
 
 export interface Env {
@@ -72,6 +73,11 @@ export function sanitize(body: unknown): Record<string, unknown> | null {
 export async function handle(request: Request, env: Env, deps: Deps): Promise<Response> {
   const url = new URL(request.url);
   if (request.method === "GET" && url.pathname === "/health") return json(200, { ok: true });
+  // App Store に載せるプライバシーポリシーとサポートのページ
+  if (request.method === "GET" && (url.pathname === "/privacy" || url.pathname === "/support")) {
+    const html = url.pathname === "/privacy" ? PRIVACY_HTML : SUPPORT_HTML;
+    return new Response(html, { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "public, max-age=3600" } });
+  }
   if (request.method !== "POST" || url.pathname !== "/v1/messages") return error(404, "not_found_error", "Not found");
 
   const jws = request.headers.get("x-mindrawer-transaction");

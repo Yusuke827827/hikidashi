@@ -17,7 +17,7 @@ settings:
     # 購読者向けの中継サーバー（server/）の URL。空なら購読の機能は出さない（例: https://mindrawer-server.yourname.workers.dev）
     SERVER_URL: ""
     PLUS_PRODUCT_ID: $(BUNDLE_PREFIX).plus.monthly
-    # プライバシーポリシーを公開した URL。空なら GitHub 上の docs/privacy-policy.md を使う（リポジトリが公開のときだけ見られる）
+    # プライバシーポリシーの URL（中継サーバーの /privacy）。空なら GitHub 上の docs/privacy-policy.md を使う
     PRIVACY_URL: ""
     MARKETING_VERSION: 0.1.0
     CURRENT_PROJECT_VERSION: 1

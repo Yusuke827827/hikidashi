@@ -10,7 +10,8 @@ App Store Connect に入力する文の下書き。文字数は App Store の上
 | カテゴリ | 仕事効率化（Productivity）／サブ: ライフスタイル |
 | 年齢区分 | 4+ |
 | 価格 | 無料（アプリ内課金: Mindrawer Plus 月額。自分の API キーを入れれば Plus なしでも AI が使える） |
-| プライバシーポリシー URL | docs/privacy-policy.md を公開した URL（例: GitHub Pages） |
+| プライバシーポリシー URL | 中継サーバーの `/privacy`（例: `https://mindrawer-server.<名前>.workers.dev/privacy`） |
+| サポート URL | 中継サーバーの `/support` |
 | App のプライバシー（栄養ラベル） | 「データの収集なし」。Plus のときはメモが中継サーバーを通るが、その場で Claude に渡すだけで保存しない（Apple の定義ではリアルタイムの処理のみの送信は「収集」に当たらない）。自分の API キーのときは開発者を通らない |
 
 ## 日本語
@@ -47,7 +48,7 @@ AI での整理と取り出しが、設定なしですぐ使えます。初回�
 
 お支払いは Apple ID に請求されます。期間が終わる 24 時間前までに解約しない限り、自動で更新されます。解約は App Store の設定からいつでもできます。
 利用規約: https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
-プライバシーポリシー: （公開した URL）
+プライバシーポリシー: https://mindrawer-server.<名前>.workers.dev/privacy
 
 **キーワード**（100 バイト以内、カンマ区切り）
 メモ,Tips,備忘録,ブックマーク,スクショ,整理,AI,リマインド,共有
@@ -86,7 +87,7 @@ AI filing and recall, no setup needed. Try it free for one week. Have an Anthrop
 
 Payment is charged to your Apple ID. The subscription renews automatically unless canceled at least 24 hours before the end of the period. Cancel anytime in App Store settings.
 Terms of Use: https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
-Privacy Policy: (your published URL)
+Privacy Policy: https://mindrawer-server.<name>.workers.dev/privacy
 
 **Keywords** (100 bytes)
 notes,tips,bookmarks,screenshot,organize,AI,reminder,share,lifehack,memo
@@ -94,7 +95,7 @@ notes,tips,bookmarks,screenshot,organize,AI,reminder,share,lifehack,memo
 ## 提出前のチェック
 
 - [ ] `App/project.yml` の `BUNDLE_PREFIX` と `APP_GROUP` を自分のものに変える
-- [ ] プライバシーポリシーを公開して URL を用意する
+- [ ] 中継サーバーを公開する（`server/README.md`）。プライバシーポリシーとサポートのページも一緒に公開される
 - [ ] ストア用の画面写真（6.9 インチ）を用意する。`scripts/screenshots.sh` の写真を元にできる
 - [ ] App Store Connect で自動更新サブスクリプションを作る（下の「Mindrawer Plus」）
 - [ ] `App/project.yml` の `SERVER_URL` と `PRIVACY_URL` を入れる

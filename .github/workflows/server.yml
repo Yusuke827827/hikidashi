@@ -1,0 +1,65 @@
+# 中継サーバー（server/）のテストと、Cloudflare への公開。
+# 公開は、リポジトリの Secrets に CLOUDFLARE_API_TOKEN があるときだけ行う（手順は server/README.md）。
+name: Server
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "server/**"
+      - "docs/privacy-policy.md"
+      - "docs/support.md"
+      - ".github/workflows/server.yml"
+  pull_request:
+    paths: ["server/**"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: server-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+
+  deploy:
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+    steps:
+      - name: Skip without Cloudflare token
+        if: env.CLOUDFLARE_API_TOKEN == ''
+        run: echo "::notice::CLOUDFLARE_API_TOKEN が未登録なので公開はしません（server/README.md の手順で登録すると自動で公開されます）"
+      - uses: actions/checkout@v4
+        if: env.CLOUDFLARE_API_TOKEN != ''
+      - uses: actions/setup-node@v4
+        if: env.CLOUDFLARE_API_TOKEN != ''
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+      - if: env.CLOUDFLARE_API_TOKEN != ''
+        working-directory: server
+        run: npm ci
+      - if: env.CLOUDFLARE_API_TOKEN != ''
+        run: bash server/scripts/ci-deploy.sh

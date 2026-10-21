@@ -188,6 +188,15 @@ describe("handle", () => {
     expect(await third.text()).toContain("Monthly limit");
   });
 
+  it("serves the privacy policy and support pages", async () => {
+    const deps = { now: () => NOW, fetch: (async () => { throw new Error("must not call"); }) as unknown as typeof fetch };
+    const privacy = await handle(new Request("https://w.example/privacy"), env(), deps);
+    expect(privacy.status).toBe(200);
+    expect(privacy.headers.get("content-type")).toContain("text/html");
+    expect(await privacy.text()).toContain("Privacy Policy");
+    expect(await (await handle(new Request("https://w.example/support"), env(), deps)).text()).toContain("Restore purchases");
+  });
+
   it("refuses requests without a valid subscription", async () => {
     const deps = { now: () => NOW, rootSha256: chain.rootSha256, fetch: (async () => { throw new Error("must not call"); }) as unknown as typeof fetch };
     const noTx = new Request("https://w.example/v1/messages", { method: "POST", body });

@@ -5,8 +5,9 @@
   "description": "Mindrawer の購読者向け AI 中継サーバー（Cloudflare Workers）",
   "scripts": {
     "dev": "wrangler dev",
-    "deploy": "wrangler deploy",
-    "test": "vitest run",
+    "pages": "node scripts/build-pages.mjs",
+    "deploy": "node scripts/build-pages.mjs && wrangler deploy",
+    "test": "node scripts/build-pages.mjs --check && vitest run",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

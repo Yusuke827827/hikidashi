@@ -4,7 +4,7 @@ Mindrawer Plus（月額の購読）の利用者が、自分の API キーなし�
 
 1. アプリが App Store の購読の証明（StoreKit 2 の signed transaction）を `x-mindrawer-transaction` に付けて、Messages API と同じ形で送る
 2. サーバーが証明を確かめる（Apple Root CA - G3 につながる鎖、App Store 署名用の印、署名、アプリ ID・商品 ID・期限・取り消し）
-3. 月の利用回数（既定 1500 回）を数え、運営側の API キーで Claude を呼んで結果を返す。メモの内容は保存しない
+3. 月の利用回数と料金を数え（上限は下の「料金の目安」）、運営側の API キーで Claude を呼んで結果を返す。メモの内容は保存しない
 
 送れるモデルは `claude-opus-5-5` だけ、`max_tokens` は 8000 まで、本文は 8MB まで。
 
@@ -15,15 +15,44 @@ cd server && npm install && npm test        # テスト用の証明書の鎖を�
 npm run typecheck
 ```
 
-## 公開の手順
+## 公開の手順（ブラウザだけでできる）
 
-1. Cloudflare のアカウントを作り、`npx wrangler login`
-2. 利用回数を数える保存場所を作る: `npx wrangler kv namespace create USAGE`。出てきた id を `wrangler.toml` の `REPLACE_WITH_KV_NAMESPACE_ID` に書く
-3. 運営側の Anthropic API キーを登録: `npx wrangler secret put ANTHROPIC_API_KEY`
-4. `wrangler.toml` の `BUNDLE_ID` と `PRODUCT_IDS` を、App Store Connect で登録したものに合わせる
-5. `npm run deploy`。表示された URL（`https://mindrawer-server.<名前>.workers.dev`）を `App/project.yml` の `SERVER_URL` に書く
+`main` に push すると GitHub Actions（`.github/workflows/server.yml`）がテストし、Cloudflare に公開する。保存場所（KV）の作成、API キーの登録、`/health` の確認まで自動で行う。必要なのは、次の 3 つの値を GitHub に登録することだけ。
 
-App Store Connect では、自動更新サブスクリプション `app.mindrawer.plus.monthly`（`BUNDLE_PREFIX` に合わせる）を作る。
+1. **Cloudflare**（無料）
+   - https://dash.cloudflare.com/sign-up でアカウントを作る
+   - 左のメニューの「Workers & Pages」を一度開く（`workers.dev` の名前を決める画面が出たら決める）
+   - 右上の人のアイコン →「My Profile」→「API Tokens」→「Create Token」→ テンプレート「Edit Cloudflare Workers」→「Use template」。Account Resources は自分のアカウント、Zone Resources は「All zones」のままで「Continue to summary」→「Create Token」。出てきたトークンを控える
+   - 「Workers & Pages」の画面の右側にある「Account ID」を控える
+2. **Anthropic**: https://console.anthropic.com/settings/keys で、サーバー用の API キーを作って控える（自分用とは別にしておくと、使用量を分けて見られる）
+3. **GitHub**: このリポジトリの「Settings」→「Secrets and variables」→「Actions」→「New repository secret」で、次の 3 つを登録する
+
+   | Name | 値 |
+   |---|---|
+   | `CLOUDFLARE_API_TOKEN` | 1 のトークン |
+   | `CLOUDFLARE_ACCOUNT_ID` | 1 の Account ID |
+   | `ANTHROPIC_API_KEY` | 2 の API キー |
+
+4. 「Actions」→「Server」→「Run workflow」を押す（以後は `server/` を変えて push するたびに自動で公開される）
+5. 終わると、実行結果のページに 3 つの URL が出る
+   - `https://mindrawer-server.<名前>.workers.dev` → `App/project.yml` の `SERVER_URL`
+   - `…/privacy` → `PRIVACY_URL` と、App Store Connect の「プライバシーポリシー URL」
+   - `…/support` → App Store Connect の「サポート URL」
+
+`wrangler.toml` の `BUNDLE_ID` と `PRODUCT_IDS` は、Apple Developer で決めた Bundle ID と App Store Connect の商品 ID に合わせる。
+
+### 手元のパソコンから公開する場合
+
+```sh
+cd server && npm install && npx wrangler login
+npx wrangler kv namespace create mindrawer-usage   # 出てきた id を wrangler.toml に書く
+npx wrangler secret put ANTHROPIC_API_KEY
+npm run deploy
+```
+
+## プライバシーポリシーとサポートのページ
+
+`/privacy` と `/support` は、`docs/privacy-policy.md` と `docs/support.md` から作る（`node scripts/build-pages.mjs` で `src/pages.generated.ts` を作り直す。`npm test` は作り直し忘れを見つける）。
 
 ## 料金の目安
 
