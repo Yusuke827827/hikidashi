@@ -58,6 +58,8 @@ Xcode の「Signing & Capabilities」で、Hikidashi と HikidashiShare の両�
 
 共有シートの拡張機能とアプリ本体でデータを共有するため、App Group が必要です。
 
+Mac が無い場合は、GitHub Actions から App Store Connect に送れる（`docs/release.md`）。Mac で開発する場合は次のとおり。
+
 1. `App/project.yml` の `BUNDLE_PREFIX` と `APP_GROUP` を自分のものに変える（例: `com.yourname.mindrawer` と `group.com.yourname.mindrawer`）。
 2. `xcodegen generate` をやり直す。
 3. Xcode で両方のターゲットに App Groups の機能があり、同じグループが選ばれていることを確認する。

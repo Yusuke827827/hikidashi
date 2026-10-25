@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # GitHub Actions から中継サーバーを Cloudflare に公開する（.github/workflows/server.yml）。
 # 必要な環境変数: CLOUDFLARE_API_TOKEN（と、アカウントが複数あるなら CLOUDFLARE_ACCOUNT_ID）。
-# ANTHROPIC_API_KEY があれば、サーバーの秘密の値として登録する。
+# ANTHROPIC_API_KEY があれば、サーバーの秘密の値として登録する。BUNDLE_PREFIX があれば Bundle ID と商品 ID をそれに合わせる。
 # 利用回数を数える保存場所（KV「mindrawer-usage」）が無ければ作る。
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -26,7 +26,12 @@ fi
 sed -i "s/REPLACE_WITH_KV_NAMESPACE_ID/$id/" wrangler.toml
 
 node scripts/build-pages.mjs
-npx wrangler deploy | tee /tmp/deploy.log
+# Bundle ID を GitHub の Variables（BUNDLE_PREFIX）で決めていれば、それに合わせる
+vars=()
+if [ -n "${BUNDLE_PREFIX:-}" ]; then
+  vars=(--var "BUNDLE_ID:$BUNDLE_PREFIX" --var "PRODUCT_IDS:$BUNDLE_PREFIX.plus.monthly")
+fi
+npx wrangler deploy "${vars[@]}" | tee /tmp/deploy.log
 
 if [ -n "${ANTHROPIC_API_KEY:-}" ]; then
   printf '%s' "$ANTHROPIC_API_KEY" | npx wrangler secret put ANTHROPIC_API_KEY >/dev/null

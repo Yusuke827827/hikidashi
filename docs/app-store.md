@@ -94,11 +94,11 @@ notes,tips,bookmarks,screenshot,organize,AI,reminder,share,lifehack,memo
 
 ## 提出前のチェック
 
-- [ ] `App/project.yml` の `BUNDLE_PREFIX` と `APP_GROUP` を自分のものに変える
+- [ ] `docs/release.md` の手順で Bundle ID を決め、GitHub の Variables `BUNDLE_PREFIX` に入れる（Mac なしで提出できる）
 - [ ] 中継サーバーを公開する（`server/README.md`）。プライバシーポリシーとサポートのページも一緒に公開される
 - [ ] ストア用の画面写真（6.9 インチ）を用意する。`scripts/screenshots.sh` の写真を元にできる
 - [ ] App Store Connect で自動更新サブスクリプションを作る（下の「Mindrawer Plus」）
-- [ ] `App/project.yml` の `SERVER_URL` と `PRIVACY_URL` を入れる
+- [ ] GitHub の Variables `SERVER_URL` と `PRIVACY_URL` を入れる
 - [ ] 審査メモに「AI 機能は Mindrawer Plus（購読）か、利用者自身の Anthropic API キーで動く。どちらも無くてもキーワード検索で使える。購読はサンドボックスのアカウントで試せる」と書く
 
 ## Mindrawer Plus（App Store Connect に入れる内容）

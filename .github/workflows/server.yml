@@ -46,6 +46,7 @@ jobs:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      BUNDLE_PREFIX: ${{ vars.BUNDLE_PREFIX }}
     steps:
       - name: Skip without Cloudflare token
         if: env.CLOUDFLARE_API_TOKEN == ''

@@ -1,0 +1,39 @@
+# App Store Connect にアプリを送る（Mac が無くても、ここから TestFlight と App Store に出せる）。
+# 「Actions」→「Release」→「Run workflow」で動かす。必要な Secrets と Variables は docs/release.md。
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      upload:
+        description: "App Store Connect に送る（オフならビルドだけ）"
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: macos-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - run: xcodebuild -version
+      - run: brew install xcodegen
+      - name: Build and upload
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          BUNDLE_PREFIX: ${{ vars.BUNDLE_PREFIX }}
+          SERVER_URL: ${{ vars.SERVER_URL }}
+          PRIVACY_URL: ${{ vars.PRIVACY_URL }}
+          BUILD_NUMBER: ${{ github.run_number }}
+          UPLOAD: ${{ inputs.upload }}
+        run: bash scripts/release.sh
