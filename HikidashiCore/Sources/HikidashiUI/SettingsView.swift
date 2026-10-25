@@ -1,4 +1,4 @@
-// 設定。Claude の API キー、壁紙、書き出し・読み込み、共有シートの使い方。
+// 設定。使い方、Mindrawer Plus、Claude の API キー、壁紙、書き出し・読み込み、共有シートの使い方。
 
 #if os(iOS)
 import HikidashiKit
@@ -21,6 +21,14 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             Form {
+                Section {
+                    NavigationLink {
+                        HowToView()
+                    } label: {
+                        Label(L("使い方", "How to use"), systemImage: "questionmark.circle")
+                    }
+                }
+
                 if Subscription.isAvailable { plusSection }
 
                 Section {

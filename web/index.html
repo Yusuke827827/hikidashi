@@ -258,6 +258,13 @@ details.more[open] summary::before { content: "−"; }
 :root[data-wall] .rail { background: color-mix(in srgb, var(--surface) 70%, transparent); border: 1px solid var(--line); border-radius: 16px; padding: 16px 12px; }
 :root[data-wall] .fitem[aria-pressed="true"] { background: var(--sunk); box-shadow: none; }
 :root[data-wall] .list-head h2, :root[data-wall] .toast { background: color-mix(in srgb, var(--surface) 70%, transparent); border-radius: 8px; padding: 2px 8px; }
+.help { max-width: 560px; width: calc(100vw - 32px); max-height: calc(100vh - 48px); border: 1px solid var(--line); border-radius: 18px; background: var(--surface); color: var(--ink); padding: 18px 20px 22px; box-shadow: var(--shadow); }
+.help::backdrop { background: rgb(0 0 0 / .35); }
+.help-head { display: flex; align-items: center; justify-content: space-between; }
+.help h2 { margin: 0; font-family: var(--font-display); font-size: 20px; }
+.help h3 { margin: 18px 0 4px; font-size: 15px; color: var(--accent); }
+.help p { margin: 0; color: var(--muted); font-size: 14px; white-space: pre-line; }
+.help-x { border: 0; background: none; font-size: 24px; line-height: 1; color: var(--muted); padding: 4px 8px; }
 .wp { position: relative; }
 .wp-btn { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; font-size: 12.5px; padding: 3px 12px; color: var(--muted); display: inline-flex; gap: 6px; align-items: center; }
 .wp-btn:hover { color: var(--ink); }
@@ -297,12 +304,14 @@ details.more[open] summary::before { content: "−"; }
 </style>
 </head>
 <body>
+<dialog id="help" class="help"><div class="help-head"><h2 id="helpTitle"></h2><button id="helpClose" type="button" class="help-x" aria-label="Close">×</button></div><div id="helpBody"></div></dialog>
 <div id="wall"></div><div id="wallVeil" hidden></div>
 <div class="wrap">
   <header class="top">
     <div class="mark"><b>Mindrawer</b><span>引出</span></div>
     <div class="top-right">
       <button class="status" id="status" type="button"></button>
+      <button class="wp-btn" id="helpBtn" type="button"><span aria-hidden="true">?</span><span id="helpLabel"></span></button>
       <div class="wp">
         <button class="wp-btn" id="wpBtn" aria-expanded="false" aria-controls="wpPanel"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="m3 16 5-5 4 4 3-3 6 6"/></svg><span id="wpLabel"></span></button>
         <div class="wp-panel" id="wpPanel" hidden>
@@ -412,7 +421,7 @@ details.more[open] summary::before { content: "−"; }
       stCloud: "Synced", stLocal: "This device", stAi: "AI on", stBasic: "Basic",
       keyPrompt: "Paste your Anthropic API key (sk-ant-…). It stays in this browser and is sent only to Anthropic. Get one at console.anthropic.com",
       keySaved: "API key saved. Claude will file your notes.", keyRemoveQ: "Remove the saved API key from this browser?", keyRemoved: "API key removed.",
-      keyBad: "The API key didn't work. Tap the status to set it again.", useAI: "Use AI ›",
+      keyBad: "The API key didn't work. Tap the status to set it again.", useAI: "Use AI ›", help: "How to use", helpSteps: [["Save", "Type a tip or note in the box and press Save (Ctrl/⌘ + Enter). You can add a source link, or a screenshot when AI is on."], ["AI files it", "AI adds a title, summary, folder, tags and the moments it will help. Dates in the note become reminders."], ["Recall", "Switch to Recall and describe what you're about to do or what's bothering you, e.g. \"About to do laundry\". You get the notes that help, plus short advice."], ["Today's pick", "One stored note resurfaces each day. Notes you mark Helpful come first when you recall."], ["Working with notes", "Pin, mark Helpful, edit or re-file each note. Switch the list between Topic and Date, or narrow it with Filter."], ["Use AI", "Tap the status at the top right and paste your Anthropic API key (console.anthropic.com). It stays in this browser and is sent only to Anthropic. Without a key, Mindrawer files and searches by keyword."], ["Wallpaper", "Pick a wallpaper or your own image from Wallpaper at the top."], ["Your data", "Notes are saved in this browser. Use Export / Import to back them up or move them; the same file works with the iPhone app."]],
       month: (d) => d.toLocaleDateString("en", { year: "numeric", month: "long" }),
       other: "Other",
       edit: "Edit", saveEdit: "Save", saveRefile: "Save & re-file with AI", cancel: "Cancel", editSaved: "Saved.",
@@ -448,7 +457,7 @@ details.more[open] summary::before { content: "−"; }
       stCloud: "アカウントに保存", stLocal: "この端末に保存", stAi: "AI 整理", stBasic: "簡易整理",
       keyPrompt: "Anthropic の API キー（sk-ant-…）を貼り付けてください。キーはこのブラウザにだけ保存され、Anthropic にだけ送られます。取得: console.anthropic.com",
       keySaved: "API キーを保存しました。Claude が整理します。", keyRemoveQ: "このブラウザに保存した API キーを削除しますか？", keyRemoved: "API キーを削除しました。",
-      keyBad: "API キーが使えませんでした。右上の表示を押して入れ直してください。", useAI: "AI を使う ›",
+      keyBad: "API キーが使えませんでした。右上の表示を押して入れ直してください。", useAI: "AI を使う ›", help: "使い方", helpSteps: [["しまう", "欄に Tips やメモを書いて「しまう」を押します（Ctrl/⌘ + Enter でも可）。出典の URL や、AI がオンのときはスクショも付けられます。"], ["AI が整理", "しまったメモに、タイトル・要約・フォルダ・タグ・「役立つ場面」を AI が付けます。本文に日付があればリマインドにも入ります。"], ["ひきだす", "「ひきだす」に切り替えて、これからすることや困りごとを書きます。例:「これから洗濯する」。言葉が一致していなくても、役立つメモと短い助言が出ます。"], ["今日のひとつ", "しまったままのメモを毎日 1 件見せます。「役立った」を押したメモは、取り出しで優先されます。"], ["メモの操作", "ピン留め・役立った・編集・再整理ができます。一覧は「分類」と「日付」で切り替え、「絞り込み」で探せます。"], ["AI を使う", "右上の表示を押して、Anthropic の API キー（console.anthropic.com で取得）を貼り付けます。キーはこのブラウザにだけ保存され、Anthropic にだけ送られます。キーが無くても、キーワードで整理と検索ができます。"], ["壁紙", "上の「壁紙」から好きな壁紙や自分の画像を選べます。"], ["データ", "メモはこのブラウザの中に保存されます。「書き出す」「読み込む」でバックアップや移動ができます。iPhone アプリとも同じファイルでやり取りできます。"]],
       month: (d) => `${d.getFullYear()}年${d.getMonth() + 1}月`,
       other: "その他",
       edit: "編集", saveEdit: "保存", saveRefile: "保存して AI で再整理", cancel: "キャンセル", editSaved: "保存しました。",
@@ -857,6 +866,7 @@ Return JSON only:
     const st = $("status");
     st.textContent = state.store ? `${state.store.kind === "db" ? t.stCloud : t.stLocal} · ${state.sample ? t.stAi : t.stBasic}` : "";
     if (!state.inClaude && !state.sample && state.store) st.textContent += " · " + t.useAI;
+    $("helpLabel").textContent = t.help;
     st.title = state.inClaude ? "" : (state.sample ? t.keyRemoveQ : t.keyPrompt);
     st.classList.toggle("on", !!state.sample);
     renderAnswer();
@@ -995,6 +1005,14 @@ Return JSON only:
   $("filter").addEventListener("input", (e) => { state.filter = e.target.value; renderList(); });
   $("exportBtn").onclick = exportNotes;
   $("status").onclick = askKey;
+  $("helpBtn").onclick = () => {
+    const t = T();
+    $("helpTitle").textContent = t.help;
+    $("helpBody").replaceChildren(...t.helpSteps.flatMap(([h, b]) => [el("h3", {}, h), el("p", {}, b)]));
+    $("help").showModal();
+  };
+  $("helpClose").onclick = () => $("help").close();
+  $("help").addEventListener("click", (e) => { if (e.target === $("help")) $("help").close(); });
   $("importInput").onchange = (e) => e.target.files[0] && importNotes(e.target.files[0]);
 
   renderAll();
