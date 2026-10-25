@@ -260,3 +260,60 @@ final class ClaudeClientTests: XCTestCase {
         XCTAssertEqual(n.remindAt, "2026-11-01")
     }
 }
+
+final class LinkPreviewTests: XCTestCase {
+    func testParsesOpenGraph() {
+        let html = """
+        <html><head><title>ignored</title>
+        <meta property="og:title" content="洗濯 &amp; シミ抜きのコツ">
+        <meta content="叩いて落とす。" name="description">
+        </head></html>
+        """
+        let p = LinkFetcher.parse(html: html)
+        XCTAssertEqual(p, LinkPreview(title: "洗濯 & シミ抜きのコツ", description: "叩いて落とす。"))
+        XCTAssertEqual(LinkFetcher.parse(html: "<title> Only  title </title>")?.title, "Only title")
+        XCTAssertNil(LinkFetcher.parse(html: "<html></html>"))
+    }
+
+    func testMergeOnce() {
+        let p = LinkPreview(title: "T", description: "D")
+        let once = LinkFetcher.merge("メモ", p)
+        XCTAssertEqual(once, "メモ\n\n\(LinkFetcher.marker)T\nD")
+        XCTAssertEqual(LinkFetcher.merge(once, p), once, "二度は足さない")
+        XCTAssertEqual(LinkFetcher.merge("", p), LinkFetcher.marker + "T\nD")
+    }
+
+    @MainActor
+    func testLibrarianAddsLinkTextBeforeFiling() async throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent("hikidashi-test-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        let store = NoteStore(root: root)
+        let lib = Librarian(store: store, credentialProvider: { nil }, onDevice: FakeAI(),
+                            linkFetcher: { _ in LinkPreview(title: "ページの題", description: "説明") })
+        let note = lib.save(text: "", url: "https://example.com/a", image: nil)
+        await lib.file(note.id)
+        let n = try XCTUnwrap(store.note(note.id))
+        XCTAssertTrue(n.text.contains("ページの題"))
+        XCTAssertTrue(n.filed, "リンク先の文があれば、文字だけの AI でも整理できる")
+    }
+}
+
+final class EventHintTests: XCTestCase {
+    func testPlansEveningBefore() {
+        let cal = Calendar.current
+        let now = cal.date(bySettingHour: 10, minute: 0, second: 0, of: Heuristics.dayFormatter.date(from: "2026-10-20")!)!
+        let trip = EventInfo(id: "e1", title: "大阪出張", start: cal.date(bySettingHour: 9, minute: 0, second: 0, of: Heuristics.dayFormatter.date(from: "2026-10-22")!)!)
+        let soon = EventInfo(id: "e2", title: "プレゼン", start: now.addingTimeInterval(5 * 3600))
+        let none = EventInfo(id: "e3", title: "歯医者", start: now.addingTimeInterval(30 * 3600))
+        let notes = [
+            Note(text: "", title: "服は 1 日ずつ袋に", situations: ["出張の準備"]),
+            Note(text: "", title: "最初の 30 秒を暗記", situations: ["プレゼン前"]),
+        ]
+        let plan = EventHints.plan(events: [none, soon, trip], notes: notes, now: now)
+        XCTAssertEqual(plan.map(\.event.id), ["e2", "e1"])
+        XCTAssertEqual(plan[0].fireAt, soon.start.addingTimeInterval(-2 * 3600), "前の日の夜が過ぎていれば 2 時間前")
+        XCTAssertEqual(cal.component(.hour, from: plan[1].fireAt), 20)
+        XCTAssertEqual(cal.component(.day, from: plan[1].fireAt), 21)
+        XCTAssertEqual(plan[1].notes.map(\.title), ["服は 1 日ずつ袋に"])
+    }
+}

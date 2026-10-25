@@ -88,6 +88,11 @@ public struct HikidashiRootView: View {
             NotificationRouter.shared.openNoteID = nil
             jump(note)
         }
+        .onChange(of: NotificationRouter.shared.recallQuery) { _, q in
+            guard let q else { return }
+            NotificationRouter.shared.recallQuery = nil
+            Task { recall = await librarian.recall(q) }
+        }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { Task { await refresh() } }
         }
@@ -108,9 +113,14 @@ public struct HikidashiRootView: View {
             NotificationRouter.shared.openNoteID = nil
             jump(note)
         }
+        if let q = NotificationRouter.shared.recallQuery {
+            NotificationRouter.shared.recallQuery = nil
+            recall = await librarian.recall(q)
+        }
         let n = librarian.ingestInbox()
         if n > 0 { show(L("共有シートから \(n) 件届きました。", "\(n) items arrived from the share sheet.")) }
         await librarian.fileAll()
+        await EventReminders.sync(store.notes)
     }
 
     private func show(_ message: String) {

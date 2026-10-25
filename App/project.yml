@@ -65,6 +65,8 @@ targets:
         UISupportedInterfaceOrientations~ipad: [UIInterfaceOrientationPortrait, UIInterfaceOrientationPortraitUpsideDown, UIInterfaceOrientationLandscapeLeft, UIInterfaceOrientationLandscapeRight]
         NSMicrophoneUsageDescription: 声でメモを入力するときにマイクを使います。
         NSSpeechRecognitionUsageDescription: 話した内容を文字にしてメモに入れます。
+        NSCalendarsFullAccessUsageDescription: 予定の前に、関係するメモを知らせるために予定を読みます。予定はこの iPhone の中だけで使います。
+        NSCalendarsUsageDescription: 予定の前に、関係するメモを知らせるために予定を読みます。予定はこの iPhone の中だけで使います。
         ITSAppUsesNonExemptEncryption: false
     settings:
       base:

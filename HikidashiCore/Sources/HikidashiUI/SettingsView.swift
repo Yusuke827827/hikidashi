@@ -17,6 +17,7 @@ struct SettingsView: View {
     @State private var message: String?
     @State private var importing = false
     @State private var exportURL: URL?
+    @State private var calendarOn = EventReminders.isOn
 
     var body: some View {
         NavigationStack {
@@ -58,6 +59,28 @@ struct SettingsView: View {
                            "The key stays in this device's keychain. Each filing or recall is billed to your Anthropic account. Without a key, Mindrawer uses on-device AI (Apple Intelligence devices) or basic filing and keyword search."))
                 }
 
+
+                Section {
+                    Toggle(isOn: Binding(get: { calendarOn }, set: { on in
+                        Task {
+                            if on {
+                                calendarOn = await EventReminders.enable()
+                                if !calendarOn { message = L("予定へのアクセスが許可されませんでした。iPhone の「設定」→「プライバシー」→「カレンダー」で許可できます。", "Calendar access wasn't allowed. You can allow it in Settings → Privacy → Calendars.") }
+                                await EventReminders.sync(librarian.store.notes)
+                            } else {
+                                await EventReminders.disable()
+                                calendarOn = false
+                            }
+                        }
+                    })) {
+                        Label(L("予定の前にメモを知らせる", "Hints before events"), systemImage: "calendar.badge.clock")
+                    }
+                } header: {
+                    Text(L("通知", "Notifications"))
+                } footer: {
+                    Text(L("カレンダーの 3 日先までの予定を見て、関係するメモがあれば前の日の夜 8 時に知らせます（例: 予定「出張」→ 荷造りのメモ）。予定はこの iPhone の中で読むだけで、どこにも送りません。",
+                           "Looks at your calendar for the next 3 days and, when a note fits an event, reminds you at 8 PM the day before (e.g. a trip → packing tips). Events are read on this iPhone only and never sent anywhere."))
+                }
 
                 Section(L("壁紙", "Wallpaper")) {
                     LazyVGrid(columns: [GridItem(.adaptive(minimum: 72), spacing: 12)], spacing: 14) {

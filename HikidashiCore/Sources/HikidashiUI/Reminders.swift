@@ -17,7 +17,8 @@ enum Reminders {
         let old = await center.pendingNotificationRequests().map(\.identifier).filter { $0.hasPrefix(idPrefix) }
         center.removePendingNotificationRequests(withIdentifiers: old)
 
-        let plan = Heuristics.reminderSchedule(notes)
+        // iOS が予約できる通知は 64 件まで。予定の前の知らせ（最大 10 件）の分を空けておく
+        let plan = Heuristics.reminderSchedule(notes, limit: 50)
         guard !plan.isEmpty else { return }
 
         var status = await center.notificationSettings().authorizationStatus
@@ -54,6 +55,8 @@ final class NotificationRouter: NSObject, UNUserNotificationCenterDelegate {
     static let shared = NotificationRouter()
 
     var openNoteID: String?
+    /// 予定の前の知らせを押したときの「ひきだす」の問い
+    var recallQuery: String?
 
     // アプリを開いている間に届いた通知も表示する
     nonisolated func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification) async -> UNNotificationPresentationOptions {
@@ -61,7 +64,12 @@ final class NotificationRouter: NSObject, UNUserNotificationCenterDelegate {
     }
 
     nonisolated func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse) async {
-        guard let id = response.notification.request.content.userInfo["noteID"] as? String else { return }
+        let info = response.notification.request.content.userInfo
+        if let q = info["recallQuery"] as? String {
+            await MainActor.run { NotificationRouter.shared.recallQuery = q }
+            return
+        }
+        guard let id = info["noteID"] as? String else { return }
         await MainActor.run { NotificationRouter.shared.openNoteID = id }
     }
 }

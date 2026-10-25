@@ -40,15 +40,18 @@ public final class Librarian {
 
     private let credentialProvider: @MainActor () -> ClaudeClient.Credential?
     private let onDevice: (any NoteAI)?
+    private let linkFetcher: @Sendable (String) async -> LinkPreview?
 
     /// credentialProvider: Claude の呼び方を返す（無ければ nil）
     /// onDevice: iPhone の中の AI（使えない端末では nil）
     public init(store: NoteStore,
                 credentialProvider: @escaping @MainActor () -> ClaudeClient.Credential? = Librarian.apiKeyCredential,
-                onDevice: (any NoteAI)? = OnDeviceAI.make()) {
+                onDevice: (any NoteAI)? = OnDeviceAI.make(),
+                linkFetcher: @escaping @Sendable (String) async -> LinkPreview? = { await LinkFetcher.fetch($0) }) {
         self.store = store
         self.credentialProvider = credentialProvider
         self.onDevice = onDevice
+        self.linkFetcher = linkFetcher
     }
 
     /// 端末に保存した自分の API キーを使う
@@ -109,11 +112,16 @@ public final class Librarian {
 
     /// 1 件を AI で整理する（再整理にも使う）
     public func file(_ id: String) async {
-        guard let ai = ai, let note = store.note(id), !filing.contains(id) else { return }
-        // スクショだけのメモは、文字を読めない AI では整理できない
-        if !ai.readsImages, note.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { return }
+        guard let ai = ai, var note = store.note(id), !filing.contains(id) else { return }
         filing.insert(id)
         defer { filing.remove(id) }
+        // 初めて整理するときだけ、リンク先のタイトルと説明を本文に足す
+        if !note.filed, let url = note.url, !note.text.contains(LinkFetcher.marker), let preview = await linkFetcher(url) {
+            store.update(id) { $0.text = LinkFetcher.merge($0.text, preview) }
+            if let updated = store.note(id) { note = updated }
+        }
+        // スクショだけのメモは、文字を読めない AI では整理できない
+        if !ai.readsImages, note.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { return }
         // スクショの文字は Claude だけが読める
         let image = ai.readsImages
             ? note.imageFile.flatMap { try? Data(contentsOf: store.imageURL($0)) }.map { ClaudeClient.Image(data: $0) }

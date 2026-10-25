@@ -14,6 +14,7 @@ struct NoteCard: View {
     @Environment(\.palette) private var p
     @State private var expanded = false
     @State private var confirmDelete = false
+    @State private var sharedImage: SharedImage?
 
     private var store: NoteStore { librarian.store }
 
@@ -123,6 +124,9 @@ struct NoteCard: View {
                 if librarian.hasAI {
                     Button { Task { await librarian.file(note.id) } } label: { Label(L("AI で再整理", "Re-file with AI"), systemImage: "sparkles") }
                 }
+                Button {
+                    sharedImage = ShareCard.image(for: note, palette: p).map(SharedImage.init)
+                } label: { Label(L("画像で共有", "Share as image"), systemImage: "photo.on.rectangle") }
                 if let s = note.url, let url = URL(string: s) {
                     ShareLink(item: url) { Label(L("出典を共有", "Share source"), systemImage: "square.and.arrow.up") }
                 }
@@ -133,6 +137,9 @@ struct NoteCard: View {
         }
         .font(.footnote)
         .foregroundStyle(p.muted)
+        .sheet(item: $sharedImage) { item in
+            ActivityView(items: [item.image]).presentationDetents([.medium, .large])
+        }
     }
 }
 #endif
