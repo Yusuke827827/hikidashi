@@ -22,6 +22,8 @@ settings:
     MARKETING_VERSION: 0.1.0
     CURRENT_PROJECT_VERSION: 1
     SWIFT_VERSION: "5.0"
+    # iPhone の中の AI（iOS 26 以降）。それより前の iOS でも起動できるよう弱くリンクする
+    OTHER_LDFLAGS: "$(inherited) -weak_framework FoundationModels"
     # 自分の Apple ID のチームを Xcode の「Signing & Capabilities」で選ぶ
     CODE_SIGN_STYLE: Automatic
 packages:

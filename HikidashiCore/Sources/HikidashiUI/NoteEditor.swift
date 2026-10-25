@@ -69,7 +69,7 @@ struct NoteEditor: View {
                     Section {
                         Button(L("保存して AI で再整理", "Save & re-file with AI")) { commit(refile: true) }
                     } footer: {
-                        Text(L("本文を大きく書き換えたときに。フォルダ・使う場面・タグを付け直します。", "Use after a big rewrite. Claude redoes the folder, moments and tags."))
+                        Text(L("本文を大きく書き換えたときに。フォルダ・使う場面・タグを付け直します。", "Use after a big rewrite. AI redoes the folder, moments and tags."))
                     }
                 }
             }

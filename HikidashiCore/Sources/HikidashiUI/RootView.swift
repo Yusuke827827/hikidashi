@@ -123,12 +123,20 @@ public struct HikidashiRootView: View {
 
     // MARK: 見出し
 
+    private var aiLabel: String {
+        switch librarian.aiKind {
+        case .claude: return "Claude"
+        case .onDevice: return L("iPhone の AI", "On-device AI")
+        case .none: return L("簡易整理", "Basic")
+        }
+    }
+
     private var header: some View {
         HStack(alignment: .firstTextBaseline, spacing: 8) {
             Text("Mindrawer").font(Fonts.mincho(26)).foregroundStyle(palette.text)
             Text("引出").font(.caption.weight(.bold)).tracking(3).foregroundStyle(palette.accent)
             Spacer()
-            Text(librarian.hasAI ? L("AI 整理", "AI on") : L("簡易整理", "Basic"))
+            Text(aiLabel)
                 .font(.caption.monospaced())
                 .foregroundStyle(palette.muted)
             Button { showSettings = true } label: {

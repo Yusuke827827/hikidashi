@@ -46,8 +46,8 @@ struct SettingsView: View {
                 } header: {
                     Text(Subscription.isAvailable ? L("自分の API キーを使う", "Use your own API key") : "Claude")
                 } footer: {
-                    Text(L("キーはこの端末のキーチェーンにだけ保存されます。整理と取り出しのたびに、あなたの Anthropic アカウントに少額の利用料がかかります。キーが無くても、簡易の整理とキーワード検索で使えます。",
-                           "The key stays in this device's keychain. Each filing or recall is billed to your Anthropic account. Without a key, Mindrawer uses basic filing and keyword search."))
+                    Text(L("キーはこの端末のキーチェーンにだけ保存されます。整理と取り出しのたびに、あなたの Anthropic アカウントに少額の利用料がかかります。キーが無くても、iPhone の中の AI（Apple Intelligence 対応機種）か、簡易の整理とキーワード検索で使えます。",
+                           "The key stays in this device's keychain. Each filing or recall is billed to your Anthropic account. Without a key, Mindrawer uses on-device AI (Apple Intelligence devices) or basic filing and keyword search."))
                 }
 
 
@@ -127,9 +127,13 @@ struct SettingsView: View {
                 }
                 Link(L("購読を管理する", "Manage subscription"), destination: URL(string: "https://apps.apple.com/account/subscriptions")!)
             } else {
+                if librarian.aiKind == .onDevice {
+                    Label(L("今は iPhone の中の AI で整理しています（無料）", "Filing with on-device AI now (free)"), systemImage: "iphone")
+                        .font(.footnote).foregroundStyle(.secondary)
+                }
                 VStack(alignment: .leading, spacing: 6) {
-                    Label(L("AI が自動で整理", "AI files every note for you"), systemImage: "folder.badge.gearshape")
-                    Label(L("問いかけに合うメモを取り出す", "Ask, and get the right notes back"), systemImage: "sparkles")
+                    Label(L("高性能な AI（Claude）が整理", "Claude, a top AI model, files your notes"), systemImage: "folder.badge.gearshape")
+                    Label(L("問いかけに合うメモを賢く取り出す", "Smarter recall for what you're doing"), systemImage: "sparkles")
                     Label(L("スクショの文字も読み取る", "Reads text in screenshots"), systemImage: "text.viewfinder")
                 }
                 .font(.subheadline)

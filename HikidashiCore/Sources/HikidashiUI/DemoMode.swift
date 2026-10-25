@@ -32,7 +32,7 @@ enum DemoMode {
     static func makeLibrarian() -> Librarian {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent("HikidashiDemo-\(UUID().uuidString)")
         try? FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
-        let librarian = Librarian(store: NoteStore(root: root), credentialProvider: { nil })
+        let librarian = Librarian(store: NoteStore(root: root), credentialProvider: { nil }, onDevice: nil)
         librarian.addExamples()
         for note in extraNotes() { librarian.store.add(note) }
         return librarian

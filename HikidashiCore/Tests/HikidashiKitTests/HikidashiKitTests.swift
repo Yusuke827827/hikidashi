@@ -72,7 +72,7 @@ final class StoreTests: XCTestCase {
         let root = try makeRoot()
         try Inbox.put(text: "ポイントは月末に失効する", url: "https://x.com/a/status/1", comment: "要チェック", image: Data([0xFF, 0xD8]), root: root)
         let store = NoteStore(root: root)
-        let lib = Librarian(store: store, credentialProvider: { nil })
+        let lib = Librarian(store: store, credentialProvider: { nil }, onDevice: nil)
         XCTAssertEqual(lib.ingestInbox(), 1)
         let n = try XCTUnwrap(store.notes.first)
         XCTAssertEqual(n.text, "要チェック\n\nポイントは月末に失効する")
@@ -87,11 +87,71 @@ final class StoreTests: XCTestCase {
     func testKeywordRecallWithoutKey() async throws {
         let root = try makeRoot()
         let store = NoteStore(root: root)
-        let lib = Librarian(store: store, credentialProvider: { nil })
+        let lib = Librarian(store: store, credentialProvider: { nil }, onDevice: nil)
         lib.addExamples()
         let r = await lib.recall(AppLanguage.current == .ja ? "洗濯" : "laundry")
         XCTAssertTrue(r.keywordOnly)
         XCTAssertFalse(r.noteIDs.isEmpty)
+    }
+}
+
+/// iPhone の中の AI の代わり
+struct FakeAI: NoteAI {
+    var readsImages: Bool { false }
+    func file(_ note: Note, folders: [String], image: ClaudeClient.Image?, today: String, language: AppLanguage) async throws -> FilingResult {
+        XCTAssertNil(image, "文字を読めない AI には画像を渡さない")
+        return FilingResult(text: "", title: "AI title", summary: "AI summary", category: "AI folder", tags: ["t"], situations: ["s"], remindAt: "")
+    }
+    func recall(_ query: String, notes: [Note], today: String, language: AppLanguage) async throws -> RecallResult {
+        RecallResult(answer: "advice", ids: [notes[0].id])
+    }
+}
+
+@MainActor
+final class OnDeviceTests: XCTestCase {
+    func makeStore() throws -> NoteStore {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent("hikidashi-test-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        return NoteStore(root: root)
+    }
+
+    func testUsesOnDeviceAIWithoutKey() async throws {
+        let store = try makeStore()
+        let lib = Librarian(store: store, credentialProvider: { nil }, onDevice: FakeAI())
+        XCTAssertEqual(lib.aiKind, .onDevice)
+        let note = lib.save(text: "元の本文", url: nil, image: Data([0xFF, 0xD8]))
+        await lib.file(note.id)
+        let n = try XCTUnwrap(store.note(note.id))
+        XCTAssertEqual(n.title, "AI title")
+        XCTAssertEqual(n.category, "AI folder")
+        XCTAssertEqual(n.text, "元の本文", "本文はそのまま")
+        XCTAssertTrue(n.filed)
+        let r = await lib.recall("なにか")
+        XCTAssertFalse(r.keywordOnly)
+        XCTAssertEqual(r.answer, "advice")
+    }
+
+    func testSkipsScreenshotOnlyNotes() async throws {
+        let store = try makeStore()
+        let lib = Librarian(store: store, credentialProvider: { nil }, onDevice: FakeAI())
+        let note = lib.save(text: "", url: nil, image: Data([0xFF, 0xD8]))
+        await lib.file(note.id)
+        XCTAssertFalse(try XCTUnwrap(store.note(note.id)).filed, "スクショだけのメモは Claude を待つ")
+    }
+
+    func testClaudeComesFirst() {
+        let lib = Librarian(store: NoteStore(root: FileManager.default.temporaryDirectory), credentialProvider: { .apiKey("sk") }, onDevice: FakeAI())
+        XCTAssertEqual(lib.aiKind, .claude)
+        XCTAssertEqual(Librarian(store: lib.store, credentialProvider: { nil }, onDevice: nil).aiKind, .none)
+    }
+
+    func testRecallPoolAndNumbers() {
+        let notes = (0..<60).map { i in Note(id: "n\(i)", text: "", title: i == 59 ? "洗濯のコツ" : "メモ\(i)", createdAt: Date(timeIntervalSince1970: Double(i))) }
+        let pool = OnDeviceAI.recallPool(notes, query: "洗濯")
+        XCTAssertEqual(pool.count, OnDeviceAI.recallPoolSize)
+        XCTAssertEqual(pool.first?.id, "n59", "キーワードが近いものが先")
+        XCTAssertEqual(OnDeviceAI.ids(from: [1, 1, 0, 99, 2], pool: pool), ["n59", pool[1].id])
+        XCTAssertTrue(OnDeviceAI.recallList(Array(pool.prefix(2))).hasPrefix("1. 洗濯のコツ"))
     }
 }
 

@@ -1,8 +1,19 @@
 // アプリ本体の司令塔。共有シートから届いたものをメモにし、AI で整理し、問いかけに合うメモを取り出す。
-// API キーが無いときは、簡易の整理とキーワード検索で動く。
+// 使う AI の順: 自分の API キーか購読があれば Claude、無ければ iPhone の中の AI（無料）。
+// どちらも使えないときは、簡易の整理とキーワード検索で動く。
 
 import Foundation
 import Observation
+
+/// いま使っている AI
+public enum AIKind: Sendable, Equatable {
+    /// Claude（自分の API キーか Mindrawer Plus）
+    case claude
+    /// iPhone の中の AI（Apple Intelligence。無料）
+    case onDevice
+    /// AI なし（簡易の整理とキーワード検索）
+    case none
+}
 
 public struct RecallOutcome: Sendable, Equatable {
     public var query: String
@@ -19,15 +30,25 @@ public final class Librarian {
     /// 整理中のメモの id
     public private(set) var filing: Set<String> = []
     public private(set) var lastError: String?
-    /// AI（Claude）を使えるか。自分の API キーか、購読があれば true
-    public var hasAI: Bool { credentialProvider() != nil }
+    /// AI を使えるか（Claude か iPhone の中の AI）
+    public var hasAI: Bool { aiKind != .none }
+
+    public var aiKind: AIKind {
+        if credentialProvider() != nil { return .claude }
+        return onDevice != nil ? .onDevice : .none
+    }
 
     private let credentialProvider: @MainActor () -> ClaudeClient.Credential?
+    private let onDevice: (any NoteAI)?
 
-    /// credentialProvider: Claude の呼び方を返す（無ければ nil で、簡易の整理とキーワード検索になる）
-    public init(store: NoteStore, credentialProvider: @escaping @MainActor () -> ClaudeClient.Credential? = Librarian.apiKeyCredential) {
+    /// credentialProvider: Claude の呼び方を返す（無ければ nil）
+    /// onDevice: iPhone の中の AI（使えない端末では nil）
+    public init(store: NoteStore,
+                credentialProvider: @escaping @MainActor () -> ClaudeClient.Credential? = Librarian.apiKeyCredential,
+                onDevice: (any NoteAI)? = OnDeviceAI.make()) {
         self.store = store
         self.credentialProvider = credentialProvider
+        self.onDevice = onDevice
     }
 
     /// 端末に保存した自分の API キーを使う
@@ -36,10 +57,12 @@ public final class Librarian {
         return .apiKey(key)
     }
 
-    var filer: Filer? {
-        guard let credential = credentialProvider() else { return nil }
-        if case let .apiKey(key) = credential, key.isEmpty { return nil }
-        return Filer(client: ClaudeClient(credential: credential))
+    var ai: (any NoteAI)? {
+        if let credential = credentialProvider() {
+            if case let .apiKey(key) = credential, key.isEmpty { return onDevice }
+            return Filer(client: ClaudeClient(credential: credential))
+        }
+        return onDevice
     }
 
     static var today: String { Heuristics.dayFormatter.string(from: Date()) }
@@ -77,7 +100,7 @@ public final class Librarian {
 
     /// 未整理のメモをまとめて整理する
     public func fileAll() async {
-        guard filer != nil else { return }
+        guard ai != nil else { return }
         let pending = store.notes.filter { !$0.filed && !filing.contains($0.id) }.map(\.id)
         for id in pending {
             await file(id)
@@ -86,17 +109,23 @@ public final class Librarian {
 
     /// 1 件を AI で整理する（再整理にも使う）
     public func file(_ id: String) async {
-        guard let filer = filer, let note = store.note(id), !filing.contains(id) else { return }
+        guard let ai = ai, let note = store.note(id), !filing.contains(id) else { return }
+        // スクショだけのメモは、文字を読めない AI では整理できない
+        if !ai.readsImages, note.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { return }
         filing.insert(id)
         defer { filing.remove(id) }
-        let image = note.imageFile.flatMap { try? Data(contentsOf: store.imageURL($0)) }.map { ClaudeClient.Image(data: $0) }
+        // スクショの文字は Claude だけが読める
+        let image = ai.readsImages
+            ? note.imageFile.flatMap { try? Data(contentsOf: store.imageURL($0)) }.map { ClaudeClient.Image(data: $0) }
+            : nil
         let folders = store.folders.filter { $0 != note.category || note.filed }
         do {
-            let r = try await filer.file(note, folders: folders, image: image, today: Self.today)
+            let r = try await ai.file(note, folders: folders, image: image, today: Self.today, language: .current)
             store.update(id) { $0.apply(r, replaceText: image != nil) }
             lastError = nil
         } catch {
-            lastError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+            // iPhone の中の AI が失敗したときは、簡易の整理のまま黙って続ける
+            if aiKind == .claude { lastError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription }
         }
     }
 
@@ -108,13 +137,14 @@ public final class Librarian {
         guard !notes.isEmpty else {
             return RecallOutcome(query: q, answer: L("まだメモがありません。先にいくつかしまってください。", "Nothing saved yet. Save a few tips first."), noteIDs: [], keywordOnly: true)
         }
-        if let filer = filer {
+        if let ai = ai {
             do {
-                let r = try await filer.recall(q, notes: notes, today: Self.today)
+                let r = try await ai.recall(q, notes: notes, today: Self.today, language: .current)
                 lastError = nil
                 return RecallOutcome(query: q, answer: r.answer, noteIDs: r.ids, keywordOnly: false)
             } catch {
-                lastError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+                // iPhone の中の AI が失敗したときは、簡易の整理のまま黙って続ける
+            if aiKind == .claude { lastError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription }
             }
         }
         let hits = Heuristics.search(notes, query: q)

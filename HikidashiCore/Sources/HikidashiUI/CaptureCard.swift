@@ -121,7 +121,7 @@ struct CaptureCard: View {
         photo = nil
         focused = false
         onToast(librarian.hasAI
-            ? L("しまいました。AI が整理しています…", "Saved. Claude is filing it…")
+            ? L("しまいました。AI が整理しています…", "Saved. AI is filing it…")
             : L("「\(note.category)」にしまいました。", "Saved to \(note.category)."))
         Task { await librarian.file(note.id) }
     }

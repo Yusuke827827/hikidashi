@@ -28,8 +28,8 @@ Mindrawer（マインドロワー、「頭の引き出し」）は、日々見�
 ● 共有シートから一発で保存
 X、Safari、写真などの共有ボタンから「Mindrawer」を選ぶだけ。ひとこと書き足すこともできます。スクショを送れば、AI が画像の文字を読み取ります。
 
-● AI が自動で整理
-タイトル、要約、フォルダ、タグ、そして「このメモが役立つ場面」を Claude が付けます。本文に日付があれば、リマインドにも入ります。
+● AI が自動で整理（無料）
+タイトル、要約、フォルダ、タグ、そして「このメモが役立つ場面」を AI が付けます。本文に日付があれば、リマインドにも入ります。Apple Intelligence 対応の iPhone なら、端末の中の AI が無料で整理します（メモは端末の外に出ません）。
 
 ● 行動や質問から取り出す
 「これから洗濯する」「プレゼン前に緊張する」「節約になるやつ」。行動や困りごとを書くと、言葉が一致していなくても役立つメモを選び、短い助言と一緒に出します。
@@ -41,10 +41,10 @@ X、Safari、写真などの共有ボタンから「Mindrawer」を選ぶだけ�
 和紙・羊皮紙・夜空・オーロラ・桜・海など 11 種類の壁紙。編集、ピン留め、「役立った」、関連メモ、声での入力にも対応。
 
 ● プライバシー
-メモは端末の中にだけ保存されます。AI で整理するときだけ Claude に送られ、Mindrawer のサーバーには保存されません。AI なしでも、キーワードでの整理と検索で使えます。
+メモは端末の中にだけ保存されます。Claude（Plus か自分の API キー）を使うときだけ送られ、Mindrawer のサーバーには保存されません。AI なしでも、キーワードでの整理と検索で使えます。
 
 ● Mindrawer Plus（月額）
-AI での整理と取り出しが、設定なしですぐ使えます。初回は 1 週間無料。Anthropic の API キーをお持ちなら、Plus なしでもそのキーで AI を使えます。
+高性能な AI（Claude）が整理と取り出しを行い、スクショの文字も読み取ります。どの iPhone でも使えます。初回は 1 週間無料。Anthropic の API キーをお持ちなら、Plus なしでもそのキーで AI を使えます。
 
 お支払いは Apple ID に請求されます。期間が終わる 24 時間前までに解約しない限り、自動で更新されます。解約は App Store の設定からいつでもできます。
 利用規約: https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
@@ -67,8 +67,8 @@ Mindrawer is a drawer in your mind for the tips and notes you pick up every day,
 • Save from the share sheet
 Tap Share in X, Safari, Photos and more, then pick Mindrawer. Add a quick note if you like. Share a screenshot and Claude reads the text from it.
 
-• Filed for you
-Claude adds a title, a summary, a folder, tags and the moments when the note will help. Dates in the note become reminders.
+• Filed for you, free
+AI adds a title, a summary, a folder, tags and the moments when the note will help. Dates in the note become reminders. On Apple Intelligence iPhones, the on-device model does this for free, and your notes never leave the phone.
 
 • Recall by what you're doing
 "About to do laundry." "Nervous before a talk." "Ways to save money." Describe what you're doing or need, and Mindrawer picks the notes that help, even without matching words, with a short piece of advice.
@@ -80,10 +80,10 @@ Today's Pick resurfaces one stored note each day, and reminders arrive on the mo
 Eleven wallpapers including washi, parchment, night sky, aurora, sakura and sea. Edit anything, pin, mark as helpful, see related notes, or dictate.
 
 • Private by design
-Notes stay on your device. They're sent to Claude only for filing and recall, and never stored on Mindrawer's server. Without AI, Mindrawer still files and searches by keyword.
+Notes stay on your device. They're sent to Claude only when you use Plus or your own API key, and never stored on Mindrawer's server. Without AI, Mindrawer still files and searches by keyword.
 
 • Mindrawer Plus (monthly)
-AI filing and recall, no setup needed. Try it free for one week. Have an Anthropic API key? Use it instead, no subscription required.
+Claude, a top AI model, files and recalls your notes and reads text in screenshots, on any iPhone. Try it free for one week. Have an Anthropic API key? Use it instead, no subscription required.
 
 Payment is charged to your Apple ID. The subscription renews automatically unless canceled at least 24 hours before the end of the period. Cancel anytime in App Store settings.
 Terms of Use: https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
