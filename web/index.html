@@ -1,0 +1,1023 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Mindrawer: 見つけた Tips をしまっておき、必要なときに取り出すメモ帳">
+<title>Mindrawer</title>
+<style>
+/* Layout: Flowa's look (warm paper, vermilion accent, frosted cards over textured backdrops). Capture/recall bar on top, index rail beside a column of note cards. */
+:root {
+  --bg: #f6f5f2;
+  --surface: #ffffff;
+  --sunk: #efede8;
+  --ink: #1c1c1e;
+  --muted: #6b6a66;
+  --faint: #a19f99;
+  --line: #e2dfd8;
+  --accent: #c8553d;
+  --accent-text: #ffffff;
+  --brass: var(--accent);
+  --brass-soft: color-mix(in srgb, var(--accent) 9%, var(--surface));
+  --ai: var(--accent);
+  --ai-soft: color-mix(in srgb, var(--accent) 8%, var(--surface));
+  --alert: #c0392b;
+  --ok: #2f7d4f;
+  --shadow: 0 1px 2px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.05);
+  --font-display: "Hiragino Mincho ProN", "YuMincho", "Yu Mincho", "Noto Serif JP", "BIZ UDPMincho", Georgia, serif;
+  --font-body: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic UI", Meiryo, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
+  --noise: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .09 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  --fiber: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='turbulence' baseFrequency='.004 .09' numOctaves='2' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .45 0 0 0 0 .4 0 0 0 0 .3 0 0 0 .22 -.05'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E");
+  --stars: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='320'%3E%3Cg fill='%23fff'%3E%3Ccircle cx='23' cy='41' r='.8' opacity='.7'/%3E%3Ccircle cx='97' cy='12' r='.5' opacity='.5'/%3E%3Ccircle cx='151' cy='78' r='1.1' opacity='.8'/%3E%3Ccircle cx='211' cy='33' r='.6' opacity='.45'/%3E%3Ccircle cx='288' cy='96' r='.9' opacity='.6'/%3E%3Ccircle cx='61' cy='142' r='.5' opacity='.4'/%3E%3Ccircle cx='183' cy='167' r='.7' opacity='.55'/%3E%3Ccircle cx='262' cy='201' r='1.2' opacity='.75'/%3E%3Ccircle cx='34' cy='233' r='.6' opacity='.5'/%3E%3Ccircle cx='121' cy='259' r='.9' opacity='.65'/%3E%3Ccircle cx='233' cy='291' r='.5' opacity='.4'/%3E%3Ccircle cx='303' cy='262' r='.6' opacity='.5'/%3E%3Ccircle cx='79' cy='303' r='.4' opacity='.35'/%3E%3Ccircle cx='166' cy='121' r='.4' opacity='.35'/%3E%3C/g%3E%3C/svg%3E");
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #17181b; --surface: #212226; --sunk: #2a2b30; --ink: #ecebe7; --muted: #9b9a95; --faint: #6c6b67; --line: #34353a;
+    --accent: #e0745a; --accent-text: #1a0d08; --alert: #ec8b73; --shadow: 0 1px 2px rgba(0,0,0,.3);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #17181b; --surface: #212226; --sunk: #2a2b30; --ink: #ecebe7; --muted: #9b9a95; --faint: #6c6b67; --line: #34353a;
+  --accent: #e0745a; --accent-text: #1a0d08; --alert: #ec8b73; --shadow: 0 1px 2px rgba(0,0,0,.3);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; }
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 18px 64px;
+}
+button { font: inherit; color: inherit; cursor: pointer; }
+:focus-visible { outline: 2px solid var(--ai); outline-offset: 2px; border-radius: 6px; }
+.wrap { max-width: 1080px; margin: 0 auto; display: grid; gap: 28px; }
+.wrap > * { min-width: 0; }
+
+/* Top bar */
+.top { display: flex; align-items: center; gap: 12px; }
+.mark { display: flex; align-items: baseline; gap: 8px; }
+.mark b { font-family: var(--font-display); font-weight: 600; font-size: 24px; letter-spacing: .02em; }
+.mark span { font-size: 12px; color: var(--accent); font-weight: 700; letter-spacing: .2em; }
+.top-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+.status { white-space: nowrap; background: none; border: 0; padding: 4px 2px; cursor: pointer; font: 12px var(--font-mono); color: var(--muted); display: inline-flex; align-items: center; gap: 6px; }
+.status::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--faint); }
+.status.on::before { background: var(--ok); }
+@media (max-width: 480px) { .top { flex-wrap: wrap; row-gap: 6px; } .top-right { gap: 6px; flex-wrap: wrap; justify-content: flex-end; } .status { order: 3; flex-basis: 100%; justify-content: flex-end; } }
+.seg { display: inline-flex; background: var(--sunk); border-radius: 12px; padding: 3px; gap: 2px; }
+.seg button { white-space: nowrap; border: 0; background: transparent; padding: 4px 12px; border-radius: 9px; font-size: 13px; color: var(--muted); min-height: 30px; }
+.seg button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: var(--shadow); font-weight: 700; }
+
+/* Hero + omnibox */
+.hero { display: grid; gap: 18px; justify-items: center; text-align: center; padding-top: 18px; }
+.hero h1 { font-family: var(--font-display); font-weight: 600; font-size: clamp(26px, 5vw, 40px); line-height: 1.25; margin: 0; letter-spacing: .01em; text-wrap: balance; }
+.hero h1 em { color: var(--accent); font-style: normal; }
+.hero p { margin: 0; color: var(--muted); max-width: 52ch; text-wrap: balance; }
+.omni { width: 100%; max-width: 720px; background: var(--surface); border: 1px solid var(--line); border-radius: 18px; box-shadow: var(--shadow); text-align: left; overflow: hidden; }
+.omni-head { display: flex; align-items: center; gap: 8px; padding: 10px 12px 0; }
+.omni textarea, .omni input[type="text"], .omni input[type="url"] {
+  width: 100%; border: 0; background: transparent; color: var(--ink); font: 16px/1.55 var(--font-body); padding: 10px 16px; resize: none; outline: none;
+}
+.omni textarea { min-height: 92px; }
+.omni textarea::placeholder, .omni input::placeholder { color: var(--faint); }
+.omni-src { border-top: 1px dashed var(--line); }
+.omni-src input { font-size: 13.5px !important; padding: 8px 16px !important; }
+.omni-foot { display: flex; align-items: center; gap: 8px; padding: 8px 10px 10px 12px; flex-wrap: wrap; }
+.tool { border: 0; background: transparent; color: var(--muted); font-size: 13px; padding: 6px 10px; border-radius: 8px; display: inline-flex; gap: 6px; align-items: center; }
+.tool:hover { background: var(--sunk); color: var(--ink); }
+.go { margin-left: auto; border: 1px solid var(--accent); background: var(--accent); color: var(--accent-text); font-weight: 700; font-size: 15px; min-height: 44px; padding: 0 20px; border-radius: 12px; }
+.go:active, .ef-acts button:active, .empty button:active { transform: scale(.97); }
+.go:disabled { opacity: .5; cursor: progress; }
+.kbd { font: 11px var(--font-mono); color: var(--faint); }
+.thumb { display: flex; align-items: center; gap: 10px; padding: 0 16px 6px; font-size: 13px; color: var(--muted); }
+.thumb img { height: 54px; border-radius: 6px; border: 1px solid var(--line); }
+.thumb button { border: 0; background: none; color: var(--alert); font-size: 12.5px; }
+.suggest { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+.suggest button { border: 1px solid var(--line); background: var(--surface); color: var(--muted); border-radius: 999px; font-size: 13px; padding: 4px 12px; }
+.suggest button:hover { color: var(--ink); border-color: var(--faint); }
+.toast { font-size: 13.5px; color: var(--ai); min-height: 1.6em; }
+
+/* Answer */
+.answer { width: 100%; max-width: 720px; text-align: left; background: var(--ai-soft); border-radius: 16px; padding: 18px; display: grid; gap: 12px; }
+.answer-top { display: flex; align-items: center; gap: 8px; }
+.answer-top small { font: 500 11.5px var(--font-mono); letter-spacing: .08em; color: var(--ai); text-transform: uppercase; }
+.answer-top button { margin-left: auto; border: 0; background: none; color: var(--muted); font-size: 13px; }
+.answer-text { white-space: pre-wrap; font-size: 15.5px; max-width: 65ch; }
+.answer .slips { display: grid; gap: 10px; }
+
+/* Main layout */
+.main { display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 32px; align-items: start; }
+@media (max-width: 760px) { .main { grid-template-columns: 1fr; gap: 22px; } }
+.rail { display: grid; gap: 26px; position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px); }
+@media (max-width: 760px) { .rail { position: static; } }
+.rail h2, .list-head h2 { margin: 0 0 8px; font: 500 11.5px var(--font-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); display: flex; align-items: center; gap: 8px; }
+.rail h2 .seg { margin-left: auto; text-transform: none; letter-spacing: 0; }
+.pick { background: var(--brass-soft); border-radius: 14px; padding: 14px; display: grid; gap: 6px; }
+.pick .f { font-size: 12px; color: var(--brass); font-weight: 600; }
+.pick b { font-size: 15px; line-height: 1.4; }
+.pick p { margin: 0; font-size: 13.5px; color: var(--muted); }
+.pick-actions { display: flex; gap: 6px; margin-top: 4px; }
+.pick-actions button { border: 0; background: var(--surface); border-radius: 8px; font-size: 12.5px; padding: 4px 10px; }
+.flist { display: grid; gap: 1px; }
+.fitem { display: flex; align-items: center; gap: 8px; border: 0; background: transparent; text-align: left; padding: 6px 10px; border-radius: 8px; font-size: 14px; color: var(--ink); }
+.fitem:hover { background: var(--sunk); }
+.fitem[aria-pressed="true"] { background: var(--surface); box-shadow: var(--shadow); font-weight: 600; }
+.fitem .n { margin-left: auto; font: 12px var(--font-mono); color: var(--faint); font-variant-numeric: tabular-nums; }
+.fitem .dot { width: 7px; height: 7px; border-radius: 2px; background: var(--brass); opacity: .75; flex: none; }
+.fitem.alert time { font: 12px var(--font-mono); color: var(--alert); flex: none; }
+.fitem.alert span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.rail-foot { display: flex; gap: 6px; flex-wrap: wrap; }
+.rail-foot button, .rail-foot label { border: 1px solid var(--line); background: transparent; border-radius: 8px; font-size: 12.5px; padding: 4px 10px; color: var(--muted); cursor: pointer; }
+
+/* List */
+.list-head { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
+.list-head h2 { margin: 0; }
+.filter { margin-left: auto; flex: 1 1 200px; max-width: 280px; display: flex; align-items: center; gap: 6px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 0 10px; }
+.filter input { border: 0; background: transparent; color: var(--ink); font: 14px var(--font-body); padding: 7px 0; width: 100%; outline: none; min-width: 0; }
+.filter svg { flex: none; color: var(--faint); }
+.slips { display: grid; gap: 12px; }
+.slip { background: var(--surface); border-radius: 14px; padding: 16px 18px 12px; display: grid; gap: 8px; box-shadow: var(--shadow); min-width: 0; border: 1px solid var(--line); }
+.slip.hit { border-color: var(--ai); }
+.slip.example { box-shadow: none; border: 1px dashed var(--line); }
+.slip-meta { display: flex; align-items: center; gap: 10px; font-size: 12.5px; }
+.slip-meta .f { color: var(--brass); font-weight: 600; }
+.slip-meta time { margin-left: auto; font: 12px var(--font-mono); color: var(--faint); }
+.slip-meta .ex { font: 11px var(--font-mono); color: var(--muted); border: 1px solid var(--line); border-radius: 4px; padding: 0 6px; }
+.slip h3 { margin: 0; font-size: 17px; font-weight: 600; line-height: 1.4; letter-spacing: -.005em; text-wrap: balance; overflow-wrap: anywhere; }
+.slip .sum { margin: 0; color: var(--ink); opacity: .88; overflow-wrap: anywhere; max-width: 65ch; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.chip { font-size: 12px; padding: 1px 9px; border-radius: 999px; background: var(--sunk); color: var(--muted); }
+.chip.sit { background: var(--ai-soft); color: var(--ai); }
+.chip.rem { background: transparent; border: 1px solid var(--alert); color: var(--alert); font-family: var(--font-mono); }
+details.more { font-size: 13.5px; }
+details.more summary { color: var(--muted); cursor: pointer; font-size: 12.5px; list-style: none; display: inline-flex; gap: 6px; }
+details.more summary::-webkit-details-marker { display: none; }
+details.more summary::before { content: "+"; font-family: var(--font-mono); }
+details.more[open] summary::before { content: "−"; }
+.raw { margin: 8px 0 0; padding-left: 12px; border-left: 2px solid var(--line); color: var(--muted); white-space: pre-wrap; overflow-wrap: anywhere; }
+.src { display: inline-block; margin-top: 6px; color: var(--ai); overflow-wrap: anywhere; }
+.related { margin-top: 10px; display: grid; gap: 4px; }
+.related small { font: 11px var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--faint); }
+.related button { border: 0; background: none; padding: 0; text-align: left; color: var(--ai); font-size: 13.5px; }
+.acts { display: flex; gap: 2px; align-items: center; flex-wrap: wrap; margin: 0 -8px; }
+.acts button { border: 0; background: transparent; color: var(--muted); font-size: 12.5px; padding: 4px 8px; border-radius: 6px; display: inline-flex; gap: 5px; align-items: center; }
+.acts button:hover { background: var(--sunk); color: var(--ink); }
+.acts button[aria-pressed="true"] { color: var(--brass); }
+.acts .del { margin-left: auto; }
+.acts .del.armed { color: var(--alert); }
+.move { display: flex; gap: 6px; }
+.move input { flex: 1; min-width: 0; border: 1px solid var(--line); background: var(--bg); color: var(--ink); border-radius: 8px; padding: 5px 10px; font: 13.5px var(--font-body); }
+.move button { border: 0; background: var(--ink); color: var(--bg); border-radius: 8px; padding: 5px 12px; font-size: 13px; }
+.empty { border: 1px dashed var(--line); border-radius: 14px; padding: 18px; display: grid; gap: 8px; color: var(--muted); }
+.empty b { color: var(--ink); font-weight: 600; }
+.empty button { justify-self: start; border: 0; background: var(--accent); color: var(--accent-text); border-radius: 10px; padding: 7px 14px; font-weight: 600; font-size: 13.5px; }
+.none { color: var(--muted); font-size: 14px; padding: 8px 2px; }
+
+/* Edit form */
+.edit { display: grid; gap: 10px; }
+.ef { display: grid; gap: 4px; min-width: 0; }
+.ef span { font: 500 11px var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.ef input, .ef textarea { width: 100%; min-width: 0; border: 1px solid var(--line); background: var(--bg); color: var(--ink); border-radius: 8px; padding: 7px 10px; font: 14.5px/1.55 var(--font-body); }
+.ef textarea { resize: vertical; min-height: 110px; }
+.ef-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+@media (max-width: 480px) { .ef-row { grid-template-columns: 1fr; } }
+.ef-hint { margin: 0; font-size: 12px; color: var(--faint); }
+.ef-acts { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
+.ef-acts button { border: 0; background: var(--accent); color: var(--accent-text); border-radius: 8px; padding: 7px 16px; font-size: 13.5px; font-weight: 600; }
+.ef-acts button.ghost { background: transparent; color: var(--muted); border: 1px solid var(--line); font-weight: 400; }
+.mic-hint { font-size: 12px; color: var(--faint); padding: 0 16px 4px; }
+
+/* Wallpaper: same textured backdrops as Flowa, drawn with gradients + SVG noise. */
+:root {
+  --art-night: var(--stars), radial-gradient(ellipse 120% 70% at 50% -10%, #23407a 0%, #0f1c42 45%, #070b1c 100%);
+  --art-washi: var(--fiber), var(--noise), radial-gradient(ellipse at 50% 40%, #f4efe3 0%, #ebe3d1 70%, #ddd2bb 100%);
+  --art-aurora: radial-gradient(circle at 18% 18%, rgba(84,120,255,.34), transparent 42%), radial-gradient(circle at 85% 28%, rgba(176,92,255,.28), transparent 48%), radial-gradient(circle at 45% 95%, rgba(40,200,180,.2), transparent 52%), var(--noise), #07080d;
+  --art-parchment: var(--noise), radial-gradient(ellipse at 50% 45%, #f4e6c0 0%, #e9d5a1 55%, #d2b071 82%, #9c6e35 100%);
+  --art-sepia: var(--noise), linear-gradient(#f1e7d0, #f1e7d0);
+  --art-dawn: linear-gradient(160deg, #f6d5bf 0%, #e9c9d3 35%, #bccbe6 70%, #93a9cf 100%);
+  --art-sakura: radial-gradient(60% 50% at 80% 10%, #f7c9d4 0%, transparent 70%), radial-gradient(50% 40% at 10% 90%, #f3d6de 0%, transparent 70%), linear-gradient(170deg, #fbeff2, #f1dfe6);
+  --art-sea: linear-gradient(180deg, #cde7ef 0%, #9ccadb 50%, #6fa9c2 100%);
+  --art-forest: radial-gradient(120% 90% at 15% 0%, #8fae86 0%, #4d6e52 45%, #1f3327 100%);
+  --art-dusk: linear-gradient(200deg, #2f2752 0%, #5a3763 35%, #8e4a62 70%, #a85a58 100%);
+}
+#wall, #wallVeil { position: fixed; inset: 0; z-index: -2; pointer-events: none; }
+#wall { background-size: cover; background-position: center; }
+#wallVeil { z-index: -1; background: var(--bg); }
+:root[data-wall] body { background: transparent; }
+:root[data-wall="night"] #wall { background: var(--art-night); background-color: #0b1430; }
+:root[data-wall="washi"] #wall { background: var(--art-washi); background-color: #eee7d8; }
+:root[data-wall="aurora"] #wall { background: var(--art-aurora); }
+:root[data-wall="parchment"] #wall { background: var(--art-parchment); background-color: #e8d6a8; }
+:root[data-wall="sepia"] #wall { background: var(--art-sepia); }
+:root[data-wall="dawn"] #wall { background: var(--art-dawn); }
+:root[data-wall="sakura"] #wall { background: var(--art-sakura); }
+:root[data-wall="sea"] #wall { background: var(--art-sea); }
+:root[data-wall="forest"] #wall { background: var(--art-forest); }
+:root[data-wall="dusk"] #wall { background: var(--art-dusk); }
+:root[data-wall="dawn"], :root[data-wall="sakura"], :root[data-wall="sea"] {
+  color-scheme: light;
+  --ink: #1c1c1e; --muted: #55565c; --faint: #85868c; --line: rgba(28,28,30,.12);
+  --surface: rgba(255,255,255,.7); --sunk: rgba(28,28,30,.06); --bg: #f7f3f1; --alert: #b03a22; --accent-text: #fff;
+  --shadow: 0 1px 2px rgba(0,0,0,.06), 0 6px 18px rgba(0,0,0,.08);
+}
+:root[data-wall="dawn"] { --accent: #c8553d; }
+:root[data-wall="sakura"] { --accent: #c2456a; --bg: #fbeff2; }
+:root[data-wall="sea"] { --accent: #1f6e8c; --bg: #eef6f9; }
+:root[data-wall="forest"], :root[data-wall="dusk"] {
+  color-scheme: dark;
+  --ink: #f2efe8; --muted: #b9b6ae; --faint: #86837c; --line: rgba(255,255,255,.14);
+  --surface: rgba(20,24,26,.5); --sunk: rgba(255,255,255,.08); --alert: #f09a7f; --accent-text: #1a1406; --shadow: 0 2px 16px rgba(0,0,0,.35);
+}
+:root[data-wall="forest"] { --accent: #d9c27a; --bg: #1f3327; }
+:root[data-wall="dusk"] { --accent: #f2b27c; --bg: #2f2752; }
+:root[data-wall="night"], :root[data-wall="aurora"] {
+  color-scheme: dark;
+  --ink: #eeebe4; --muted: #a7a6b4; --faint: #77768a; --line: rgba(255,255,255,.12);
+  --surface: rgba(20,24,40,.55); --sunk: rgba(255,255,255,.08); --bg: #10142a; --shadow: 0 2px 16px rgba(0,0,0,.35);
+}
+:root[data-wall="night"] { --accent: #e9ae4c; --accent-text: #1a1406; --alert: #f09a7f; }
+:root[data-wall="aurora"] { --accent: #8ea4ff; --accent-text: #0b0d1a; --alert: #f09a7f; --bg: #0d0f18; }
+:root[data-wall="washi"], :root[data-wall="parchment"], :root[data-wall="sepia"] {
+  color-scheme: light;
+  --ink: #22201b; --muted: #6d655a; --faint: #9a9081; --line: rgba(60,45,20,.16);
+  --surface: rgba(255,252,244,.6); --sunk: rgba(80,60,30,.07); --bg: #f6f1e6; --alert: #b03a22;
+  --shadow: 0 1px 2px rgba(60,40,10,.08), 0 6px 18px rgba(60,40,10,.08);
+}
+:root[data-wall="washi"] { --accent: #b0402a; --accent-text: #fff; }
+:root[data-wall="parchment"] { --ink: #34250f; --muted: #6e5634; --accent: #8a3b1c; --accent-text: #fff; --bg: #f2e4bf; }
+:root[data-wall="sepia"] { --ink: #3b2f1e; --accent: #b5482f; --accent-text: #fff; --bg: #f1e7d0; }
+:root[data-wall="custom"] .slip, :root[data-wall="custom"] .omni, :root[data-wall="custom"] .pick, :root[data-wall="custom"] .answer { background: color-mix(in srgb, var(--surface) 78%, transparent); }
+:root[data-wall] .slip, :root[data-wall] .omni, :root[data-wall] .pick, :root[data-wall] .answer, :root[data-wall] .wp-panel, :root[data-wall] .rail {
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+}
+:root[data-wall] .wp-panel { background: color-mix(in srgb, var(--surface) 40%, var(--bg) 60%); }
+:root[data-wall] .rail { background: color-mix(in srgb, var(--surface) 70%, transparent); border: 1px solid var(--line); border-radius: 16px; padding: 16px 12px; }
+:root[data-wall] .fitem[aria-pressed="true"] { background: var(--sunk); box-shadow: none; }
+:root[data-wall] .list-head h2, :root[data-wall] .toast { background: color-mix(in srgb, var(--surface) 70%, transparent); border-radius: 8px; padding: 2px 8px; }
+.wp { position: relative; }
+.wp-btn { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; font-size: 12.5px; padding: 3px 12px; color: var(--muted); display: inline-flex; gap: 6px; align-items: center; }
+.wp-btn:hover { color: var(--ink); }
+.wp-panel {
+  position: absolute; right: 0; top: calc(100% + 8px); z-index: 20; width: min(320px, calc(100vw - 32px));
+  background: var(--surface); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow); padding: 14px; display: grid; gap: 12px;
+}
+@media (max-width: 480px) { .wp-panel { position: fixed; left: 16px; right: 16px; top: 112px; width: auto; max-height: calc(100vh - 128px); overflow: auto; } }
+.wp-panel h3 { margin: 0; font: 500 11.5px var(--font-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.swatches { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.sw { aspect-ratio: 1; max-width: 100%; border-radius: 10px; border: 1px solid var(--line); background-size: cover; background-position: center; position: relative; padding: 0; }
+.sw[aria-pressed="true"] { outline: 2px solid var(--ink); outline-offset: 2px; }
+.sw span { position: absolute; left: 0; right: 0; bottom: -18px; font-size: 10.5px; color: var(--muted); text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sw.none-sw { background: var(--bg); display: grid; place-items: center; color: var(--faint); font-size: 18px; }
+.sw[data-art="night"] { background: var(--art-night); }
+.sw[data-art="washi"] { background: var(--art-washi); }
+.sw[data-art="aurora"] { background: var(--art-aurora); }
+.sw[data-art="parchment"] { background: var(--art-parchment); }
+.sw[data-art="sepia"] { background: var(--art-sepia); }
+.sw[data-art="dawn"] { background: var(--art-dawn); }
+.sw[data-art="sakura"] { background: var(--art-sakura); }
+.sw[data-art="sea"] { background: var(--art-sea); }
+.sw[data-art="forest"] { background: var(--art-forest); }
+.sw[data-art="dusk"] { background: var(--art-dusk); }
+.sw[aria-pressed="true"] { outline-color: var(--accent); }
+.sw.up { display: grid; place-items: center; color: var(--muted); font-size: 20px; cursor: pointer; background: var(--sunk); }
+.swatches { padding-bottom: 16px; row-gap: 26px; }
+.wp-row { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; font-size: 13px; color: var(--muted); }
+.wp-row input[type="range"] { width: 100%; accent-color: var(--brass); }
+.wp-row output { font: 12px var(--font-mono); min-width: 3ch; text-align: right; }
+.wp-note { font-size: 12px; color: var(--faint); margin: 0; }
+@media (prefers-reduced-motion: no-preference) {
+  .slip { transition: border-color .2s, transform .2s; }
+  .answer { animation: rise .25s ease-out; }
+  @keyframes rise { from { transform: translateY(4px); } to { transform: none; } }
+}
+</style>
+</head>
+<body>
+<div id="wall"></div><div id="wallVeil" hidden></div>
+<div class="wrap">
+  <header class="top">
+    <div class="mark"><b>Mindrawer</b><span>引出</span></div>
+    <div class="top-right">
+      <button class="status" id="status" type="button"></button>
+      <div class="wp">
+        <button class="wp-btn" id="wpBtn" aria-expanded="false" aria-controls="wpPanel"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="m3 16 5-5 4 4 3-3 6 6"/></svg><span id="wpLabel"></span></button>
+        <div class="wp-panel" id="wpPanel" hidden>
+          <h3 id="wpH"></h3>
+          <div class="swatches" id="swatches"></div>
+          <div class="wp-row"><label for="wpDim" id="wpDimL"></label><input type="range" id="wpDim" min="0" max="85" step="5"><output id="wpDimO"></output></div>
+          <div class="wp-row"><label for="wpBlur" id="wpBlurL"></label><input type="range" id="wpBlur" min="0" max="20" step="2"><output id="wpBlurO"></output></div>
+          <p class="wp-note" id="wpNote"></p>
+          <input type="file" id="wpFile" accept="image/*" hidden>
+        </div>
+      </div>
+      <div class="seg" role="group" aria-label="Language">
+        <button id="langEn" aria-pressed="false">EN</button>
+        <button id="langJa" aria-pressed="false">日本語</button>
+      </div>
+    </div>
+  </header>
+
+  <section class="hero">
+    <h1 id="heroTitle"></h1>
+    <p id="heroSub"></p>
+    <div class="omni">
+      <div class="omni-head">
+        <div class="seg" role="tablist">
+          <button id="mSave" aria-pressed="true"></button>
+          <button id="mAsk" aria-pressed="false"></button>
+        </div>
+      </div>
+      <div id="saveBox">
+        <textarea id="noteText"></textarea>
+        <div class="thumb" id="thumb" hidden><img id="thumbImg" alt=""><span id="thumbLabel"></span><button id="thumbRm"></button></div>
+        <div class="omni-src" id="srcRow" hidden><input type="url" id="noteUrl"></div>
+      </div>
+      <div id="askBox" hidden><input type="text" id="askText"></div>
+      <div class="mic-hint" id="micHint"></div>
+      <div class="omni-foot">
+        <span id="saveTools">
+          <button class="tool" id="addSrc"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg><span id="addSrcLabel"></span></button>
+          <label class="tool" id="imgTool" hidden><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg><span id="imgLabel"></span><input type="file" id="imgInput" accept="image/*" hidden></label>
+        </span>
+        <span class="kbd" id="kbd"></span>
+        <button class="go" id="go"></button>
+      </div>
+    </div>
+    <div class="suggest" id="suggest" hidden></div>
+    <div class="toast" id="toast" role="status"></div>
+    <div class="answer" id="answer" hidden>
+      <div class="answer-top"><small id="answerHead"></small><button id="answerClose"></button></div>
+      <div class="answer-text" id="answerText"></div>
+      <div class="slips" id="answerSlips"></div>
+    </div>
+  </section>
+
+  <div class="main">
+    <aside class="rail">
+      <div id="pickBox" hidden><h2 id="pickH"></h2><div class="pick" id="pick"></div></div>
+      <div id="remBox" hidden><h2 id="remH"></h2><div class="flist" id="remList"></div></div>
+      <div>
+        <h2><span id="foldH"></span>
+          <span class="seg" role="group"><button id="byCat" aria-pressed="true"></button><button id="byDate" aria-pressed="false"></button></span>
+        </h2>
+        <div class="flist" id="folders"></div>
+      </div>
+      <div class="rail-foot">
+        <button id="exportBtn"></button>
+        <label id="importLabel"><span id="importText"></span><input type="file" id="importInput" accept="application/json,.json" hidden></label>
+      </div>
+    </aside>
+    <section>
+      <div class="list-head">
+        <h2 id="listH"></h2>
+        <div class="filter"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input type="search" id="filter"></div>
+      </div>
+      <div class="slips" id="slips"></div>
+    </section>
+  </div>
+</div>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const KEY = "hikidashi-notes-v1", LANG_KEY = "hikidashi-lang";
+
+  const I18N = {
+    en: {
+      heroTitle: "Save it once. <em>It finds you</em> when it matters.",
+      heroSub: "Paste a tip from X, a screenshot, or a note to self. Mindrawer files it, and hands it back when you're about to need it.",
+      save: "Save", recall: "Recall", saving: "Filing…", searching: "Looking…",
+      notePh: "Paste a tip, a thread, or a note to self…\ne.g. “To get a coffee stain out, blot from the outside in. Never rub.”",
+      askPh: "What are you about to do, or what do you need?  e.g. “packing for a trip”",
+      urlPh: "Source URL (optional)", addSrc: "Source", addImg: "Screenshot", imgReady: "Screenshot attached — text will be read from it", remove: "Remove",
+      kbdSave: "⌘/Ctrl + Enter", kbdAsk: "Enter",
+      suggest: ["About to do laundry", "Packing for a trip", "Ways to save money", "Preparing for a presentation"],
+      saved: (t, f, r) => `Filed “${t}” under ${f}${r ? ` · reminder on ${r}` : ""}.`,
+      saveFail: "Couldn't save. Try again.", needText: "Write something or attach a screenshot first.",
+      answerHead: (q, n) => `Recall · “${q}” · ${n} ${n === 1 ? "note" : "notes"}`, close: "Close",
+      noNotes: "Nothing saved yet. Save a few tips first.", noMatch: "Nothing related turned up.",
+      kwMatch: (n) => `${n} notes look related by keyword.`, aiFallback: "Couldn't reach Claude, so these are keyword matches.",
+      pickH: "Today's pick", pickSeen: "Got it", pickOther: "Another", remH: "Coming up",
+      foldH: "Folders", byCat: "Topic", byDate: "Date", all: "All notes", pinned: "Pinned",
+      listH: (n) => `${n} ${n === 1 ? "note" : "notes"}`, filterPh: "Filter",
+      pin: "Pin", helpful: "Helpful", move: "Move", del: "Delete", delSure: "Delete?", moveGo: "Move", refile: "Re-file",
+      original: "Original & related", related: "Related", example: "Example",
+      emptyB: "Your drawer is empty", emptyP: "Saved notes look like the examples below and land in folders on their own.", emptyBtn: "Add the 3 examples",
+      none: "No notes match.", exportBtn: "Export", importText: "Import",
+      imported: (n) => `Imported ${n} notes.`, importFail: "That file isn't a Mindrawer export.", exported: "Export ready.",
+      stCloud: "Synced", stLocal: "This device", stAi: "AI on", stBasic: "Basic",
+      keyPrompt: "Paste your Anthropic API key (sk-ant-…). It stays in this browser and is sent only to Anthropic. Get one at console.anthropic.com",
+      keySaved: "API key saved. Claude will file your notes.", keyRemoveQ: "Remove the saved API key from this browser?", keyRemoved: "API key removed.",
+      keyBad: "The API key didn't work. Tap the status to set it again.", useAI: "Use AI ›",
+      month: (d) => d.toLocaleDateString("en", { year: "numeric", month: "long" }),
+      other: "Other",
+      edit: "Edit", saveEdit: "Save", saveRefile: "Save & re-file with AI", cancel: "Cancel", editSaved: "Saved.",
+      fTitle: "Title", fText: "Note", fSummary: "Summary", fFolder: "Folder", fRemind: "Remind on", fSituations: "When it helps (comma-separated)", fTags: "Tags (comma-separated)", fUrl: "Source URL",
+      dictate: "Tip: to speak instead of type, tap the mic on your phone's keyboard (or press Fn twice on a Mac, Win + H on Windows).",
+      wp: "Wallpaper", wpH: "Wallpaper", wpDim: "Veil", wpBlur: "Blur", wpUp: "Your image", wpNone: "Plain",
+      wpNote: "Saved on this device only.", wpFail: "Couldn't use that image.",
+      wpNames: { dawn: "Dawn", sakura: "Sakura", sea: "Sea", washi: "Washi", parchment: "Parchment", sepia: "Sepia", forest: "Forest", dusk: "Dusk", night: "Night sky", aurora: "Aurora" },
+      rules: [["Food & Cooking", /cook|recipe|food|kitchen|meal/i], ["Health", /sleep|health|exercise|stretch|posture/i], ["Money", /money|save|budget|tax|price|deal|quote/i], ["Tech", /mac|windows|iphone|android|shortcut|app|excel|chrome/i], ["Work & Study", /work|meeting|email|slides|present|study|interview/i], ["Home", /clean|laundry|stain|storage|move|moving/i], ["Travel", /travel|trip|hotel|flight|pack/i]],
+    },
+    ja: {
+      heroTitle: "しまっておけば、<em>必要なときに</em>出てくる。",
+      heroSub: "X で見た Tips、スクショ、自分用の備忘録。貼るだけで整理され、それが要る場面で手元に戻ってきます。",
+      save: "しまう", recall: "ひきだす", saving: "整理中…", searching: "探し中…",
+      notePh: "Tips、スレッド、備忘録をそのまま貼り付け…\n例：「コーヒーのシミは、こすらず外から内へ叩く」",
+      askPh: "これから何をする？何が知りたい？　例：「旅行の荷造り」",
+      urlPh: "出典 URL（任意）", addSrc: "出典", addImg: "スクショ", imgReady: "スクショから文字を読み取って保存します", remove: "外す",
+      kbdSave: "⌘/Ctrl + Enter", kbdAsk: "Enter",
+      suggest: ["これから洗濯する", "旅行の荷造り中", "節約になるやつ", "プレゼン前に緊張する"],
+      saved: (t, f, r) => `「${t}」を ${f} にしまいました${r ? `（${r} にリマインド）` : ""}`,
+      saveFail: "保存できませんでした。もう一度お試しください。", needText: "テキストを書くか、スクショを付けてください。",
+      answerHead: (q, n) => `ひきだし ・ 「${q}」 ・ ${n} 件`, close: "閉じる",
+      noNotes: "まだメモがありません。先にいくつかしまってください。", noMatch: "関係しそうなメモは見つかりませんでした。",
+      kwMatch: (n) => `キーワードが近いメモが ${n} 件あります。`, aiFallback: "AI に聞けなかったので、キーワードで近いメモを出しました。",
+      pickH: "今日のひとつ", pickSeen: "読んだ", pickOther: "別のを見る", remH: "近日のリマインド",
+      foldH: "フォルダ", byCat: "分類", byDate: "日付", all: "すべて", pinned: "ピン留め",
+      listH: (n) => `${n} 件`, filterPh: "絞り込み",
+      pin: "ピン", helpful: "役立った", move: "移動", del: "削除", delSure: "本当に削除", moveGo: "移動", refile: "再整理",
+      original: "原文と関連メモ", related: "関連", example: "見本",
+      emptyB: "ひきだしはまだ空です", emptyP: "保存したメモは下の見本のような形になり、自動でフォルダに入ります。", emptyBtn: "見本の 3 件を入れて試す",
+      none: "該当するメモはありません。", exportBtn: "書き出す", importText: "読み込む",
+      imported: (n) => `${n} 件を読み込みました。`, importFail: "Mindrawer の書き出しファイルではないようです。", exported: "書き出しました。",
+      stCloud: "アカウントに保存", stLocal: "この端末に保存", stAi: "AI 整理", stBasic: "簡易整理",
+      keyPrompt: "Anthropic の API キー（sk-ant-…）を貼り付けてください。キーはこのブラウザにだけ保存され、Anthropic にだけ送られます。取得: console.anthropic.com",
+      keySaved: "API キーを保存しました。Claude が整理します。", keyRemoveQ: "このブラウザに保存した API キーを削除しますか？", keyRemoved: "API キーを削除しました。",
+      keyBad: "API キーが使えませんでした。右上の表示を押して入れ直してください。", useAI: "AI を使う ›",
+      month: (d) => `${d.getFullYear()}年${d.getMonth() + 1}月`,
+      other: "その他",
+      edit: "編集", saveEdit: "保存", saveRefile: "保存して AI で再整理", cancel: "キャンセル", editSaved: "保存しました。",
+      fTitle: "タイトル", fText: "本文", fSummary: "要約", fFolder: "フォルダ", fRemind: "リマインド日", fSituations: "使う場面（カンマ区切り）", fTags: "タグ（カンマ区切り）", fUrl: "出典 URL",
+      dictate: "声で入力したいときは、スマホのキーボードのマイクを押してください（Mac は Fn を 2 回、Windows は Win + H）。",
+      wp: "壁紙", wpH: "壁紙", wpDim: "薄く", wpBlur: "ぼかし", wpUp: "自分の画像", wpNone: "標準",
+      wpNote: "この端末にだけ保存されます。自分の画像は「薄く」で読みやすさを調整できます。", wpFail: "その画像は使えませんでした。",
+      wpNames: { dawn: "朝焼け", sakura: "桜", sea: "海", washi: "和紙", parchment: "羊皮紙", sepia: "セピア", forest: "森", dusk: "夕暮れ", night: "夜空", aurora: "オーロラ" },
+      rules: [["料理・食", /料理|レシピ|食|味|調味|野菜|肉|魚|弁当|醤油|炊/], ["健康・体", /健康|睡眠|運動|筋トレ|ストレッチ|病院|薬|肩こり|姿勢/], ["お金・節約", /お金|節約|ポイント|税|ふるさと|保険|投資|NISA|値下げ|安く|見積/], ["PC・ガジェット", /PC|Mac|Windows|iPhone|Android|ショートカット|アプリ|Excel|スクショ|⌘|Ctrl/i], ["仕事・勉強", /仕事|会議|メール|資料|プレゼン|勉強|英語|面接/], ["暮らし・家事", /掃除|洗濯|シミ|収納|片付|家事|ゴミ|引っ越/], ["おでかけ・旅行", /旅行|ホテル|新幹線|飛行機|観光|荷造り|空港/]],
+    },
+  };
+  const EXAMPLES = {
+    en: [
+      { text: "Coffee or soy sauce spill: don't rub. Blot with a damp cloth from the outside in, then a drop of dish soap.", category: "Home", title: "Blot stains, never rub", summary: "Work from the outside in with a damp cloth, finish with dish soap.", tags: ["stains", "laundry"], situations: ["Spilled on clothes", "Doing laundry"] },
+      { text: "On a Mac, press ⌘+Shift+4 then Space to screenshot a single window.", category: "Tech", title: "Screenshot one window on Mac", summary: "⌘+Shift+4, then Space, then click the window.", tags: ["Mac", "shortcut"], situations: ["Making slides", "Reporting a bug"] },
+      { text: "Book movers' estimates on the same day, an hour apart. Competing quotes drop fast. Avoid end of month.", category: "Money", title: "Get moving quotes on one day", summary: "Back-to-back estimates make movers undercut each other.", tags: ["moving", "quotes"], situations: ["Planning a move", "Negotiating a price"] },
+    ],
+    ja: [
+      { text: "醤油やコーヒーをこぼしたら、こすらずに水を含ませた布で外側から内側へ叩く。最後に中性洗剤を少し。", category: "暮らし・家事", title: "シミは叩いて落とす", summary: "こすらず外→内に叩き、仕上げに中性洗剤。", tags: ["シミ抜き", "洗濯"], situations: ["服を汚したとき", "洗濯するとき"] },
+      { text: "Mac で ⌘+Shift+4 のあとスペースを押すとウィンドウ単位でスクショできる。", category: "PC・ガジェット", title: "Mac のウィンドウ単位スクショ", summary: "⌘+Shift+4 → スペースでウィンドウを選んで撮れる。", tags: ["Mac", "ショートカット"], situations: ["資料を作るとき", "不具合を報告するとき"] },
+      { text: "引っ越し見積もりは同じ日に複数社を時間ずらして呼ぶと、相見積もりで値下げしやすい。3月は避ける。", category: "お金・節約", title: "引っ越し見積もりは同日に複数社", summary: "同じ日に複数社を呼ぶと値下げ交渉が効く。", tags: ["引っ越し", "相見積もり"], situations: ["引っ越しの準備", "値段交渉するとき"] },
+    ],
+  };
+
+  const state = {
+    lang: "en", mode: "save", view: "cat", folder: "__all", filter: "", hits: null, editing: null, armed: null,
+    notes: [], store: null, sample: null, downloads: null, image: null, pickSkip: 0,
+  };
+  try { const l = localStorage.getItem(LANG_KEY); state.lang = l || (/^ja/i.test(navigator.language || "") ? "ja" : "en"); } catch { state.lang = /^ja/i.test(navigator.language || "") ? "ja" : "en"; }
+  const T = () => I18N[state.lang];
+
+  // ---------- storage ----------
+  function localStore() {
+    const read = () => { try { return JSON.parse(localStorage.getItem(KEY) || "[]"); } catch { return []; } };
+    const write = (a) => { try { localStorage.setItem(KEY, JSON.stringify(a)); } catch {} };
+    let cb = () => {};
+    return {
+      kind: "local",
+      subscribe(fn) { cb = fn; fn(read()); },
+      async add(n) { const a = [{ ...n, id: "n" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6) }, ...read()]; write(a); cb(a); },
+      async update(id, p) { const a = read().map((x) => (x.id === id ? { ...x, ...p } : x)); write(a); cb(a); },
+      async remove(id) { const a = read().filter((x) => x.id !== id); write(a); cb(a); },
+    };
+  }
+  function dbStore(db, uid) {
+    const col = db.collection("data/users/" + uid);
+    return {
+      kind: "db",
+      subscribe(fn) { col.orderBy("createdAt", "desc").limit(1000).onSnapshot((s) => fn(s.docs.map((d) => ({ ...d.data(), id: d.id }))), () => {}); },
+      async add(n) { await col.add(n); },
+      async update(id, p) { await col.doc(id).update(p); },
+      async remove(id) { await col.doc(id).delete(); },
+    };
+  }
+
+  // ---------- helpers ----------
+  const todayISO = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
+  const fmtDate = (ms) => new Date(ms).toLocaleDateString(state.lang === "ja" ? "ja-JP" : "en", { year: "numeric", month: "short", day: "numeric" });
+  const monthKey = (ms) => { const d = new Date(ms); return d.getFullYear() * 100 + d.getMonth(); };
+  const monthLabel = (k) => T().month(new Date(Math.floor(k / 100), k % 100, 1));
+  function el(tag, attrs = {}, ...kids) {
+    const e = document.createElement(tag);
+    for (const [k, v] of Object.entries(attrs)) {
+      if (v == null || v === false) continue;
+      if (k === "class") e.className = v; else if (k.startsWith("on")) e.addEventListener(k.slice(2), v); else e.setAttribute(k, v);
+    }
+    for (const k of kids.flat()) if (k != null && k !== false) e.append(k.nodeType ? k : String(k));
+    return e;
+  }
+  let toastT;
+  function toast(t) { $("toast").textContent = t; clearTimeout(toastT); toastT = setTimeout(() => ($("toast").textContent = ""), 6000); }
+  function heuristic(text) {
+    const r = T().rules.find(([, re]) => re.test(text));
+    const first = text.split(/[\n。.!?]/)[0].trim();
+    return { title: first.slice(0, 48) || "Note", summary: "", category: r ? r[0] : T().other, tags: [], situations: [], remindAt: null };
+  }
+  function words(q) { return q.toLowerCase().split(/[\s、。,.!?？！「」“”"']+/).filter((w) => w.length >= 2); }
+  function hay(n) { return [n.title, n.summary, n.text, n.category, ...(n.tags || []), ...(n.situations || [])].join(" ").toLowerCase(); }
+  function localScore(n, q) {
+    const h = hay(n); let s = 0;
+    for (const w of words(q)) { if (h.includes(w)) s += 3; else if (/[^\x00-\x7f]/.test(w)) for (let i = 0; i + 2 <= w.length; i++) if (h.includes(w.slice(i, i + 2))) s += 1; }
+    return s + (n.helpful || 0) * 0.2;
+  }
+  function related(n) {
+    const set = new Set([...(n.tags || []), ...(n.situations || [])].map((x) => x.toLowerCase()));
+    return state.notes.filter((m) => m.id !== n.id).map((m) => {
+      let s = m.category === n.category ? 0.5 : 0;
+      for (const x of [...(m.tags || []), ...(m.situations || [])]) if (set.has(x.toLowerCase())) s += 1;
+      return { m, s };
+    }).filter((x) => x.s >= 1).sort((a, b) => b.s - a.s).slice(0, 3).map((x) => x.m);
+  }
+
+  // ---------- 自分の API キー（claude.ai の外で開いたとき） ----------
+  const KEY_KEY = "mindrawer.apiKey";
+  const readKey = () => { try { return localStorage.getItem(KEY_KEY) || ""; } catch { return ""; } };
+  const fileToBase64 = (file) => new Promise((ok, ng) => {
+    const img = new Image();
+    img.onload = () => {
+      const s = Math.min(1, 1568 / Math.max(img.width, img.height));
+      const c = document.createElement("canvas");
+      c.width = Math.round(img.width * s); c.height = Math.round(img.height * s);
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+      ok(c.toDataURL("image/jpeg", 0.85).split(",")[1]);
+    };
+    img.onerror = ng;
+    img.src = URL.createObjectURL(file);
+  });
+  function keySample(key) {
+    return {
+      limits: async () => ({ images: true }),
+      async json(prompt, opts = {}) {
+        const content = [];
+        for (const f of opts.images || []) content.push({ type: "image", source: { type: "base64", media_type: "image/jpeg", data: await fileToBase64(f) } });
+        content.push({ type: "text", text: prompt });
+        const res = await fetch("https://api.anthropic.com/v1/messages", {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            "x-api-key": key,
+            "anthropic-version": "2023-06-01",
+            "anthropic-beta": "server-side-fallback-2026-07-01",
+            "anthropic-dangerous-direct-browser-access": "true",
+          },
+          body: JSON.stringify({
+            model: "claude-opus-5-5",
+            max_tokens: 8000,
+            fallbacks: "default",
+            output_config: { effort: opts.modelTier === "quick" ? "low" : "medium" },
+            messages: [{ role: "user", content }],
+          }),
+        });
+        if (res.status === 401 || res.status === 403) { toast(T().keyBad); const e = new Error("bad key"); e.code = "not_granted"; throw e; }
+        const j = await res.json();
+        if (!res.ok) throw new Error(j?.error?.message || String(res.status));
+        const text = (j.content || []).filter((b) => b.type === "text").map((b) => b.text).join("");
+        const m = text.match(/\{[\s\S]*\}/);
+        if (!m) throw new Error("no json");
+        return JSON.parse(m[0]);
+      },
+    };
+  }
+  function askKey() {
+    if (state.inClaude) return;
+    const t = T();
+    const cur = readKey();
+    if (cur && !confirm(t.keyRemoveQ)) return;
+    if (cur) {
+      try { localStorage.removeItem(KEY_KEY); } catch {}
+      state.sample = null; $("imgTool").hidden = true; renderChrome(); toast(t.keyRemoved); return;
+    }
+    const k = (prompt(t.keyPrompt) || "").trim();
+    if (!k) return;
+    try { localStorage.setItem(KEY_KEY, k); } catch {}
+    state.sample = keySample(k); $("imgTool").hidden = false; renderChrome(); toast(t.keySaved);
+  }
+
+  // ---------- AI ----------
+  const langName = () => (state.lang === "ja" ? "Japanese" : "English");
+  async function classify(text, url, image) {
+    if (!state.sample) return { ...heuristic(text), text };
+    const cats = [...new Set(state.notes.map((n) => n.category))];
+    const prompt = `You file notes for a personal "tips drawer" app.
+Today: ${todayISO()}. Write every field in ${langName()} (keep proper nouns and code as-is).
+Existing folders: ${cats.length ? cats.join(" / ") : "(none yet)"}
+Reuse an existing folder name exactly when it fits; otherwise invent a short, broad folder name (1–3 words) that future notes could share.
+"situations": 2–4 moments when this note would help, phrased the way the user would describe what they're doing (e.g. "Doing laundry", "Before a presentation").
+"remindAt": if the note mentions a date or deadline, give it as YYYY-MM-DD resolved against today; else null.
+${image ? '"text": transcribe the useful content of the attached screenshot (e.g. a post on X) as clean plain text, merged with any typed note. Drop UI chrome, usernames and counts unless they matter.' : '"text": return the note text unchanged.'}
+Return JSON only:
+{"text":"","title":"under 60 chars","summary":"one sentence","category":"","tags":["up to 5"],"situations":[""],"remindAt":null}
+
+Note:
+${text || "(see screenshot)"}${url ? "\nSource: " + url : ""}`;
+    try {
+      const r = await state.sample.json(prompt, { modelTier: image ? "default" : "quick", images: image ? [image] : undefined });
+      const finalText = String(r.text || text).trim() || text;
+      const h = heuristic(finalText);
+      return {
+        text: finalText,
+        title: String(r.title || h.title).slice(0, 80),
+        summary: String(r.summary || ""),
+        category: String(r.category || h.category).slice(0, 32),
+        tags: Array.isArray(r.tags) ? r.tags.map(String).slice(0, 6) : [],
+        situations: Array.isArray(r.situations) ? r.situations.map(String).slice(0, 5) : [],
+        remindAt: /^\d{4}-\d{2}-\d{2}$/.test(r.remindAt || "") ? r.remindAt : null,
+      };
+    } catch (e) {
+      if (e && e.code === "not_granted") { state.sample = null; renderChrome(); }
+      if (!text) throw e;
+      return { ...heuristic(text), text };
+    }
+  }
+  async function retrieve(q) {
+    const ranked = state.notes.map((n) => ({ n, s: localScore(n, q) })).sort((a, b) => b.s - a.s);
+    const kw = ranked.filter((x) => x.s >= 1).slice(0, 8).map((x) => x.n.id);
+    if (!state.sample) return { answer: kw.length ? T().kwMatch(kw.length) : T().noMatch, ids: kw };
+    const pool = (state.notes.length > 150 ? ranked.slice(0, 150).map((x) => x.n) : state.notes).map((n) => ({
+      id: n.id, title: n.title, summary: n.summary || String(n.text).slice(0, 140), folder: n.category, tags: n.tags, situations: n.situations,
+      helpful: n.helpful || 0, pinned: !!n.pinned, remindAt: n.remindAt || undefined,
+    }));
+    const prompt = `You pull the right notes out of a user's personal tips drawer at the moment they need them.
+The input may be something they're about to do, a problem, a question, or a plain search. Infer the intent and pick notes that would genuinely help now, even without shared words. Prefer notes marked helpful or pinned when relevance is equal.
+Today: ${todayISO()}. Answer in ${langName()}.
+Input: ${q}
+
+Notes (JSON):
+${JSON.stringify(pool)}
+
+Return JSON only:
+{"answer":"2–4 short sentences of practical advice built only from the chosen notes; if none fit, say so plainly","ids":["most relevant first, max 8"]}`;
+    try {
+      const r = await state.sample.json(prompt, { modelTier: "default" });
+      const known = new Set(state.notes.map((n) => n.id));
+      return { answer: String(r.answer || ""), ids: (Array.isArray(r.ids) ? r.ids : []).filter((id) => known.has(id)) };
+    } catch (e) {
+      if (e && e.code === "not_granted") { state.sample = null; renderChrome(); }
+      return { answer: T().aiFallback, ids: kw };
+    }
+  }
+
+  // ---------- actions ----------
+  async function save() {
+    const text = $("noteText").value.trim();
+    if (!state.store) return;
+    if (!text && !state.image) { toast(T().needText); return; }
+    const url = $("noteUrl").value.trim();
+    busy(true);
+    try {
+      const meta = await classify(text, url, state.image);
+      await state.store.add({ ...meta, url: url || null, createdAt: Date.now(), helpful: 0, pinned: false });
+      $("noteText").value = ""; $("noteUrl").value = ""; $("srcRow").hidden = true; clearImage();
+      toast(T().saved(meta.title, meta.category, meta.remindAt));
+    } catch { toast(T().saveFail); } finally { busy(false); }
+  }
+  async function ask(override) {
+    const q = (override ?? $("askText").value).trim();
+    if (!q) return;
+    $("askText").value = q;
+    if (!state.notes.length) return showAnswer(q, T().noNotes, []);
+    busy(true);
+    try { const r = await retrieve(q); showAnswer(q, r.answer, r.ids); } finally { busy(false); }
+  }
+  function busy(on) { $("go").disabled = on; $("go").textContent = on ? (state.mode === "save" ? T().saving : T().searching) : (state.mode === "save" ? T().save : T().recall); }
+  function showAnswer(q, text, ids) {
+    state.hits = new Set(ids);
+    state.lastAnswer = { q, text, ids };
+    renderAnswer(); renderList();
+  }
+  function renderAnswer() {
+    const a = state.lastAnswer;
+    $("answer").hidden = !a;
+    if (!a) return;
+    $("answerHead").textContent = T().answerHead(a.q, a.ids.length);
+    $("answerText").textContent = a.text;
+    $("answerSlips").replaceChildren(...a.ids.map((id) => state.notes.find((n) => n.id === id)).filter(Boolean).map((n) => slip(n)));
+  }
+  function setImage(file) {
+    if (!file) return;
+    state.image = file;
+    $("thumbImg").src = URL.createObjectURL(file);
+    $("thumb").hidden = false;
+  }
+  function clearImage() { state.image = null; $("thumb").hidden = true; $("imgInput").value = ""; }
+  async function addExamples() {
+    for (const [i, ex] of EXAMPLES[state.lang].entries()) await state.store.add({ ...ex, url: null, remindAt: null, helpful: 0, pinned: false, example: true, createdAt: Date.now() - (i + 1) * 864e5 * 17 });
+  }
+  async function exportNotes() {
+    const data = JSON.stringify({ app: "hikidashi", version: 1, exportedAt: new Date().toISOString(), notes: state.notes }, null, 2);
+    const filename = `hikidashi-${todayISO()}.json`;
+    if (state.downloads) {
+      try { await state.downloads.save({ filename, data }); toast(T().exported); } catch {}
+      return;
+    }
+    const a = el("a", { href: URL.createObjectURL(new Blob([data], { type: "application/json" })), download: filename });
+    document.body.append(a); a.click(); a.remove();
+    toast(T().exported);
+  }
+  async function importNotes(file) {
+    try {
+      const j = JSON.parse(await file.text());
+      if (j.app !== "hikidashi" || !Array.isArray(j.notes)) throw 0;
+      const have = new Set(state.notes.map((n) => n.createdAt + "|" + n.title));
+      let n = 0;
+      for (const x of j.notes) {
+        if (typeof x.text !== "string" || have.has(x.createdAt + "|" + x.title)) continue;
+        const { id, ...rest } = x; await state.store.add({ ...rest, createdAt: Number(x.createdAt) || Date.now() }); n++;
+      }
+      toast(T().imported(n));
+    } catch { toast(T().importFail); }
+    $("importInput").value = "";
+  }
+  async function refile(n) {
+    const meta = await classify(n.text, n.url, null);
+    const { text, ...rest } = meta;
+    await state.store.update(n.id, rest);
+  }
+
+  // ---------- render ----------
+  function folderOf(n) { return state.view === "cat" ? n.category || T().other : String(monthKey(n.createdAt)); }
+  function folderLabel(k) { return state.view === "cat" ? k : monthLabel(Number(k)); }
+  function slip(n, isExample) {
+    const t = T();
+    const s = el("article", { class: "slip" + (state.hits && state.hits.has(n.id) ? " hit" : "") + (isExample ? " example" : "") },
+      el("div", { class: "slip-meta" }, el("span", { class: "f" }, n.category || t.other),
+        isExample ? el("span", { class: "ex" }, t.example) : el("time", {}, fmtDate(n.createdAt))),
+      el("h3", {}, n.title),
+      n.summary ? el("p", { class: "sum" }, n.summary) : null,
+      el("div", { class: "chips" },
+        n.remindAt ? el("span", { class: "chip rem" }, n.remindAt) : null,
+        (n.situations || []).map((x) => el("span", { class: "chip sit" }, x)),
+        (n.tags || []).map((x) => el("span", { class: "chip" }, "#" + x))),
+    );
+    if (isExample) { s.append(el("p", { class: "raw" }, n.text)); return s; }
+    const rel = related(n);
+    s.append(el("details", { class: "more" }, el("summary", {}, t.original),
+      el("p", { class: "raw" }, n.text),
+      n.url ? el("a", { class: "src", href: n.url, target: "_blank", rel: "noopener" }, n.url) : null,
+      rel.length ? el("div", { class: "related" }, el("small", {}, t.related),
+        rel.map((m) => el("button", { onclick: () => jumpTo(m) }, "→ " + m.title))) : null));
+    if (state.editing === n.id) { s.replaceChildren(editForm(n)); return s; }
+    const armed = state.armed === n.id;
+    s.append(el("div", { class: "acts" },
+      el("button", { "aria-pressed": String(!!n.pinned), onclick: () => state.store.update(n.id, { pinned: !n.pinned }) }, (n.pinned ? "★ " : "☆ ") + t.pin),
+      el("button", { onclick: () => state.store.update(n.id, { helpful: (n.helpful || 0) + 1 }) }, "↑ " + t.helpful + (n.helpful ? ` · ${n.helpful}` : "")),
+      el("button", { onclick: () => { state.editing = n.id; renderList(); renderAnswer(); } }, t.edit),
+      state.sample ? el("button", { onclick: async (e) => { e.currentTarget.disabled = true; await refile(n); } }, t.refile) : null,
+      el("button", { class: "del" + (armed ? " armed" : ""), onclick: async () => {
+        if (armed) { state.armed = null; await state.store.remove(n.id); }
+        else { state.armed = n.id; renderList(); setTimeout(() => { if (state.armed === n.id) { state.armed = null; renderList(); } }, 3000); }
+      } }, armed ? t.delSure : t.del)));
+    return s;
+  }
+  function editForm(n) {
+    const t = T(), pre = "ed-" + n.id + "-";
+    const list = (a) => (a || []).join(", ");
+    const split = (v) => v.split(/[,、，\n]/).map((x) => x.trim().replace(/^#/, "")).filter(Boolean);
+    const field = (key, label, input) => { input.id = pre + key; return el("label", { class: "ef", for: input.id }, el("span", {}, label), input); };
+    const f = {
+      title: el("input", { type: "text", value: n.title || "" }),
+      text: el("textarea", { rows: "5" }, n.text || ""),
+      summary: el("input", { type: "text", value: n.summary || "" }),
+      category: el("input", { type: "text", value: n.category || "", list: "folderNames" }),
+      situations: el("input", { type: "text", value: list(n.situations) }),
+      tags: el("input", { type: "text", value: list(n.tags) }),
+      remindAt: el("input", { type: "date", value: n.remindAt || "" }),
+      url: el("input", { type: "url", value: n.url || "" }),
+    };
+    f.text.value = n.text || "";
+    const close = () => { state.editing = null; renderList(); renderAnswer(); };
+    const commit = async (refileAfter) => {
+      const text = f.text.value.trim();
+      if (!text) { f.text.focus(); return; }
+      const patch = {
+        title: f.title.value.trim() || heuristic(text).title, text, summary: f.summary.value.trim(),
+        category: f.category.value.trim() || T().other, situations: split(f.situations.value), tags: split(f.tags.value),
+        remindAt: /^\d{4}-\d{2}-\d{2}$/.test(f.remindAt.value) ? f.remindAt.value : null, url: f.url.value.trim() || null,
+      };
+      state.editing = null;
+      await state.store.update(n.id, patch);
+      if (refileAfter) { toast(T().saving); await refile({ ...n, ...patch }); toast(T().editSaved); } else toast(T().editSaved);
+    };
+    const form = el("form", { class: "edit", onsubmit: (e) => { e.preventDefault(); commit(false); } },
+      field("title", t.fTitle, f.title), field("text", t.fText, f.text), field("summary", t.fSummary, f.summary),
+      el("div", { class: "ef-row" }, field("category", t.fFolder, f.category), field("remindAt", t.fRemind, f.remindAt)),
+      field("situations", t.fSituations, f.situations), field("tags", t.fTags, f.tags), field("url", t.fUrl, f.url),
+      el("p", { class: "ef-hint" }, t.dictate),
+      el("div", { class: "ef-acts" },
+        el("button", { type: "button", class: "ghost", onclick: close }, t.cancel),
+        state.sample ? el("button", { type: "button", class: "ghost", onclick: () => commit(true) }, t.saveRefile) : null,
+        el("button", { type: "submit" }, t.saveEdit)));
+    form.addEventListener("keydown", (e) => { if (e.key === "Escape") close(); if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); commit(false); } });
+    setTimeout(() => f.text.focus(), 0);
+    return form;
+  }
+
+  function jumpTo(n) {
+    state.view = "cat"; state.folder = n.category; state.filter = ""; $("filter").value = ""; state.hits = new Set([n.id]);
+    renderRail(); renderList();
+    requestAnimationFrame(() => document.querySelector(".slip.hit")?.scrollIntoView({ behavior: "smooth", block: "center" }));
+  }
+
+  function renderChrome() {
+    const t = T();
+    document.documentElement.lang = state.lang;
+    $("langEn").setAttribute("aria-pressed", String(state.lang === "en"));
+    $("langJa").setAttribute("aria-pressed", String(state.lang === "ja"));
+    $("heroTitle").innerHTML = t.heroTitle; // static strings from I18N only
+    $("heroSub").textContent = t.heroSub;
+    $("mSave").textContent = t.save; $("mAsk").textContent = t.recall;
+    $("mSave").setAttribute("aria-pressed", String(state.mode === "save"));
+    $("mAsk").setAttribute("aria-pressed", String(state.mode === "ask"));
+    $("saveBox").hidden = state.mode !== "save"; $("saveTools").hidden = state.mode !== "save";
+    $("askBox").hidden = state.mode !== "ask"; $("suggest").hidden = state.mode !== "ask";
+    $("noteText").placeholder = t.notePh; $("askText").placeholder = t.askPh; $("noteUrl").placeholder = t.urlPh;
+    $("addSrcLabel").textContent = t.addSrc; $("imgLabel").textContent = t.addImg; $("thumbLabel").textContent = t.imgReady; $("thumbRm").textContent = t.remove;
+    $("kbd").textContent = state.mode === "save" ? t.kbdSave : t.kbdAsk;
+    $("micHint").textContent = t.dictate;
+    busy(false);
+    $("suggest").replaceChildren(...t.suggest.map((x) => el("button", { onclick: () => ask(x) }, x)));
+    $("answerClose").textContent = t.close;
+    $("pickH").textContent = t.pickH; $("remH").textContent = t.remH; $("foldH").textContent = t.foldH;
+    $("byCat").textContent = t.byCat; $("byDate").textContent = t.byDate;
+    $("byCat").setAttribute("aria-pressed", String(state.view === "cat")); $("byDate").setAttribute("aria-pressed", String(state.view === "date"));
+    $("filter").placeholder = t.filterPh; $("exportBtn").textContent = t.exportBtn; $("importText").textContent = t.importText;
+    $("exportBtn").hidden = false;
+    const st = $("status");
+    st.textContent = state.store ? `${state.store.kind === "db" ? t.stCloud : t.stLocal} · ${state.sample ? t.stAi : t.stBasic}` : "";
+    if (!state.inClaude && !state.sample && state.store) st.textContent += " · " + t.useAI;
+    st.title = state.inClaude ? "" : (state.sample ? t.keyRemoveQ : t.keyPrompt);
+    st.classList.toggle("on", !!state.sample);
+    renderAnswer();
+  }
+
+  function renderRail() {
+    const t = T(), notes = state.notes;
+    // Today's pick: least recently seen older notes, rotated daily
+    const old = notes.filter((n) => Date.now() - n.createdAt > 2 * 864e5).sort((a, b) => (a.lastSeen || a.createdAt) - (b.lastSeen || b.createdAt));
+    const pool = old.slice(0, 7);
+    $("pickBox").hidden = !pool.length;
+    if (pool.length) {
+      const day = Number(todayISO().replace(/-/g, ""));
+      const p = pool[(day + state.pickSkip) % pool.length];
+      $("pick").replaceChildren(
+        el("span", { class: "f" }, p.category), el("b", {}, p.title), p.summary ? el("p", {}, p.summary) : null,
+        el("div", { class: "pick-actions" },
+          el("button", { onclick: () => state.store.update(p.id, { lastSeen: Date.now() }) }, t.pickSeen),
+          pool.length > 1 ? el("button", { onclick: () => { state.pickSkip++; renderRail(); } }, t.pickOther) : null,
+          el("button", { onclick: () => jumpTo(p) }, "→")));
+    }
+    // Reminders
+    const now = new Date(todayISO()).getTime();
+    const soon = notes.filter((n) => n.remindAt).map((n) => ({ n, d: new Date(n.remindAt).getTime() }))
+      .filter((x) => x.d >= now - 3 * 864e5 && x.d <= now + 14 * 864e5).sort((a, b) => a.d - b.d);
+    $("remBox").hidden = !soon.length;
+    $("remList").replaceChildren(...soon.map(({ n }) => el("button", { class: "fitem alert", onclick: () => jumpTo(n) }, el("time", {}, n.remindAt.slice(5).replace("-", "/")), el("span", {}, n.title))));
+    // Folders
+    const counts = new Map();
+    for (const n of notes) { const k = folderOf(n); counts.set(k, (counts.get(k) || 0) + 1); }
+    const keys = [...counts.keys()].sort(state.view === "cat" ? (a, b) => counts.get(b) - counts.get(a) || a.localeCompare(b) : (a, b) => Number(b) - Number(a));
+    const pinnedN = notes.filter((n) => n.pinned).length;
+    if (!["__all", "__pin"].includes(state.folder) && !counts.has(state.folder)) state.folder = "__all";
+    if (state.folder === "__pin" && !pinnedN) state.folder = "__all";
+    const item = (key, label, n, dot) => el("button", { class: "fitem", "aria-pressed": String(state.folder === key), onclick: () => { state.folder = key; renderRail(); renderList(); } }, dot ? el("i", { class: "dot" }) : null, label, el("span", { class: "n" }, n));
+    $("folders").replaceChildren(...(notes.length ? [item("__all", t.all, notes.length), pinnedN ? item("__pin", "★ " + t.pinned, pinnedN) : null, ...keys.map((k) => item(k, folderLabel(k), counts.get(k), state.view === "cat"))].filter(Boolean) : []));
+    let dl = $("folderNames");
+    if (!dl) { dl = el("datalist", { id: "folderNames" }); document.body.append(dl); }
+    dl.replaceChildren(...[...new Set(notes.map((n) => n.category))].map((c) => el("option", { value: c })));
+  }
+
+  function renderList() {
+    const t = T(), box = $("slips");
+    if (!state.notes.length) {
+      $("listH").textContent = t.listH(0);
+      box.replaceChildren(
+        el("div", { class: "empty" }, el("b", {}, t.emptyB), el("span", {}, t.emptyP), state.store ? el("button", { onclick: addExamples }, t.emptyBtn) : null),
+        ...EXAMPLES[state.lang].map((ex, i) => slip({ ...ex, id: "ex" + i, createdAt: Date.now() }, true)));
+      return;
+    }
+    const f = state.filter.toLowerCase();
+    const shown = state.notes.filter((n) =>
+      (state.folder === "__all" || (state.folder === "__pin" ? n.pinned : folderOf(n) === state.folder)) && (!f || hay(n).includes(f)));
+    $("listH").textContent = t.listH(shown.length);
+    box.replaceChildren(...(shown.length ? shown.map((n) => slip(n)) : [el("div", { class: "none" }, t.none)]));
+  }
+  function renderAll() { renderChrome(); renderWp(); renderRail(); renderList(); }
+
+  // ---------- wallpaper (per-device preference) ----------
+  const WP_KEY = "hikidashi-wallpaper", WP_IMG_KEY = "hikidashi-wallpaper-img";
+  const WALLS = ["dawn", "sakura", "sea", "washi", "parchment", "sepia", "forest", "dusk", "night", "aurora"];
+  const wp = { id: "none", dim: 45, blur: 0 };
+  try { Object.assign(wp, JSON.parse(localStorage.getItem(WP_KEY) || "{}")); } catch {}
+  let customImg = null;
+  try { customImg = localStorage.getItem(WP_IMG_KEY); } catch {}
+  function saveWp() { try { localStorage.setItem(WP_KEY, JSON.stringify(wp)); } catch {} }
+  function applyWp() {
+    if (wp.id !== "none" && wp.id !== "custom" && !WALLS.includes(wp.id)) wp.id = "none";
+    if (wp.id === "custom" && !customImg) wp.id = "none";
+    const root = document.documentElement, wall = $("wall"), custom = wp.id === "custom";
+    if (wp.id === "none") delete root.dataset.wall; else root.dataset.wall = wp.id;
+    wall.style.background = custom ? `center / cover no-repeat url("${customImg}")` : "";
+    wall.style.filter = custom && wp.blur ? `blur(${wp.blur}px)` : "none";
+    wall.style.inset = custom && wp.blur ? `-${wp.blur * 2}px` : "0";
+    $("wallVeil").hidden = !custom;
+    $("wallVeil").style.opacity = String(wp.dim / 100);
+    $("wpDim").value = wp.dim; $("wpDimO").textContent = wp.dim + "%";
+    $("wpBlur").value = wp.blur; $("wpBlurO").textContent = wp.blur + "px";
+    $("wpDim").parentElement.hidden = $("wpBlur").parentElement.hidden = !custom;
+  }
+  function renderWp() {
+    const t = T();
+    $("wpLabel").textContent = t.wp; $("wpH").textContent = t.wpH; $("wpDimL").textContent = t.wpDim; $("wpBlurL").textContent = t.wpBlur; $("wpNote").textContent = t.wpNote;
+    const sw = (id, label, style, cls) => {
+      const b = el("button", { class: "sw" + (cls ? " " + cls : ""), "aria-pressed": String(wp.id === id), "aria-label": label, onclick: () => { wp.id = id; saveWp(); applyWp(); renderWp(); } }, el("span", {}, label));
+      if (style) b.style.background = style;
+      return b;
+    };
+    const up = el("button", { class: "sw up", "aria-label": t.wpUp, onclick: () => $("wpFile").click() }, "+", el("span", {}, t.wpUp));
+    $("swatches").replaceChildren(
+      (() => { const b = sw("none", t.wpNone, null, "none-sw"); b.prepend("∅"); return b; })(),
+      ...WALLS.map((k) => { const b = sw(k, t.wpNames[k], null); b.dataset.art = k; return b; }),
+      ...(customImg ? [sw("custom", t.wpUp, `center / cover url("${customImg}")`)] : []),
+      up);
+  }
+  async function loadWpImage(file) {
+    try {
+      const img = await createImageBitmap(file);
+      const scale = Math.min(1, 1920 / Math.max(img.width, img.height));
+      const c = document.createElement("canvas");
+      c.width = Math.round(img.width * scale); c.height = Math.round(img.height * scale);
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+      let url = c.toDataURL("image/jpeg", 0.82);
+      if (url.length > 2_500_000) url = c.toDataURL("image/jpeg", 0.6);
+      customImg = url;
+      try { localStorage.setItem(WP_IMG_KEY, url); } catch {}
+      wp.id = "custom"; saveWp(); applyWp(); renderWp();
+    } catch { toast(T().wpFail); }
+    $("wpFile").value = "";
+  }
+  $("wpBtn").onclick = (e) => { e.stopPropagation(); const open = $("wpPanel").hidden; $("wpPanel").hidden = !open; $("wpBtn").setAttribute("aria-expanded", String(open)); };
+  document.addEventListener("click", (e) => { if (!$("wpPanel").hidden && !e.target.closest(".wp")) { $("wpPanel").hidden = true; $("wpBtn").setAttribute("aria-expanded", "false"); } });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("wpPanel").hidden) { $("wpPanel").hidden = true; $("wpBtn").setAttribute("aria-expanded", "false"); $("wpBtn").focus(); } });
+  $("wpDim").oninput = (e) => { wp.dim = Number(e.target.value); saveWp(); applyWp(); };
+  $("wpBlur").oninput = (e) => { wp.blur = Number(e.target.value); saveWp(); applyWp(); };
+  $("wpFile").onchange = (e) => e.target.files[0] && loadWpImage(e.target.files[0]);
+  applyWp();
+
+  // ---------- wiring ----------
+  const setLang = (l) => { state.lang = l; try { localStorage.setItem(LANG_KEY, l); } catch {} renderAll(); };
+  $("langEn").onclick = () => setLang("en");
+  $("langJa").onclick = () => setLang("ja");
+  const setMode = (m) => { state.mode = m; renderChrome(); (m === "save" ? $("noteText") : $("askText")).focus(); };
+  $("mSave").onclick = () => setMode("save");
+  $("mAsk").onclick = () => setMode("ask");
+  $("go").onclick = () => (state.mode === "save" ? save() : ask());
+  $("noteText").addEventListener("keydown", (e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) save(); });
+  $("noteText").addEventListener("paste", (e) => { const f = [...(e.clipboardData?.files || [])].find((x) => x.type.startsWith("image/")); if (f && !$("imgTool").hidden) { e.preventDefault(); setImage(f); } });
+  $("askText").addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.isComposing) ask(); });
+  $("addSrc").onclick = () => { $("srcRow").hidden = !$("srcRow").hidden; if (!$("srcRow").hidden) $("noteUrl").focus(); };
+  $("imgInput").onchange = (e) => setImage(e.target.files[0]);
+  $("thumbRm").onclick = clearImage;
+  $("answerClose").onclick = () => { state.lastAnswer = null; state.hits = null; renderAnswer(); renderList(); };
+  $("byCat").onclick = () => { state.view = "cat"; state.folder = "__all"; renderAll(); };
+  $("byDate").onclick = () => { state.view = "date"; state.folder = "__all"; renderAll(); };
+  $("filter").addEventListener("input", (e) => { state.filter = e.target.value; renderList(); });
+  $("exportBtn").onclick = exportNotes;
+  $("status").onclick = askKey;
+  $("importInput").onchange = (e) => e.target.files[0] && importNotes(e.target.files[0]);
+
+  renderAll();
+
+  (async () => {
+    const c = window.claude;
+    let store = null;
+    state.inClaude = !!c?.use;
+    if (!state.inClaude) {
+      const k = readKey();
+      if (k) { state.sample = keySample(k); $("imgTool").hidden = false; }
+    }
+    if (c?.use) {
+      const [db, user, sample, downloads] = await Promise.all(["db", "user", "sample", "downloads"].map((n) => c.use(n).catch(() => null)));
+      state.sample = sample; state.downloads = downloads;
+      if (sample) { try { const lim = await sample.limits(); $("imgTool").hidden = !lim?.images; } catch {} }
+      const uid = user ? await user.id().catch(() => null) : null;
+      if (db && uid) store = dbStore(db, uid);
+    }
+    state.store = store || localStore();
+    state.store.subscribe((arr) => { state.notes = arr.slice().sort((a, b) => b.createdAt - a.createdAt); renderAll(); });
+  })();
+})();
+</script>
+</body>
+</html>
