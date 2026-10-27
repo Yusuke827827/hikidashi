@@ -37,6 +37,12 @@ X、Safari、写真などの共有ボタンから「Mindrawer」を選ぶだけ�
 ● 忘れていたメモにまた出会える
 「今日のひとつ」で、しまったままのメモを毎日 1 件表示。リマインド日の朝には通知が届きます。
 
+● 必要なときに向こうから
+予定表に「出張」があれば前の日の夜に荷造りのコツを、スーパーに着いたら買い物のメモを知らせます。ホーム画面のウィジェット、Siri（「Mindrawer でひきだす」）、iPhone の検索からも取り出せます。
+
+● 共有と同期
+メモを 1 枚の画像カードにして X などで共有できます。iCloud で iPhone と iPad のメモをそろえられます。
+
 ● 自分好みに
 和紙・羊皮紙・夜空・オーロラ・桜・海など 11 種類の壁紙。編集、ピン留め、「役立った」、関連メモ、声での入力にも対応。
 
@@ -75,6 +81,12 @@ AI adds a title, a summary, a folder, tags and the moments when the note will he
 
 • Meet forgotten notes again
 Today's Pick resurfaces one stored note each day, and reminders arrive on the morning they're due.
+
+• It finds you
+A trip on your calendar? Packing tips arrive the evening before. Arrive at the supermarket and your shopping notes pop up. Recall from the Home Screen widget, Siri ("Recall in Mindrawer") or Spotlight.
+
+• Share and sync
+Turn any note into a clean image card to share. Keep iPhone and iPad in step with iCloud.
 
 • Make it yours
 Eleven wallpapers including washi, parchment, night sky, aurora, sakura and sea. Edit anything, pin, mark as helpful, see related notes, or dictate.
