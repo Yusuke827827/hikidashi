@@ -19,6 +19,8 @@ settings:
     PLUS_PRODUCT_ID: $(BUNDLE_PREFIX).plus.monthly
     # プライバシーポリシーの URL（中継サーバーの /privacy）。空なら GitHub 上の docs/privacy-policy.md を使う
     PRIVACY_URL: ""
+    # iCloud の同期に使うコンテナ
+    CLOUD_CONTAINER: iCloud.$(BUNDLE_PREFIX)
     MARKETING_VERSION: 0.1.0
     CURRENT_PROJECT_VERSION: 1
     SWIFT_VERSION: "5.0"
@@ -47,6 +49,11 @@ targets:
       properties:
         com.apple.security.application-groups:
           - $(APP_GROUP)
+        com.apple.developer.icloud-container-identifiers:
+          - $(CLOUD_CONTAINER)
+        com.apple.developer.icloud-services:
+          - CloudKit
+        aps-environment: development
     info:
       path: Info.plist
       properties:
@@ -59,6 +66,8 @@ targets:
         MindrawerServerURL: $(SERVER_URL)
         MindrawerPlusProductID: $(PLUS_PRODUCT_ID)
         MindrawerPrivacyURL: $(PRIVACY_URL)
+        MindrawerCloudContainer: $(CLOUD_CONTAINER)
+        UIBackgroundModes: [remote-notification]
         UILaunchScreen: {}
         CFBundleURLTypes:
           - CFBundleURLName: $(PRODUCT_BUNDLE_IDENTIFIER)
@@ -70,6 +79,7 @@ targets:
         NSMicrophoneUsageDescription: 声でメモを入力するときにマイクを使います。
         NSSpeechRecognitionUsageDescription: 話した内容を文字にしてメモに入れます。
         NSCalendarsFullAccessUsageDescription: 予定の前に、関係するメモを知らせるために予定を読みます。予定はこの iPhone の中だけで使います。
+        NSLocationWhenInUseUsageDescription: メモに付けた場所に着いたときに知らせるために使います。位置は iPhone が見張るだけで、アプリは記録しません。
         NSCalendarsUsageDescription: 予定の前に、関係するメモを知らせるために予定を読みます。予定はこの iPhone の中だけで使います。
         ITSAppUsesNonExemptEncryption: false
     settings:

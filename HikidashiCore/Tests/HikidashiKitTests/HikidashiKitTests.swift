@@ -317,3 +317,61 @@ final class EventHintTests: XCTestCase {
         XCTAssertEqual(plan[1].notes.map(\.title), ["服は 1 日ずつ袋に"])
     }
 }
+
+@MainActor
+final class SyncAndPlaceTests: XCTestCase {
+    func makeStore() throws -> NoteStore {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent("hikidashi-test-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        return NoteStore(root: root)
+    }
+
+    func testPlaceAndUpdatedAtRoundTrip() throws {
+        var n = Note(text: "t", title: "T", place: Place(name: "スーパー", latitude: 35.1, longitude: 139.2))
+        n.updatedAt = Date(timeIntervalSince1970: 1_800_000_000)
+        let back = try JSONDecoder().decode(Note.self, from: JSONEncoder().encode(n))
+        XCTAssertEqual(back.place, n.place)
+        XCTAssertEqual(back.updatedAt, n.updatedAt)
+        XCTAssertEqual(back.modifiedAt, n.updatedAt)
+    }
+
+    func testOnChangeAndUpdatedAt() throws {
+        let store = try makeStore()
+        var log: [(saved: [String], deleted: [String])] = []
+        store.onChange = { log.append((saved: $0, deleted: $1)) }
+        store.add(Note(id: "a", text: "x"))
+        XCTAssertNil(store.note("a")?.updatedAt)
+        store.update("a") { $0.title = "new" }
+        XCTAssertNotNil(store.note("a")?.updatedAt)
+        store.update("a") { $0.title = "new" }
+        store.remove("a")
+        XCTAssertEqual(log.map(\.saved), [["a"], ["a"], []], "変わらない更新は知らせない")
+        XCTAssertEqual(log.last?.deleted, ["a"])
+    }
+
+    func testApplyRemoteKeepsNewer() throws {
+        let store = try makeStore()
+        var calls = 0
+        store.add(Note(id: "a", text: "local", createdAt: Date(timeIntervalSince1970: 100), updatedAt: Date(timeIntervalSince1970: 200)))
+        store.add(Note(id: "b", text: "gone"))
+        store.onChange = { _, _ in calls += 1 }
+        let older = Note(id: "a", text: "older", createdAt: Date(timeIntervalSince1970: 100), updatedAt: Date(timeIntervalSince1970: 150))
+        let newer = Note(id: "c", text: "from iPad")
+        store.applyRemote(saved: [older, newer], deleted: ["b"])
+        XCTAssertEqual(store.note("a")?.text, "local", "古い方は無視")
+        XCTAssertEqual(store.note("c")?.text, "from iPad")
+        XCTAssertNil(store.note("b"))
+        let newest = Note(id: "a", text: "newest", createdAt: Date(timeIntervalSince1970: 100), updatedAt: Date(timeIntervalSince1970: 300))
+        store.applyRemote(saved: [newest], deleted: [])
+        XCTAssertEqual(store.note("a")?.text, "newest")
+        XCTAssertEqual(calls, 0, "届いた変更は送り返さない")
+        XCTAssertEqual(NoteStore(root: store.root).notes.count, 2, "保存される")
+    }
+
+    func testPlaceNotesLimit() {
+        let notes = (0..<20).map { i in Note(id: "\(i)", text: "", pinned: i == 3, place: Place(name: "p", latitude: 0, longitude: 0)) } + [Note(text: "none")]
+        let picked = Heuristics.placeNotes(notes)
+        XCTAssertEqual(picked.count, 15)
+        XCTAssertEqual(picked.first?.id, "3", "ピン留めが先")
+    }
+}

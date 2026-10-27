@@ -18,6 +18,7 @@ struct NoteEditor: View {
     @State private var url: String
     @State private var hasRemind: Bool
     @State private var remindDate: Date
+    @State private var place: Place?
 
     init(note: Note, librarian: Librarian) {
         self.note = note
@@ -31,6 +32,7 @@ struct NoteEditor: View {
         _url = State(initialValue: note.url ?? "")
         _hasRemind = State(initialValue: note.remindAt != nil)
         _remindDate = State(initialValue: note.remindAt.flatMap { Heuristics.dayFormatter.date(from: $0) } ?? Date())
+        _place = State(initialValue: note.place)
     }
 
     var body: some View {
@@ -58,6 +60,25 @@ struct NoteEditor: View {
                     if hasRemind {
                         DatePicker(L("日付", "Date"), selection: $remindDate, displayedComponents: .date)
                     }
+                }
+                Section {
+                    if let p = place {
+                        HStack {
+                            Label(p.name, systemImage: "mappin.and.ellipse")
+                            Spacer()
+                            Button(L("外す", "Remove"), role: .destructive) { place = nil }.buttonStyle(.borderless)
+                        }
+                    } else {
+                        NavigationLink {
+                            PlaceSearchView { place = $0 }
+                        } label: {
+                            Label(L("場所を選ぶ", "Choose a place"), systemImage: "mappin.and.ellipse")
+                        }
+                    }
+                } header: {
+                    Text(L("着いたら知らせる", "Remind me at a place"))
+                } footer: {
+                    Text(L("例: スーパーに着いたら買い物のコツ、ジムに着いたらフォームの注意。", "e.g. shopping tips at the supermarket, form cues at the gym."))
                 }
                 Section(L("出典", "Source")) {
                     TextField("https://", text: $url)
@@ -108,6 +129,7 @@ struct NoteEditor: View {
             n.tags = split(tags)
             n.url = link.isEmpty ? nil : link
             n.remindAt = remind
+            n.place = place
         }
         if refile { Task { await librarian.file(id) } }
         dismiss()

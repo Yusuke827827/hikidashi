@@ -139,3 +139,13 @@ public enum Heuristics {
         return f
     }()
 }
+
+extension Heuristics {
+    /// 場所で知らせるメモ。iOS が見張れる場所は 1 つのアプリで 20 か所までなので、ピン留め・新しいものから limit 件
+    public static func placeNotes(_ notes: [Note], limit: Int = 15) -> [Note] {
+        notes.filter { $0.place != nil }
+            .sorted { a, b in a.pinned != b.pinned ? a.pinned : a.modifiedAt > b.modifiedAt }
+            .prefix(limit)
+            .map { $0 }
+    }
+}

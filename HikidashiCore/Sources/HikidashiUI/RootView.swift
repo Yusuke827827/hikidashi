@@ -76,6 +76,7 @@ public struct HikidashiRootView: View {
         }
         .task { await refresh() }
         .task { if !DemoMode.isOn { await Subscription.shared.start() } }
+        .task { if !DemoMode.isOn, CloudSync.isOn { CloudSync.shared.start(store: store) } }
         // 購読が始まったら、たまっている未整理のメモを整理する
         .onChange(of: Subscription.shared.isActive) { _, active in
             if active { Task { await librarian.fileAll() } }
@@ -83,6 +84,9 @@ public struct HikidashiRootView: View {
         // リマインド日・タイトルが変わったときだけ、通知を予約し直す
         .task(id: Reminders.signature(store.notes)) {
             if !DemoMode.isOn { await Reminders.sync(store.notes) }
+        }
+        .task(id: PlaceReminders.signature(store.notes)) {
+            if !DemoMode.isOn { await PlaceReminders.sync(store.notes) }
         }
         .onChange(of: NotificationRouter.shared.openNoteID) { _, id in
             guard let id, let note = store.note(id) else { return }
@@ -130,6 +134,7 @@ public struct HikidashiRootView: View {
         }
         let n = librarian.ingestInbox()
         if n > 0 { show(L("共有シートから \(n) 件届きました。", "\(n) items arrived from the share sheet.")) }
+        if CloudSync.isOn { await CloudSync.shared.fetch() }
         await librarian.fileAll()
         await EventReminders.sync(store.notes)
     }

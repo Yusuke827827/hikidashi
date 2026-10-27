@@ -3,6 +3,22 @@
 
 import Foundation
 
+/// 着いたら知らせる場所
+public struct Place: Codable, Hashable, Sendable {
+    public var name: String
+    public var latitude: Double
+    public var longitude: Double
+    /// 半径（メートル）
+    public var radius: Double
+
+    public init(name: String, latitude: Double, longitude: Double, radius: Double = 150) {
+        self.name = name
+        self.latitude = latitude
+        self.longitude = longitude
+        self.radius = radius
+    }
+}
+
 public struct Note: Codable, Identifiable, Hashable, Sendable {
     public var id: String
     /// 本文（共有された文、スクショから読み取った文、自分で書いた備忘録）
@@ -28,6 +44,13 @@ public struct Note: Codable, Identifiable, Hashable, Sendable {
     public var filed: Bool
     /// 添付したスクショ（保存フォルダ内 Images/ のファイル名）
     public var imageFile: String?
+    /// 着いたら知らせる場所
+    public var place: Place?
+    /// 最後に変えた日時（iCloud の同期で新しい方を残すため）
+    public var updatedAt: Date?
+
+    /// 最後に変えた日時（無ければ作った日時）
+    public var modifiedAt: Date { updatedAt ?? createdAt }
 
     public init(
         id: String = UUID().uuidString,
@@ -45,7 +68,9 @@ public struct Note: Codable, Identifiable, Hashable, Sendable {
         lastSeen: Date? = nil,
         example: Bool = false,
         filed: Bool = false,
-        imageFile: String? = nil
+        imageFile: String? = nil,
+        place: Place? = nil,
+        updatedAt: Date? = nil
     ) {
         self.id = id
         self.text = text
@@ -63,10 +88,12 @@ public struct Note: Codable, Identifiable, Hashable, Sendable {
         self.example = example
         self.filed = filed
         self.imageFile = imageFile
+        self.place = place
+        self.updatedAt = updatedAt
     }
 
     enum CodingKeys: String, CodingKey {
-        case id, text, url, title, summary, category, tags, situations, remindAt, createdAt, pinned, helpful, lastSeen, example, filed, imageFile
+        case id, text, url, title, summary, category, tags, situations, remindAt, createdAt, pinned, helpful, lastSeen, example, filed, imageFile, place, updatedAt
     }
 
     public init(from decoder: Decoder) throws {
@@ -95,6 +122,8 @@ public struct Note: Codable, Identifiable, Hashable, Sendable {
         // Web 版のメモは整理済み（filed の項目が無い）として扱う
         filed = try c.decodeIfPresent(Bool.self, forKey: .filed) ?? true
         imageFile = try c.decodeIfPresent(String.self, forKey: .imageFile)
+        place = try? c.decodeIfPresent(Place.self, forKey: .place)
+        updatedAt = Self.decodeDate(c, .updatedAt)
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -115,6 +144,8 @@ public struct Note: Codable, Identifiable, Hashable, Sendable {
         try c.encode(example, forKey: .example)
         try c.encode(filed, forKey: .filed)
         try c.encodeIfPresent(imageFile, forKey: .imageFile)
+        try c.encodeIfPresent(place, forKey: .place)
+        try c.encodeIfPresent(updatedAt.map(Self.millis), forKey: .updatedAt)
     }
 
     static func millis(_ d: Date) -> Double { (d.timeIntervalSince1970 * 1000).rounded() }

@@ -18,6 +18,7 @@ struct SettingsView: View {
     @State private var importing = false
     @State private var exportURL: URL?
     @State private var calendarOn = EventReminders.isOn
+    @State private var cloudOn = CloudSync.isOn
 
     var body: some View {
         NavigationStack {
@@ -80,6 +81,34 @@ struct SettingsView: View {
                 } footer: {
                     Text(L("カレンダーの 3 日先までの予定を見て、関係するメモがあれば前の日の夜 8 時に知らせます（例: 予定「出張」→ 荷造りのメモ）。予定はこの iPhone の中で読むだけで、どこにも送りません。",
                            "Looks at your calendar for the next 3 days and, when a note fits an event, reminds you at 8 PM the day before (e.g. a trip → packing tips). Events are read on this iPhone only and never sent anywhere."))
+                }
+
+                if CloudSync.containerID != nil {
+                    Section {
+                        Toggle(isOn: Binding(get: { cloudOn }, set: { on in
+                            Task {
+                                if on {
+                                    guard await CloudSync.accountAvailable() else {
+                                        message = L("iCloud にサインインしていないようです。iPhone の「設定」で iCloud にサインインしてください。", "You don't seem to be signed in to iCloud. Sign in from the Settings app.")
+                                        cloudOn = false
+                                        return
+                                    }
+                                    UserDefaults.standard.set(true, forKey: CloudSync.settingKey)
+                                    CloudSync.shared.start(store: librarian.store, uploadAll: true)
+                                    cloudOn = true
+                                } else {
+                                    UserDefaults.standard.set(false, forKey: CloudSync.settingKey)
+                                    CloudSync.shared.stop()
+                                    cloudOn = false
+                                }
+                            }
+                        })) {
+                            Label(L("iCloud で同期", "Sync with iCloud"), systemImage: "icloud")
+                        }
+                    } footer: {
+                        Text(L("同じ Apple ID の iPhone・iPad でメモをそろえます。メモはあなたの iCloud にだけ置かれ、Mindrawer のサーバーは通りません。スクショは同期しません。",
+                               "Keeps notes in step across your iPhone and iPad with the same Apple ID. Notes live only in your iCloud and never pass through Mindrawer's servers. Screenshots aren't synced."))
+                    }
                 }
 
                 Section(L("壁紙", "Wallpaper")) {

@@ -30,6 +30,9 @@ public final class NoteStore {
     public let root: URL
     public var fileURL: URL { root.appendingPathComponent("notes.json") }
 
+    /// 変わったメモ（保存・削除）を知らせる。iCloud の同期が使う
+    public var onChange: ((_ saved: [String], _ deleted: [String]) -> Void)?
+
     public init(root: URL = SharedContainer.root) {
         self.root = root
         reload()
@@ -56,12 +59,17 @@ public final class NoteStore {
         notes.insert(note, at: 0)
         notes.sort { $0.createdAt > $1.createdAt }
         persist()
+        onChange?([note.id], [])
     }
 
     public func update(_ id: String, _ change: (inout Note) -> Void) {
         guard let i = notes.firstIndex(where: { $0.id == id }) else { return }
+        let before = notes[i]
         change(&notes[i])
+        guard notes[i] != before else { return }
+        notes[i].updatedAt = Date()
         persist()
+        onChange?([id], [])
     }
 
     public func remove(_ id: String) {
@@ -70,6 +78,7 @@ public final class NoteStore {
         }
         notes.removeAll { $0.id == id }
         persist()
+        onChange?([], [id])
     }
 
     public func imageURL(_ name: String) -> URL {
@@ -100,6 +109,7 @@ public final class NoteStore {
         }
         var seen = Set(notes.map { Self.dedupeKey($0) })
         var added = 0
+        var addedIDs: [String] = []
         for var n in file.notes where !n.text.isEmpty {
             let key = Self.dedupeKey(n)
             if seen.contains(key) { continue }
@@ -107,11 +117,42 @@ public final class NoteStore {
             if notes.contains(where: { $0.id == n.id }) { n.id = UUID().uuidString }
             n.imageFile = nil
             notes.append(n)
+            addedIDs.append(n.id)
             added += 1
         }
         notes.sort { $0.createdAt > $1.createdAt }
         persist()
+        if !addedIDs.isEmpty { onChange?(addedIDs, []) }
         return added
+    }
+
+    // MARK: iCloud から届いた変更
+
+    /// 他の端末からの変更を当てはめる。新しい方を残す。画像はこの端末のものを残す。onChange は呼ばない
+    public func applyRemote(saved: [Note], deleted: [String]) {
+        var changed = false
+        for var r in saved {
+            if let i = notes.firstIndex(where: { $0.id == r.id }) {
+                guard r.modifiedAt > notes[i].modifiedAt else { continue }
+                r.imageFile = notes[i].imageFile
+                notes[i] = r
+            } else {
+                r.imageFile = nil
+                notes.append(r)
+            }
+            changed = true
+        }
+        let gone = Set(deleted)
+        if notes.contains(where: { gone.contains($0.id) }) {
+            for n in notes where gone.contains(n.id) {
+                if let img = n.imageFile { try? FileManager.default.removeItem(at: imageURL(img)) }
+            }
+            notes.removeAll { gone.contains($0.id) }
+            changed = true
+        }
+        guard changed else { return }
+        notes.sort { $0.createdAt > $1.createdAt }
+        persist()
     }
 
     static func dedupeKey(_ n: Note) -> String {
