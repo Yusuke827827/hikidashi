@@ -12,14 +12,20 @@ public struct InboxItem: Codable, Sendable, Equatable {
     public var comment: String
     /// 一緒に置いた画像（Inbox/ 内のファイル名）
     public var imageFile: String?
+    /// 一緒に置いたファイル（Inbox/ 内のファイル名）と元の名前
+    public var file: String?
+    public var fileTitle: String?
     public var createdAt: Date
 
-    public init(id: String = UUID().uuidString, text: String, url: String? = nil, comment: String = "", imageFile: String? = nil, createdAt: Date = Date()) {
+    public init(id: String = UUID().uuidString, text: String, url: String? = nil, comment: String = "", imageFile: String? = nil,
+                file: String? = nil, fileTitle: String? = nil, createdAt: Date = Date()) {
         self.id = id
         self.text = text
         self.url = url
         self.comment = comment
         self.imageFile = imageFile
+        self.file = file
+        self.fileTitle = fileTitle
         self.createdAt = createdAt
     }
 
@@ -38,13 +44,21 @@ public enum Inbox {
 
     /// 共有されたものを置く（拡張機能から呼ぶ）
     @discardableResult
-    public static func put(text: String, url: String?, comment: String, image: Data?, root: URL = SharedContainer.root) throws -> InboxItem {
+    public static func put(text: String, url: String?, comment: String, image: Data?, file: (data: Data, name: String)? = nil,
+                           root: URL = SharedContainer.root) throws -> InboxItem {
         let dir = directory(in: root)
         var item = InboxItem(text: text, url: url, comment: comment)
         if let image {
             let name = item.id + ".jpg"
             try image.write(to: dir.appendingPathComponent(name), options: .atomic)
             item.imageFile = name
+        }
+        if let file {
+            let ext = (file.name as NSString).pathExtension.lowercased()
+            let name = item.id + "-file" + (ext.isEmpty ? "" : "." + ext)
+            try file.data.write(to: dir.appendingPathComponent(name), options: .atomic)
+            item.file = name
+            item.fileTitle = file.name
         }
         let enc = JSONEncoder()
         enc.dateEncodingStrategy = .millisecondsSince1970
@@ -74,6 +88,12 @@ public enum Inbox {
                 let to = SharedContainer.images(in: root).appendingPathComponent(img)
                 try? fm.removeItem(at: to)
                 if (try? fm.moveItem(at: from, to: to)) == nil { item.imageFile = nil }
+            }
+            if let f = item.file {
+                let from = dir.appendingPathComponent(f)
+                let to = SharedContainer.images(in: root).appendingPathComponent(f)
+                try? fm.removeItem(at: to)
+                if (try? fm.moveItem(at: from, to: to)) == nil { item.file = nil }
             }
             try? fm.removeItem(at: file)
             items.append(item)

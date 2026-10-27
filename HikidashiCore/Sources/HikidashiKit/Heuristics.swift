@@ -149,3 +149,68 @@ extension Heuristics {
             .map { $0 }
     }
 }
+
+/// 「似たフォルダをまとめますか？」の提案
+public struct FolderMergeSuggestion: Sendable, Equatable {
+    /// まとめられる側（消える）
+    public var from: String
+    /// まとめる先（メモの多い方）
+    public var into: String
+    /// 提案を「別のままにする」で消したときの鍵（順序によらない）
+    public var key: String { [from, into].sorted().joined(separator: "|") }
+}
+
+extension Heuristics {
+    /// 名前が似ている（片方がもう片方を含む、または 2 文字ずつの重なりが多い）か、
+    /// 中のメモのタグ・使う場面が多く重なるフォルダの組を、似ている順に返す
+    public static func folderMergeSuggestions(_ notes: [Note], folders: [String], dismissed: Set<String> = [], limit: Int = 2) -> [FolderMergeSuggestion] {
+        let other = otherFolder
+        let names = folders.filter { $0 != other && !$0.isEmpty }
+        guard names.count >= 2 else { return [] }
+        var count: [String: Int] = [:]
+        var words: [String: Set<String>] = [:]
+        for n in notes {
+            count[n.category, default: 0] += 1
+            words[n.category, default: []].formUnion((n.tags + n.situations).map { $0.lowercased() })
+        }
+        var found: [(s: FolderMergeSuggestion, score: Double)] = []
+        for i in 0..<names.count {
+            for j in (i + 1)..<names.count {
+                let a = names[i], b = names[j]
+                let score = max(nameSimilarity(a, b), jaccard(words[a] ?? [], words[b] ?? []))
+                guard score >= 0.5 else { continue }
+                let ca = count[a] ?? 0, cb = count[b] ?? 0
+                let s = ca >= cb ? FolderMergeSuggestion(from: b, into: a) : FolderMergeSuggestion(from: a, into: b)
+                guard !dismissed.contains(s.key) else { continue }
+                found.append((s: s, score: score))
+            }
+        }
+        found.sort { $0.score > $1.score }
+        return found.prefix(limit).map { $0.s }
+    }
+
+    /// 名前の近さ（0〜1）
+    static func nameSimilarity(_ a: String, _ b: String) -> Double {
+        let x = a.lowercased(), y = b.lowercased()
+        if x == y { return 1 }
+        let short = x.count <= y.count ? x : y, long = x.count <= y.count ? y : x
+        if short.count >= 2, long.contains(short) { return 0.9 }
+        // 「・」や「&」で区切った言葉が共通なら似ている（「お金」と「お金・節約」は上で拾う）
+        let sep = CharacterSet(charactersIn: "・&/、, ")
+        let wa = Set(x.components(separatedBy: sep).filter { $0.count >= 2 })
+        let wb = Set(y.components(separatedBy: sep).filter { $0.count >= 2 })
+        if !wa.isDisjoint(with: wb) { return 0.8 }
+        return jaccard(bigrams(x), bigrams(y))
+    }
+
+    static func bigrams(_ s: String) -> Set<String> {
+        let c = Array(s.filter { !$0.isWhitespace })
+        guard c.count >= 2 else { return [s] }
+        return Set((0..<(c.count - 1)).map { String(c[$0...$0 + 1]) })
+    }
+
+    static func jaccard(_ a: Set<String>, _ b: Set<String>) -> Double {
+        guard !a.isEmpty, !b.isEmpty else { return 0 }
+        return Double(a.intersection(b).count) / Double(a.union(b).count)
+    }
+}

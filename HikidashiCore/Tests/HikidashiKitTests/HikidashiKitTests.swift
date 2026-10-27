@@ -375,3 +375,92 @@ final class SyncAndPlaceTests: XCTestCase {
         XCTAssertEqual(picked.first?.id, "3", "ピン留めが先")
     }
 }
+
+@MainActor
+final class FolderAndAttachmentTests: XCTestCase {
+    func makeStore() throws -> NoteStore {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent("hikidashi-test-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        return NoteStore(root: root)
+    }
+
+    func testFolderManagement() throws {
+        let store = try makeStore()
+        store.add(Note(id: "1", text: "a", category: "お金"))
+        store.add(Note(id: "2", text: "b", category: "お金・節約"))
+        store.add(Note(id: "3", text: "c", category: "お金・節約"))
+        XCTAssertTrue(store.createFolder("レシピ"))
+        XCTAssertFalse(store.createFolder("お金"), "同じ名前は作らない")
+        XCTAssertEqual(store.folderCounts["レシピ"], 0)
+        store.setFavoriteFolder("レシピ", true)
+        XCTAssertEqual(store.folders.first, "レシピ", "お気に入りが先")
+
+        store.mergeFolders(["お金"], into: "お金・節約")
+        XCTAssertEqual(store.note("1")?.category, "お金・節約")
+        XCTAssertNil(store.folderCounts["お金"])
+
+        store.renameFolder("レシピ", to: "料理")
+        XCTAssertTrue(store.isFavoriteFolder("料理"), "お気に入りは引き継ぐ")
+        XCTAssertNil(store.folderCounts["レシピ"])
+
+        store.deleteFolder("お金・節約")
+        XCTAssertEqual(store.note("2")?.category, Heuristics.otherFolder)
+
+        let again = NoteStore(root: store.root)
+        XCTAssertTrue(again.isFavoriteFolder("料理"), "保存される")
+    }
+
+    func testMergeSuggestions() {
+        let notes = [
+            Note(text: "", category: "お金・節約"), Note(text: "", category: "お金・節約"), Note(text: "", category: "お金"),
+            Note(text: "", category: "料理", tags: ["レシピ", "時短", "作り置き"]),
+            Note(text: "", category: "ごはん", tags: ["レシピ", "時短", "作り置き"]),
+            Note(text: "", category: "旅行"),
+        ]
+        let folders = ["お金・節約", "お金", "料理", "ごはん", "旅行"]
+        let all = Heuristics.folderMergeSuggestions(notes, folders: folders, limit: 5)
+        XCTAssertTrue(all.contains(FolderMergeSuggestion(from: "お金", into: "お金・節約")))
+        XCTAssertTrue(all.contains { Set([$0.from, $0.into]) == Set(["料理", "ごはん"]) }, "タグが重なるフォルダ")
+        XCTAssertFalse(all.contains { $0.from == "旅行" || $0.into == "旅行" })
+        let key = FolderMergeSuggestion(from: "お金", into: "お金・節約").key
+        XCTAssertFalse(Heuristics.folderMergeSuggestions(notes, folders: folders, dismissed: [key], limit: 5).contains { $0.key == key })
+    }
+
+    func testExtractorHelpers() {
+        XCTAssertEqual(TextExtractor.kind(ofExtension: "PDF"), .pdf)
+        XCTAssertEqual(TextExtractor.kind(ofExtension: "heic"), .image)
+        XCTAssertEqual(TextExtractor.kind(ofExtension: "md"), .text)
+        let once = TextExtractor.merge("", extracted: "読んだ文字", marker: TextExtractor.fileMarker)
+        XCTAssertEqual(once, TextExtractor.fileMarker + "読んだ文字")
+        XCTAssertEqual(TextExtractor.merge(once, extracted: "別", marker: TextExtractor.fileMarker), once)
+    }
+
+    func testTextFileExtraction() async {
+        let t = await TextExtractor.text(fromFile: Data("買い物リスト\n牛乳".utf8), extension: "txt")
+        XCTAssertEqual(t, "買い物リスト\n牛乳")
+    }
+
+    func testAttachmentIsReadWithoutAI() async throws {
+        let store = try makeStore()
+        let lib = Librarian(store: store, credentialProvider: { nil }, onDevice: nil, linkFetcher: { _ in nil },
+                            textExtractor: { _, ext in ext == "pdf" ? "請求書 10月分 支払期限 11/30" : nil })
+        let note = lib.save(text: "", url: nil, image: nil, file: (data: Data("%PDF".utf8), name: "請求書.pdf"))
+        XCTAssertEqual(note.fileTitle, "請求書.pdf")
+        XCTAssertTrue(FileManager.default.fileExists(atPath: store.imageURL(try XCTUnwrap(note.file)).path))
+        await lib.fileAll()
+        let n = try XCTUnwrap(store.note(note.id))
+        XCTAssertTrue(n.text.contains("支払期限"))
+        XCTAssertTrue(n.enriched)
+        XCTAssertTrue(n.title.contains("請求書"), "AI が無くても取り出した文字でタイトルを付ける")
+    }
+
+    func testInboxCarriesFile() throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent("hikidashi-test-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        try Inbox.put(text: "", url: nil, comment: "", image: nil, file: (data: Data("hello".utf8), name: "memo.txt"), root: root)
+        let items = Inbox.drain(root: root)
+        let f = try XCTUnwrap(items.first?.file)
+        XCTAssertEqual(items.first?.fileTitle, "memo.txt")
+        XCTAssertTrue(FileManager.default.fileExists(atPath: SharedContainer.images(in: root).appendingPathComponent(f).path))
+    }
+}

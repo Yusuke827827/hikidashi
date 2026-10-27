@@ -26,6 +26,8 @@ public struct HikidashiRootView: View {
     @State private var pickSkip = 0
     @State private var toast: String?
     @State private var jumpTarget: String?
+    @State private var managingFolders = false
+    @State private var mergeRefresh = 0
 
     @MainActor
     public init() {
@@ -51,6 +53,9 @@ public struct HikidashiRootView: View {
                         if let recall { recallCard(recall) }
                         if let pick = Heuristics.todaysPick(store.notes, skip: pickSkip) { pickCard(pick) }
                         upcoming
+                        if let s = mergeSuggestion {
+                            MergeSuggestionCard(suggestion: s, store: store) { withAnimation { mergeRefresh += 1 } }
+                        }
                         if store.notes.isEmpty { emptyState } else { folderBar; listHeader; notesList }
                     }
                     .padding(.horizontal, 16)
@@ -70,6 +75,9 @@ public struct HikidashiRootView: View {
         .preferredColorScheme(wallpaper.scheme)
         .sheet(item: $editing) { n in
             NoteEditor(note: n, librarian: librarian).environment(\.palette, palette).tint(palette.accent)
+        }
+        .sheet(isPresented: $managingFolders, onDismiss: { mergeRefresh += 1 }) {
+            FolderManagerView(store: store).environment(\.palette, palette).tint(palette.accent)
         }
         .sheet(isPresented: $showSettings) {
             SettingsView(librarian: librarian, wallpaperRaw: $wallpaperRaw).environment(\.palette, palette).tint(palette.accent)
@@ -260,11 +268,16 @@ public struct HikidashiRootView: View {
         return d.formatted(.dateTime.year().month(.wide).locale(AppLanguage.current.locale))
     }
 
+    /// 似ているフォルダをまとめる提案（1 件だけ）
+    private var mergeSuggestion: FolderMergeSuggestion? {
+        _ = mergeRefresh
+        guard !DemoMode.isOn else { return nil }
+        return Heuristics.folderMergeSuggestions(store.notes, folders: store.folders, dismissed: MergeDismissals.all, limit: 1).first
+    }
+
     private var folderBar: some View {
-        let counts = Dictionary(grouping: store.notes, by: folderKey).mapValues(\.count)
-        let keys = folderMode == .topic
-            ? counts.keys.sorted { (counts[$0]!, $1) > (counts[$1]!, $0) }
-            : counts.keys.sorted(by: >)
+        let counts = folderMode == .topic ? store.folderCounts : Dictionary(grouping: store.notes, by: folderKey).mapValues(\.count)
+        let keys = folderMode == .topic ? store.folders : counts.keys.sorted(by: >)
         let pinned = store.notes.filter(\.pinned).count
         return VStack(alignment: .leading, spacing: 10) {
             HStack {
@@ -277,12 +290,19 @@ public struct HikidashiRootView: View {
                 .pickerStyle(.segmented)
                 .frame(width: 150)
                 .onChange(of: folderMode) { _, _ in folder = Self.allKey }
+                Button { managingFolders = true } label: {
+                    Image(systemName: "folder.badge.gearshape").frame(width: 36, height: 34)
+                }
+                .foregroundStyle(palette.muted)
+                .accessibilityLabel(L("フォルダの管理", "Manage folders"))
             }
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 6) {
                     folderTab(Self.allKey, L("すべて", "All"), store.notes.count)
-                    if pinned > 0 { folderTab(Self.pinKey, "★ " + L("ピン留め", "Pinned"), pinned) }
-                    ForEach(keys, id: \.self) { k in folderTab(k, folderLabel(k), counts[k] ?? 0) }
+                    if pinned > 0 { folderTab(Self.pinKey, "★ " + L("お気に入り", "Favorites"), pinned) }
+                    ForEach(keys, id: \.self) { k in
+                        folderTab(k, (folderMode == .topic && store.isFavoriteFolder(k) ? "★ " : "") + folderLabel(k), counts[k] ?? 0)
+                    }
                 }
             }
         }

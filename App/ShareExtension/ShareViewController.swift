@@ -24,7 +24,8 @@ final class ShareViewController: UIViewController {
 
     private func save(_ model: SharedPayload, comment: String) {
         do {
-            try Inbox.put(text: model.text, url: model.url, comment: comment, image: model.image)
+            try Inbox.put(text: model.text, url: model.url, comment: comment, image: model.image,
+                          file: model.file.map { (data: $0.data, name: $0.name) })
             extensionContext?.completeRequest(returningItems: nil)
         } catch {
             model.error = L("保存できませんでした。", "Couldn't save.")
@@ -42,6 +43,8 @@ final class SharedPayload: ObservableObject {
     @Published var text = ""
     @Published var url: String?
     @Published var image: Data?
+    /// PDF などのファイル（文字は次にアプリを開いたときに取り出す）
+    @Published var file: (data: Data, name: String)?
     @Published var loading = true
     @Published var error: String?
 
@@ -50,6 +53,10 @@ final class SharedPayload: ObservableObject {
         for item in items {
             if let s = item.attributedContentText?.string, !s.isEmpty { texts.append(s) }
             for provider in item.attachments ?? [] {
+                if file == nil, image == nil, let type = Self.fileType(provider) {
+                    file = await Self.loadFile(provider, type: type)
+                    if file != nil { continue }
+                }
                 if provider.hasItemConformingToTypeIdentifier(UTType.url.identifier), url == nil {
                     if let u = await Self.loadURL(provider), !u.isFileURL { url = u.absoluteString }
                 } else if provider.hasItemConformingToTypeIdentifier(UTType.image.identifier), image == nil {
@@ -69,6 +76,33 @@ final class SharedPayload: ObservableObject {
             return k != url
         }.joined(separator: "\n\n")
         loading = false
+    }
+
+    /// 画像・URL・文以外のファイル（PDF、テキストファイルなど）の種類
+    nonisolated static func fileType(_ p: NSItemProvider) -> UTType? {
+        if p.hasItemConformingToTypeIdentifier(UTType.pdf.identifier) { return .pdf }
+        if p.hasItemConformingToTypeIdentifier(UTType.image.identifier) { return nil }
+        for id in p.registeredTypeIdentifiers {
+            guard let t = UTType(id), t.conforms(to: .data) else { continue }
+            if t.conforms(to: .plainText) && !t.conforms(to: .fileURL) { continue }
+            if t.conforms(to: .text) || t.conforms(to: .commaSeparatedText) || t.conforms(to: .json) { return t }
+        }
+        return nil
+    }
+
+    nonisolated static func loadFile(_ p: NSItemProvider, type: UTType) async -> (data: Data, name: String)? {
+        await withCheckedContinuation { c in
+            _ = p.loadFileRepresentation(forTypeIdentifier: type.identifier) { url, _ in
+                guard let url, let data = try? Data(contentsOf: url), data.count <= 20_000_000 else {
+                    c.resume(returning: nil)
+                    return
+                }
+                let base = p.suggestedName ?? url.deletingPathExtension().lastPathComponent
+                let ext = url.pathExtension.isEmpty ? (type.preferredFilenameExtension ?? "") : url.pathExtension
+                let name = (base as NSString).pathExtension.isEmpty && !ext.isEmpty ? base + "." + ext : base
+                c.resume(returning: (data: data, name: name))
+            }
+        }
     }
 
     nonisolated static func loadURL(_ p: NSItemProvider) async -> URL? {
@@ -129,13 +163,16 @@ struct ShareView: View {
                         if let data = model.image, let ui = UIImage(data: data) {
                             Image(uiImage: ui).resizable().scaledToFit().frame(maxHeight: 220).clipShape(RoundedRectangle(cornerRadius: 10))
                         }
+                        if let f = model.file {
+                            Label(f.name, systemImage: "doc.text").font(.callout)
+                        }
                         if !model.text.isEmpty {
                             Text(model.text).font(.callout).lineLimit(8)
                         }
                         if let url = model.url {
                             Text(url).font(.footnote).foregroundStyle(accent).lineLimit(2)
                         }
-                        if model.text.isEmpty && model.url == nil && model.image == nil {
+                        if model.text.isEmpty && model.url == nil && model.image == nil && model.file == nil {
                             Text(L("共有された内容を読み取れませんでした。下にメモを書いて保存できます。", "Couldn't read what was shared. You can still write a note below."))
                                 .font(.footnote).foregroundStyle(.secondary)
                         }
@@ -145,7 +182,7 @@ struct ShareView: View {
                         .lineLimit(2...5)
                         .padding(12)
                         .background(RoundedRectangle(cornerRadius: 10).fill(bg))
-                    Text(L("X の投稿は、本文が共有されないことがあります。そのときはスクショを共有すると、AI が文字を読み取ります。", "Posts on X sometimes share only a link. Share a screenshot instead and Claude will read the text."))
+                    Text(L("X の投稿は、本文が共有されないことがあります。そのときはスクショを共有すると、AI が文字を読み取ります。", "Posts on X sometimes share only a link. Share a screenshot instead and the text will be read from it."))
                         .font(.caption).foregroundStyle(.secondary)
                     if let e = model.error { Text(e).font(.footnote).foregroundStyle(accent) }
                 }
@@ -161,7 +198,7 @@ struct ShareView: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button(L("しまう", "Save")) { onSave(comment) }
                         .bold()
-                        .disabled(model.loading || (model.text.isEmpty && model.url == nil && model.image == nil && comment.isEmpty))
+                        .disabled(model.loading || (model.text.isEmpty && model.url == nil && model.image == nil && model.file == nil && comment.isEmpty))
                 }
             }
         }

@@ -44,6 +44,11 @@ public struct Note: Codable, Identifiable, Hashable, Sendable {
     public var filed: Bool
     /// 添付したスクショ（保存フォルダ内 Images/ のファイル名）
     public var imageFile: String?
+    /// 添付したファイル（保存フォルダ内 Images/ のファイル名）と、元のファイル名
+    public var file: String?
+    public var fileTitle: String?
+    /// 画像・ファイル・リンク先から文字を取り出し済みか
+    public var enriched: Bool
     /// 着いたら知らせる場所
     public var place: Place?
     /// 最後に変えた日時（iCloud の同期で新しい方を残すため）
@@ -69,6 +74,9 @@ public struct Note: Codable, Identifiable, Hashable, Sendable {
         example: Bool = false,
         filed: Bool = false,
         imageFile: String? = nil,
+        file: String? = nil,
+        fileTitle: String? = nil,
+        enriched: Bool = false,
         place: Place? = nil,
         updatedAt: Date? = nil
     ) {
@@ -88,12 +96,15 @@ public struct Note: Codable, Identifiable, Hashable, Sendable {
         self.example = example
         self.filed = filed
         self.imageFile = imageFile
+        self.file = file
+        self.fileTitle = fileTitle
+        self.enriched = enriched
         self.place = place
         self.updatedAt = updatedAt
     }
 
     enum CodingKeys: String, CodingKey {
-        case id, text, url, title, summary, category, tags, situations, remindAt, createdAt, pinned, helpful, lastSeen, example, filed, imageFile, place, updatedAt
+        case id, text, url, title, summary, category, tags, situations, remindAt, createdAt, pinned, helpful, lastSeen, example, filed, imageFile, file, fileTitle, enriched, place, updatedAt
     }
 
     public init(from decoder: Decoder) throws {
@@ -122,6 +133,10 @@ public struct Note: Codable, Identifiable, Hashable, Sendable {
         // Web 版のメモは整理済み（filed の項目が無い）として扱う
         filed = try c.decodeIfPresent(Bool.self, forKey: .filed) ?? true
         imageFile = try c.decodeIfPresent(String.self, forKey: .imageFile)
+        file = try c.decodeIfPresent(String.self, forKey: .file)
+        fileTitle = try c.decodeIfPresent(String.self, forKey: .fileTitle)
+        // Web 版のメモ（項目なし）は取り出し済みとして扱う
+        enriched = try c.decodeIfPresent(Bool.self, forKey: .enriched) ?? true
         place = try? c.decodeIfPresent(Place.self, forKey: .place)
         updatedAt = Self.decodeDate(c, .updatedAt)
     }
@@ -144,6 +159,9 @@ public struct Note: Codable, Identifiable, Hashable, Sendable {
         try c.encode(example, forKey: .example)
         try c.encode(filed, forKey: .filed)
         try c.encodeIfPresent(imageFile, forKey: .imageFile)
+        try c.encodeIfPresent(file, forKey: .file)
+        try c.encodeIfPresent(fileTitle, forKey: .fileTitle)
+        try c.encode(enriched, forKey: .enriched)
         try c.encodeIfPresent(place, forKey: .place)
         try c.encodeIfPresent(updatedAt.map(Self.millis), forKey: .updatedAt)
     }

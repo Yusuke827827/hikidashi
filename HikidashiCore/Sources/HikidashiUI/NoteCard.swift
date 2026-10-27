@@ -2,6 +2,7 @@
 
 #if os(iOS)
 import HikidashiKit
+import QuickLook
 import SwiftUI
 
 struct NoteCard: View {
@@ -15,6 +16,7 @@ struct NoteCard: View {
     @State private var expanded = false
     @State private var confirmDelete = false
     @State private var sharedImage: SharedImage?
+    @State private var previewURL: URL?
 
     private var store: NoteStore { librarian.store }
 
@@ -48,6 +50,18 @@ struct NoteCard: View {
                     .scaledToFit()
                     .frame(maxHeight: expanded ? 420 : 160)
                     .clipShape(RoundedRectangle(cornerRadius: 8))
+            }
+            if let f = note.file {
+                Button { previewURL = store.imageURL(f) } label: {
+                    Label(note.fileTitle ?? f, systemImage: "doc.text")
+                        .font(.footnote.weight(.semibold))
+                        .lineLimit(1)
+                        .padding(.horizontal, 10)
+                        .frame(minHeight: 32)
+                        .background(RoundedRectangle(cornerRadius: 8).fill(p.surface2))
+                }
+                .foregroundStyle(p.text)
+                .quickLookPreview($previewURL)
             }
             chips
             if expanded { details }
@@ -108,7 +122,7 @@ struct NoteCard: View {
                 Image(systemName: note.pinned ? "star.fill" : "star").frame(width: 36, height: 32)
             }
             .foregroundStyle(note.pinned ? p.accent : p.muted)
-            .accessibilityLabel(L("ピン", "Pin"))
+            .accessibilityLabel(L("お気に入り", "Favorite"))
             Button {
                 store.update(note.id) { $0.helpful += 1 }
             } label: {

@@ -4,6 +4,7 @@
 import HikidashiKit
 import PhotosUI
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct CaptureCard: View {
     enum Mode: Hashable { case save, recall }
@@ -19,6 +20,10 @@ struct CaptureCard: View {
     @State private var showURL = false
     @State private var photo: PhotosPickerItem?
     @State private var imageData: Data?
+    /// 添付したファイル（PDF・テキストなど）
+    @State private var attachment: (data: Data, name: String)?
+    @State private var importingFile = false
+    @State private var scanning = false
     @State private var query = ""
     @State private var searching = false
     @State private var speech = SpeechInput()
@@ -45,6 +50,30 @@ struct CaptureCard: View {
             }
         }
         .card()
+        .fileImporter(isPresented: $importingFile, allowedContentTypes: [.pdf, .plainText, .text, .image, .commaSeparatedText, .json]) { result in
+            guard case let .success(url) = result else { return }
+            let scoped = url.startAccessingSecurityScopedResource()
+            defer { if scoped { url.stopAccessingSecurityScopedResource() } }
+            guard let data = try? Data(contentsOf: url) else { return }
+            guard data.count <= 20_000_000 else {
+                onToast(L("ファイルが大きすぎます（20MB まで）。", "That file is too large (20 MB max)."))
+                return
+            }
+            if TextExtractor.kind(ofExtension: url.pathExtension) == .image {
+                imageData = ImageTools.jpeg(data: data)
+            } else {
+                attachment = (data: data, name: url.lastPathComponent)
+            }
+        }
+        .fullScreenCover(isPresented: $scanning) {
+            DocumentScanner { pdf in
+                scanning = false
+                if let pdf {
+                    attachment = (data: pdf, name: L("スキャン", "Scan") + " " + Heuristics.dayFormatter.string(from: Date()) + ".pdf")
+                }
+            }
+            .ignoresSafeArea()
+        }
         .onChange(of: photo) { _, item in
             guard let item else { return }
             Task {
@@ -83,10 +112,23 @@ struct CaptureCard: View {
             if let imageData, let ui = UIImage(data: imageData) {
                 HStack(spacing: 10) {
                     Image(uiImage: ui).resizable().scaledToFill().frame(width: 54, height: 54).clipShape(RoundedRectangle(cornerRadius: 8))
-                    Text(L("スクショから文字を読み取って保存します", "Text will be read from the screenshot"))
+                    Text(L("画像の文字を読み取って整理します", "Text in the image will be read and filed"))
                         .font(.footnote).foregroundStyle(p.muted)
                     Spacer()
                     Button(L("外す", "Remove")) { self.imageData = nil; photo = nil }.font(.footnote)
+                }
+            }
+            if let a = attachment {
+                HStack(spacing: 10) {
+                    Image(systemName: "doc.text").font(.title2).frame(width: 54, height: 54)
+                        .background(RoundedRectangle(cornerRadius: 8).fill(p.surface2))
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(a.name).font(.footnote.weight(.semibold)).foregroundStyle(p.text).lineLimit(1)
+                        Text(L("ファイルの文字を読み取って整理します", "Text in the file will be read and filed"))
+                            .font(.caption).foregroundStyle(p.muted)
+                    }
+                    Spacer()
+                    Button(L("外す", "Remove")) { attachment = nil }.font(.footnote)
                 }
             }
             HStack(spacing: 4) {
@@ -94,7 +136,17 @@ struct CaptureCard: View {
                 PhotosPicker(selection: $photo, matching: .images) {
                     Image(systemName: "photo").frame(width: 40, height: 40)
                 }
-                .accessibilityLabel(L("スクショを添付", "Attach screenshot"))
+                .accessibilityLabel(L("写真・スクショを添付", "Attach a photo or screenshot"))
+                Button { importingFile = true } label: {
+                    Image(systemName: "paperclip").frame(width: 40, height: 40)
+                }
+                .accessibilityLabel(L("ファイルを添付", "Attach a file"))
+                if DocumentScanner.isAvailable {
+                    Button { scanning = true } label: {
+                        Image(systemName: "doc.viewfinder").frame(width: 40, height: 40)
+                    }
+                    .accessibilityLabel(L("書類をスキャン", "Scan a document"))
+                }
                 Button { showURL.toggle() } label: {
                     Image(systemName: "link").frame(width: 40, height: 40)
                 }
@@ -108,16 +160,17 @@ struct CaptureCard: View {
 
     private func save() {
         let t = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !t.isEmpty || imageData != nil else {
-            onToast(L("テキストを書くか、スクショを付けてください。", "Write something or attach a screenshot first."))
+        guard !t.isEmpty || imageData != nil || attachment != nil else {
+            onToast(L("テキストを書くか、写真やファイルを付けてください。", "Write something or attach a photo or file first."))
             return
         }
         if speech.isRecording { speech.stop() }
-        let note = librarian.save(text: t, url: url, image: imageData)
+        let note = librarian.save(text: t, url: url, image: imageData, file: attachment)
         text = ""
         url = ""
         showURL = false
         imageData = nil
+        attachment = nil
         photo = nil
         focused = false
         onToast(librarian.hasAI

@@ -41,17 +41,20 @@ public final class Librarian {
     private let credentialProvider: @MainActor () -> ClaudeClient.Credential?
     private let onDevice: (any NoteAI)?
     private let linkFetcher: @Sendable (String) async -> LinkPreview?
+    private let textExtractor: @Sendable (Data, String) async -> String?
 
     /// credentialProvider: Claude の呼び方を返す（無ければ nil）
     /// onDevice: iPhone の中の AI（使えない端末では nil）
     public init(store: NoteStore,
                 credentialProvider: @escaping @MainActor () -> ClaudeClient.Credential? = Librarian.apiKeyCredential,
                 onDevice: (any NoteAI)? = OnDeviceAI.make(),
-                linkFetcher: @escaping @Sendable (String) async -> LinkPreview? = { await LinkFetcher.fetch($0) }) {
+                linkFetcher: @escaping @Sendable (String) async -> LinkPreview? = { await LinkFetcher.fetch($0) },
+                textExtractor: @escaping @Sendable (Data, String) async -> String? = { await TextExtractor.text(fromFile: $0, extension: $1) }) {
         self.store = store
         self.credentialProvider = credentialProvider
         self.onDevice = onDevice
         self.linkFetcher = linkFetcher
+        self.textExtractor = textExtractor
     }
 
     /// 端末に保存した自分の API キーを使う
@@ -77,7 +80,8 @@ public final class Librarian {
     public func ingestInbox() -> Int {
         let items = Inbox.drain(root: store.root)
         for item in items {
-            var note = Note(text: item.noteText, url: item.url, createdAt: item.createdAt, filed: false, imageFile: item.imageFile)
+            var note = Note(text: item.noteText, url: item.url, createdAt: item.createdAt, filed: false, imageFile: item.imageFile,
+                            file: item.file, fileTitle: item.fileTitle)
             Heuristics.file(&note)
             store.add(note)
         }
@@ -86,14 +90,21 @@ public final class Librarian {
 
     /// アプリ内で書いたメモを保存する（すぐ一覧に出し、整理は後から）
     @discardableResult
-    public func save(text: String, url: String?, image: Data?) -> Note {
+    public func save(text: String, url: String?, image: Data?, file: (data: Data, name: String)? = nil) -> Note {
         var imageFile: String?
+        var fileName: String?
         let id = UUID().uuidString
         if let image {
             let name = id + ".jpg"
             if (try? image.write(to: store.imageURL(name), options: .atomic)) != nil { imageFile = name }
         }
-        var note = Note(id: id, text: text.trimmingCharacters(in: .whitespacesAndNewlines), url: Note.nonEmpty(url), filed: false, imageFile: imageFile)
+        if let file {
+            let ext = (file.name as NSString).pathExtension
+            let name = id + (ext.isEmpty ? "" : "." + ext.lowercased())
+            if (try? file.data.write(to: store.imageURL(name), options: .atomic)) != nil { fileName = name }
+        }
+        var note = Note(id: id, text: text.trimmingCharacters(in: .whitespacesAndNewlines), url: Note.nonEmpty(url), filed: false, imageFile: imageFile,
+                        file: fileName, fileTitle: file?.name)
         Heuristics.file(&note)
         store.add(note)
         return note
@@ -101,10 +112,9 @@ public final class Librarian {
 
     // MARK: 整理
 
-    /// 未整理のメモをまとめて整理する
+    /// 未整理のメモをまとめて整理する（AI が無くても、画像・ファイル・リンク先の文字は取り出す）
     public func fileAll() async {
-        guard ai != nil else { return }
-        let pending = store.notes.filter { !$0.filed && !filing.contains($0.id) }.map(\.id)
+        let pending = store.notes.filter { (!$0.filed || !$0.enriched) && !filing.contains($0.id) }.map(\.id)
         for id in pending {
             await file(id)
         }
@@ -112,14 +122,14 @@ public final class Librarian {
 
     /// 1 件を AI で整理する（再整理にも使う）
     public func file(_ id: String) async {
-        guard let ai = ai, var note = store.note(id), !filing.contains(id) else { return }
+        guard var note = store.note(id), !filing.contains(id) else { return }
         filing.insert(id)
         defer { filing.remove(id) }
-        // 初めて整理するときだけ、リンク先のタイトルと説明を本文に足す
-        if !note.filed, let url = note.url, !note.text.contains(LinkFetcher.marker), let preview = await linkFetcher(url) {
-            store.update(id) { $0.text = LinkFetcher.merge($0.text, preview) }
+        if !note.enriched {
+            await enrich(id)
             if let updated = store.note(id) { note = updated }
         }
+        guard let ai = ai else { return }
         // スクショだけのメモは、文字を読めない AI では整理できない
         if !ai.readsImages, note.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { return }
         // スクショの文字は Claude だけが読める
@@ -134,6 +144,36 @@ public final class Librarian {
         } catch {
             // iPhone の中の AI が失敗したときは、簡易の整理のまま黙って続ける
             if aiKind == .claude { lastError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription }
+        }
+    }
+
+    /// 画像の文字（OCR）・添付ファイルの文字・リンク先のタイトルと説明を本文に足す（1 回だけ、端末の中で）
+    func enrich(_ id: String) async {
+        guard let note = store.note(id), !note.enriched else { return }
+        let before = note.text
+        var text = note.text
+        if let url = note.url, !text.contains(LinkFetcher.marker), let preview = await linkFetcher(url) {
+            text = LinkFetcher.merge(text, preview)
+        }
+        if let img = note.imageFile, !text.contains(TextExtractor.imageMarker),
+           let data = try? Data(contentsOf: store.imageURL(img)), let t = await textExtractor(data, "jpg") {
+            text = TextExtractor.merge(text, extracted: t, marker: TextExtractor.imageMarker)
+        }
+        if let f = note.file, !text.contains(TextExtractor.fileMarker),
+           let data = try? Data(contentsOf: store.imageURL(f)), let t = await textExtractor(data, (f as NSString).pathExtension) {
+            text = TextExtractor.merge(text, extracted: t, marker: TextExtractor.fileMarker)
+        }
+        let wasEmpty = before.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        store.update(id) { n in
+            n.text = text
+            n.enriched = true
+            // 本文が空だったメモは、取り出した文字でタイトルとフォルダを付け直す（AI が無いときのため）
+            if wasEmpty, !n.filed, text != before {
+                n.title = Heuristics.title(for: text.replacingOccurrences(of: TextExtractor.imageMarker, with: "")
+                    .replacingOccurrences(of: TextExtractor.fileMarker, with: "")
+                    .replacingOccurrences(of: LinkFetcher.marker, with: ""))
+                n.category = Heuristics.folder(for: text)
+            }
         }
     }
 

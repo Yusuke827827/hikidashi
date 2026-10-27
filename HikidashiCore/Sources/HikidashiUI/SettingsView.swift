@@ -19,6 +19,7 @@ struct SettingsView: View {
     @State private var exportURL: URL?
     @State private var calendarOn = EventReminders.isOn
     @State private var cloudOn = CloudSync.isOn
+    @State private var managingFolders = false
 
     var body: some View {
         NavigationStack {
@@ -137,6 +138,9 @@ struct SettingsView: View {
                         ShareLink(item: exportURL) { Label(L("書き出す（JSON）", "Export (JSON)"), systemImage: "square.and.arrow.up") }
                     }
                     Button { importing = true } label: { Label(L("読み込む（JSON）", "Import (JSON)"), systemImage: "square.and.arrow.down") }
+                    Button { managingFolders = true } label: {
+                        Label(L("フォルダの管理", "Manage folders"), systemImage: "folder.badge.gearshape")
+                    }
                     Button { librarian.addExamples(); message = L("見本を 3 件入れました。", "Added 3 examples.") } label: {
                         Label(L("見本を入れる", "Add examples"), systemImage: "text.badge.plus")
                     }
@@ -159,6 +163,7 @@ struct SettingsView: View {
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) { Button(L("完了", "Done")) { dismiss() } }
             }
+            .sheet(isPresented: $managingFolders) { FolderManagerView(store: librarian.store) }
             .fileImporter(isPresented: $importing, allowedContentTypes: [.json]) { result in
                 guard case let .success(url) = result else { return }
                 let scoped = url.startAccessingSecurityScopedResource()
