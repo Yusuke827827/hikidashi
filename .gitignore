@@ -10,3 +10,5 @@ App/ShareExtension/Info.plist
 App/ShareExtension/HikidashiShare.entitlements
 build/
 screenshots/
+App/Widget/Info.plist
+App/Widget/HikidashiWidget.entitlements

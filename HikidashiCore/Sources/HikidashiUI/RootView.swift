@@ -4,6 +4,7 @@
 #if os(iOS)
 import HikidashiKit
 import SwiftUI
+import CoreSpotlight
 import UserNotifications
 
 public struct HikidashiRootView: View {
@@ -92,6 +93,16 @@ public struct HikidashiRootView: View {
             guard let q else { return }
             NotificationRouter.shared.recallQuery = nil
             Task { recall = await librarian.recall(q) }
+        }
+        .onOpenURL { AppRouter.handle($0) }
+        .onContinueUserActivity(CSSearchableItemActionType) { activity in
+            if let id = Spotlight.noteID(from: activity) { AppRouter.open(noteID: id) }
+        }
+        // メモが変わったら、ウィジェットと iPhone の検索を新しくする
+        .onChange(of: store.notes) { _, notes in
+            guard !DemoMode.isOn else { return }
+            AppRouter.reloadWidgets()
+            Spotlight.index(notes)
         }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { Task { await refresh() } }

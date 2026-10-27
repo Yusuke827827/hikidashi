@@ -41,6 +41,7 @@ targets:
       - package: HikidashiCore
         product: HikidashiKit
       - target: HikidashiShare
+      - target: HikidashiWidget
     entitlements:
       path: Hikidashi.entitlements
       properties:
@@ -59,6 +60,9 @@ targets:
         MindrawerPlusProductID: $(PLUS_PRODUCT_ID)
         MindrawerPrivacyURL: $(PRIVACY_URL)
         UILaunchScreen: {}
+        CFBundleURLTypes:
+          - CFBundleURLName: $(PRODUCT_BUNDLE_IDENTIFIER)
+            CFBundleURLSchemes: [mindrawer]
         UIApplicationSceneManifest:
           UIApplicationSupportsMultipleScenes: false
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
@@ -107,4 +111,31 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: $(BUNDLE_PREFIX).share
+        TARGETED_DEVICE_FAMILY: "1,2"
+
+  HikidashiWidget:
+    type: app-extension
+    platform: iOS
+    sources:
+      - Widget
+    dependencies:
+      - package: HikidashiCore
+        product: HikidashiKit
+    entitlements:
+      path: Widget/HikidashiWidget.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - $(APP_GROUP)
+    info:
+      path: Widget/Info.plist
+      properties:
+        CFBundleDisplayName: Mindrawer
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        HikidashiAppGroup: $(APP_GROUP)
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(BUNDLE_PREFIX).widget
         TARGETED_DEVICE_FAMILY: "1,2"
