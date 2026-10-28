@@ -96,7 +96,8 @@ public final class Librarian {
 
     /// アプリ内で書いたメモを保存する（すぐ一覧に出し、整理は後から）
     @discardableResult
-    public func save(text: String, url: String?, image: Data?, file: (data: Data, name: String)? = nil) -> Note {
+    /// original: メモ風に整えて保存するときの元の文（整理のときに二度は整えない）
+    public func save(text: String, url: String?, image: Data?, file: (data: Data, name: String)? = nil, original: String? = nil) -> Note {
         var imageFile: String?
         var fileName: String?
         let id = UUID().uuidString
@@ -110,7 +111,7 @@ public final class Librarian {
             if (try? file.data.write(to: store.imageURL(name), options: .atomic)) != nil { fileName = name }
         }
         var note = Note(id: id, text: text.trimmingCharacters(in: .whitespacesAndNewlines), url: Note.nonEmpty(url), filed: false, imageFile: imageFile,
-                        file: fileName, fileTitle: file?.name)
+                        original: original, file: fileName, fileTitle: file?.name)
         Heuristics.file(&note)
         store.add(note)
         return note
@@ -145,7 +146,7 @@ public final class Librarian {
         let folders = store.folders.filter { $0 != note.category || note.filed }
         do {
             // メモ風に整えるのは、初めて整理する、ある程度長い文だけ
-            let memo = memoMode && !note.filed && Self.worthMemo(note.text)
+            let memo = memoMode && !note.filed && note.original == nil && Self.worthMemo(note.text)
             let r = try await ai.file(note, folders: folders, image: image, today: Self.today, language: .current, memo: memo)
             store.update(id) { $0.apply(r, replaceText: image != nil || memo) }
             lastError = nil
@@ -156,9 +157,21 @@ public final class Librarian {
     }
 
     /// メモ風に整える価値がある長さか（短いメモはそのまま）
-    static func worthMemo(_ text: String) -> Bool {
+    public static func worthMemo(_ text: String) -> Bool {
         let t = text.trimmingCharacters(in: .whitespacesAndNewlines)
         return t.count >= 80 || t.components(separatedBy: "\n").count >= 4
+    }
+
+    /// 保存する前に、AI でメモ風に整えた文を作る（使えないときは nil）
+    public func condense(_ text: String) async -> String? {
+        guard let ai = ai else { return nil }
+        do {
+            let r = try await ai.condense(text, language: .current).trimmingCharacters(in: .whitespacesAndNewlines)
+            return r.isEmpty ? nil : r
+        } catch {
+            if aiKind == .claude { lastError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription }
+            return nil
+        }
     }
 
     /// メモ風に整える前の文に戻す

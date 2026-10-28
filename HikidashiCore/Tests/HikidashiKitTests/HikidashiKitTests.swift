@@ -105,6 +105,7 @@ struct FakeAI: NoteAI {
     func recall(_ query: String, notes: [Note], today: String, language: AppLanguage) async throws -> RecallResult {
         RecallResult(answer: "advice", ids: [notes[0].id])
     }
+    func condense(_ text: String, language: AppLanguage) async throws -> String { "・まとめ" }
 }
 
 @MainActor
@@ -506,5 +507,26 @@ final class MemoModeTests: XCTestCase {
         let p = Prompts.filing(text: "x", url: nil, hasImage: false, folders: [], today: "2026-10-28", language: .ja, memo: true)
         XCTAssertTrue(p.contains("concise memo"))
         XCTAssertFalse(Prompts.filing(text: "x", url: nil, hasImage: false, folders: [], today: "2026-10-28", language: .ja).contains("concise memo"))
+    }
+}
+
+@MainActor
+final class MemoPreviewTests: XCTestCase {
+    func testCondenseThenSaveEditedMemo() async throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent("hikidashi-test-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        let lib = Librarian(store: NoteStore(root: root), credentialProvider: { nil }, onDevice: FakeAI(), linkFetcher: { _ in nil }, textExtractor: { _, _ in nil })
+        lib.memoMode = true
+        defer { lib.memoMode = false }
+        let long = String(repeating: "記事の本文です。", count: 20)
+        let condensed = await lib.condense(long)
+        XCTAssertEqual(condensed, "・まとめ")
+        let note = lib.save(text: "・まとめ（自分で直した）", url: nil, image: nil, original: long)
+        await lib.file(note.id)
+        let n = try XCTUnwrap(lib.store.note(note.id))
+        XCTAssertEqual(n.text, "・まとめ（自分で直した）", "確かめて直した文は、整理のときに書き換えない")
+        XCTAssertEqual(n.original, long)
+        let none = await Librarian(store: lib.store, credentialProvider: { nil }, onDevice: nil).condense(long)
+        XCTAssertNil(none, "AI が無ければ nil")
     }
 }

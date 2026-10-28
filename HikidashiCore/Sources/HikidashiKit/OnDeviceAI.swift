@@ -13,6 +13,8 @@ public protocol NoteAI: Sendable {
     /// memo: 本文をメモ風に整える（FilingResult.text に入れて返す。整えないときは空）
     func file(_ note: Note, folders: [String], image: ClaudeClient.Image?, today: String, language: AppLanguage, memo: Bool) async throws -> FilingResult
     func recall(_ query: String, notes: [Note], today: String, language: AppLanguage) async throws -> RecallResult
+    /// 長い文をメモ風に整えて返す（保存する前に確かめるとき）
+    func condense(_ text: String, language: AppLanguage) async throws -> String
 }
 
 extension Filer: NoteAI {
@@ -116,13 +118,14 @@ struct OnDeviceFiler: NoteAI {
             \(note.text.prefix(1500))\(note.url.map { "\nSource: " + $0 } ?? "")
             """
         let r = try await session.respond(to: prompt, generating: OnDeviceFiling.self).content
-        var memoText = ""
-        if memo {
-            let s = LanguageModelSession(instructions: "You turn pasted text into a concise personal memo. Write in \(language.promptName).")
-            memoText = (try? await s.respond(to: String(note.text.prefix(2500)), generating: OnDeviceMemo.self).content.memo) ?? ""
-        }
+        let memoText = memo ? ((try? await condense(note.text, language: language)) ?? "") : ""
         return FilingResult(text: memoText, title: r.title, summary: r.summary, category: r.folder,
                             tags: r.tags, situations: r.situations, remindAt: r.remindAt)
+    }
+
+    func condense(_ text: String, language: AppLanguage) async throws -> String {
+        let s = LanguageModelSession(instructions: "You turn pasted text into a concise personal memo. Write in \(language.promptName).")
+        return try await s.respond(to: String(text.prefix(2500)), generating: OnDeviceMemo.self).content.memo
     }
 
     func recall(_ query: String, notes: [Note], today: String, language: AppLanguage) async throws -> RecallResult {

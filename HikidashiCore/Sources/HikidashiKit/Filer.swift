@@ -15,6 +15,10 @@ public struct FilingResult: Codable, Sendable, Equatable {
     public var remindAt: String
 }
 
+public struct MemoResult: Codable, Sendable, Equatable {
+    public var text: String
+}
+
 public struct RecallResult: Codable, Sendable, Equatable {
     public var answer: String
     public var ids: [String]
@@ -37,6 +41,24 @@ public enum Prompts {
         "required": ["text", "title", "summary", "category", "tags", "situations", "remindAt"],
         "additionalProperties": false,
     ]
+
+    public static let memoSchema: [String: Any] = [
+        "type": "object",
+        "properties": ["text": ["type": "string"]],
+        "required": ["text"],
+        "additionalProperties": false,
+    ]
+
+    /// 長い文をメモ風に整える（保存する前に確かめるとき）
+    public static func memo(text: String, language: AppLanguage) -> String {
+        """
+        You help a user keep a personal "tips drawer". \(memoRule.replacingOccurrences(of: "If the note is already a short memo (about 3 lines or fewer), return it unchanged.", with: ""))
+        Write in \(language.promptName) unless the text is clearly in another language. Return it as "text".
+
+        Text:
+        \(text)
+        """
+    }
 
     public static let recallSchema: [String: Any] = [
         "type": "object",
@@ -116,6 +138,10 @@ public struct Filer: Sendable {
     public func file(_ note: Note, folders: [String], image: ClaudeClient.Image?, today: String, language: AppLanguage = .current, memo: Bool = false) async throws -> FilingResult {
         let prompt = Prompts.filing(text: note.text, url: note.url, hasImage: image != nil, folders: folders, today: today, language: language, memo: memo)
         return try await client.json(FilingResult.self, prompt: prompt, schema: Prompts.filingSchema, images: image.map { [$0] } ?? [], effort: .low)
+    }
+
+    public func condense(_ text: String, language: AppLanguage = .current) async throws -> String {
+        try await client.json(MemoResult.self, prompt: Prompts.memo(text: text, language: language), schema: Prompts.memoSchema, effort: .low).text
     }
 
     public func recall(_ query: String, notes: [Note], today: String, language: AppLanguage = .current) async throws -> RecallResult {

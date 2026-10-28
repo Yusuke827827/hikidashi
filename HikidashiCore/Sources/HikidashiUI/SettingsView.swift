@@ -20,6 +20,7 @@ struct SettingsView: View {
     @State private var calendarOn = EventReminders.isOn
     @State private var cloudOn = CloudSync.isOn
     @State private var managingFolders = false
+    @AppStorage("memoPreview") private var memoPreview = true
 
     var body: some View {
         NavigationStack {
@@ -66,11 +67,16 @@ struct SettingsView: View {
                     Toggle(isOn: Binding(get: { librarian.memoMode }, set: { librarian.memoMode = $0 })) {
                         Label(L("長い文はメモ風にまとめる", "Condense long text into a memo"), systemImage: "list.bullet.rectangle")
                     }
+                    if librarian.memoMode {
+                        Toggle(isOn: $memoPreview) {
+                            Label(L("しまう前に確認して直す", "Review and edit before saving"), systemImage: "pencil.and.list.clipboard")
+                        }
+                    }
                 } header: {
                     Text(L("整理", "Filing"))
                 } footer: {
-                    Text(L("コピペした記事や長い文章を、AI が「・」で始まる短い箇条書きのメモに整えます。数字・手順・名前・日付は残します。元の文はメモの「原文と関連」から見られ、戻すこともできます。入力欄でもオン・オフできます。",
-                           "AI turns pasted articles and long text into a short bulleted memo, keeping numbers, steps, names and dates. The original stays under More on the note, and you can restore it. You can also toggle this in the input box."))
+                    Text(L("コピペした記事や長い文章を、AI が「・」で始まる短い箇条書きのメモに整えます。数字・手順・名前・日付は残します。「しまう前に確認して直す」がオンなら、まとめた結果を編集してから保存できます。元の文はメモの「原文と関連」から見られ、戻すこともできます。入力欄でもオン・オフできます。",
+                           "AI turns pasted articles and long text into a short bulleted memo, keeping numbers, steps, names and dates. With Review before saving on, you can edit the result before it's saved. The original stays under More on the note, and you can restore it. You can also toggle this in the input box."))
                 }
 
                 Section {

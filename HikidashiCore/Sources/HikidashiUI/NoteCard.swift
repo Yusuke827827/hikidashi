@@ -97,7 +97,7 @@ struct NoteCard: View {
                 .textSelection(.enabled)
                 .padding(.leading, 10)
                 .overlay(alignment: .leading) { Rectangle().fill(p.line).frame(width: 2) }
-            if let original = note.original {
+            if let original = note.original, original != note.text {
                 DisclosureGroup {
                     Text(original)
                         .font(.footnote)

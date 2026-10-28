@@ -24,6 +24,10 @@ struct CaptureCard: View {
     @State private var attachment: (data: Data, name: String)?
     @State private var importingFile = false
     @State private var scanning = false
+    /// メモ風にまとめた結果を、しまう前に確かめる
+    @AppStorage("memoPreview") private var memoPreview = true
+    @State private var memoDraft: MemoDraft?
+    @State private var condensing = false
     @State private var query = ""
     @State private var searching = false
     @State private var speech = SpeechInput()
@@ -64,6 +68,16 @@ struct CaptureCard: View {
             } else {
                 attachment = (data: data, name: url.lastPathComponent)
             }
+        }
+        .sheet(item: $memoDraft) { draft in
+            MemoPreviewSheet(draft: draft) { text, original in
+                memoDraft = nil
+                commit(text: text, original: original)
+            } onCancel: {
+                memoDraft = nil
+            }
+            .environment(\.palette, p)
+            .tint(p.accent)
         }
         .fullScreenCover(isPresented: $scanning) {
             DocumentScanner { pdf in
@@ -161,7 +175,11 @@ struct CaptureCard: View {
                 }
                 .accessibilityLabel(L("出典 URL", "Source URL"))
                 Spacer()
-                Button(L("しまう", "Save"), action: save).buttonStyle(PrimaryButtonStyle())
+                Button(action: save) {
+                    if condensing { ProgressView().tint(p.accentText) } else { Text(L("しまう", "Save")) }
+                }
+                .buttonStyle(PrimaryButtonStyle())
+                .disabled(condensing)
             }
             .foregroundStyle(p.muted)
         }
@@ -174,7 +192,28 @@ struct CaptureCard: View {
             return
         }
         if speech.isRecording { speech.stop() }
-        let note = librarian.save(text: t, url: url, image: imageData, file: attachment)
+        // メモ風モードで、しまう前に確かめる設定なら、先にまとめて見せる
+        if librarian.memoMode, memoPreview, librarian.hasAI, Librarian.worthMemo(t), imageData == nil, attachment == nil {
+            condensing = true
+            focused = false
+            Task {
+                let c = await librarian.condense(t)
+                condensing = false
+                if let c {
+                    memoDraft = MemoDraft(original: t, text: c)
+                } else {
+                    onToast(L("まとめられなかったので、そのまましまいました。", "Couldn't condense it, so it was saved as is."))
+                    commit(text: t, original: nil)
+                }
+            }
+            return
+        }
+        commit(text: t, original: nil)
+    }
+
+    /// 保存する。original があれば、メモ風に整えた後の文として保存する
+    private func commit(text t: String, original: String?) {
+        let note = librarian.save(text: t, url: url, image: imageData, file: attachment, original: original)
         text = ""
         url = ""
         showURL = false
@@ -247,6 +286,55 @@ struct CaptureCard: View {
                 .frame(width: 40, height: 40)
         }
         .accessibilityLabel(speech.isRecording ? L("録音を止める", "Stop dictation") : L("声で入力", "Dictate"))
+    }
+}
+struct MemoDraft: Identifiable {
+    let id = UUID()
+    let original: String
+    var text: String
+}
+
+/// AI がまとめたメモを確かめて、直してからしまう
+struct MemoPreviewSheet: View {
+    @State var draft: MemoDraft
+    var onSave: (_ text: String, _ original: String) -> Void
+    var onCancel: () -> Void
+
+    @Environment(\.palette) private var p
+    @State private var showOriginal = false
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    TextEditor(text: $draft.text)
+                        .frame(minHeight: 220)
+                } header: {
+                    Text(L("AI がまとめたメモ（直せます）", "AI's memo (you can edit it)"))
+                }
+                Section {
+                    DisclosureGroup(isExpanded: $showOriginal) {
+                        Text(draft.original).font(.footnote).foregroundStyle(.secondary).textSelection(.enabled)
+                    } label: {
+                        Text(L("元の文", "Original text"))
+                    }
+                    Button(L("元の文のまましまう", "Save the original as is")) {
+                        // 同じ文を original に入れて、整理のときにまとめ直さないようにする
+                        onSave(draft.original, draft.original)
+                    }
+                }
+            }
+            .navigationTitle(L("しまう前に確認", "Check before saving"))
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) { Button(L("キャンセル", "Cancel"), action: onCancel) }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button(L("これでしまう", "Save")) { onSave(draft.text.trimmingCharacters(in: .whitespacesAndNewlines), draft.original) }
+                        .bold()
+                        .disabled(draft.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                }
+            }
+        }
     }
 }
 #endif
