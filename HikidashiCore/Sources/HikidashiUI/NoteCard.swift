@@ -97,6 +97,20 @@ struct NoteCard: View {
                 .textSelection(.enabled)
                 .padding(.leading, 10)
                 .overlay(alignment: .leading) { Rectangle().fill(p.line).frame(width: 2) }
+            if let original = note.original {
+                DisclosureGroup {
+                    Text(original)
+                        .font(.footnote)
+                        .foregroundStyle(p.muted)
+                        .textSelection(.enabled)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    Button(L("元の文に戻す", "Restore the original")) { librarian.restoreOriginal(note.id) }
+                        .font(.footnote)
+                } label: {
+                    Text(L("メモ風に整える前の文", "Text before it was condensed")).font(.footnote).foregroundStyle(p.muted)
+                }
+                .tint(p.accent)
+            }
             if let s = note.url, let url = URL(string: s) {
                 Link(s, destination: url).font(.footnote).lineLimit(2)
             }

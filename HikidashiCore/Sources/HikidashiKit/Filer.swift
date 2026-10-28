@@ -48,10 +48,21 @@ public enum Prompts {
         "additionalProperties": false,
     ]
 
-    public static func filing(text: String, url: String?, hasImage: Bool, folders: [String], today: String, language: AppLanguage) -> String {
-        let textRule = hasImage
-            ? "\"text\": transcribe the useful content of the attached screenshot (for example a post on X) as clean plain text, merged with the typed note below. Drop UI chrome, usernames and counts unless they matter."
-            : "\"text\": return the note text unchanged."
+    /// メモ風に整えるときの書き方
+    static let memoRule = "Rewrite it as a concise memo the user can scan in seconds: short lines that each start with \"・\", keeping every key fact, number, step, name, date and URL, and dropping filler, greetings and repetition. Keep the original language. If the note is already a short memo (about 3 lines or fewer), return it unchanged."
+
+    public static func filing(text: String, url: String?, hasImage: Bool, folders: [String], today: String, language: AppLanguage, memo: Bool = false) -> String {
+        let textRule: String
+        switch (hasImage, memo) {
+        case (true, false):
+            textRule = "\"text\": transcribe the useful content of the attached screenshot (for example a post on X) as clean plain text, merged with the typed note below. Drop UI chrome, usernames and counts unless they matter."
+        case (true, true):
+            textRule = "\"text\": read the useful content of the attached screenshot together with the typed note below. " + memoRule
+        case (false, true):
+            textRule = "\"text\": " + memoRule
+        case (false, false):
+            textRule = "\"text\": return the note text unchanged."
+        }
         let folderList = folders.isEmpty ? "(none yet)" : folders.joined(separator: " / ")
         let body = text.isEmpty ? "(see screenshot)" : text
         let source = url.map { "\nSource: " + $0 } ?? ""
@@ -102,8 +113,8 @@ public struct Filer: Sendable {
         self.client = client
     }
 
-    public func file(_ note: Note, folders: [String], image: ClaudeClient.Image?, today: String, language: AppLanguage = .current) async throws -> FilingResult {
-        let prompt = Prompts.filing(text: note.text, url: note.url, hasImage: image != nil, folders: folders, today: today, language: language)
+    public func file(_ note: Note, folders: [String], image: ClaudeClient.Image?, today: String, language: AppLanguage = .current, memo: Bool = false) async throws -> FilingResult {
+        let prompt = Prompts.filing(text: note.text, url: note.url, hasImage: image != nil, folders: folders, today: today, language: language, memo: memo)
         return try await client.json(FilingResult.self, prompt: prompt, schema: Prompts.filingSchema, images: image.map { [$0] } ?? [], effort: .low)
     }
 
@@ -123,7 +134,10 @@ public struct Filer: Sendable {
 extension Note {
     /// 整理の結果を当てはめる。本文は、スクショから読み取ったときだけ置き換える
     public mutating func apply(_ r: FilingResult, replaceText: Bool) {
-        if replaceText, !r.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { text = r.text }
+        if replaceText, !r.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty, r.text != text {
+            if original == nil { original = text }
+            text = r.text
+        }
         if !r.title.isEmpty { title = String(r.title.prefix(80)) }
         summary = r.summary
         if !r.category.isEmpty { category = String(r.category.prefix(32)) }

@@ -118,6 +118,15 @@ struct CaptureCard: View {
                     Button(L("外す", "Remove")) { self.imageData = nil; photo = nil }.font(.footnote)
                 }
             }
+            if librarian.hasAI {
+                Toggle(isOn: Binding(get: { librarian.memoMode }, set: { librarian.memoMode = $0 })) {
+                    Label(L("長い文はメモ風にまとめる", "Condense long text into a memo"), systemImage: "list.bullet.rectangle")
+                        .font(.footnote)
+                        .foregroundStyle(p.muted)
+                }
+                .tint(p.accent)
+                .controlSize(.mini)
+            }
             if let a = attachment {
                 HStack(spacing: 10) {
                     Image(systemName: "doc.text").font(.title2).frame(width: 54, height: 54)

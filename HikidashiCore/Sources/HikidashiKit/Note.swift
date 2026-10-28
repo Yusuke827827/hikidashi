@@ -44,6 +44,8 @@ public struct Note: Codable, Identifiable, Hashable, Sendable {
     public var filed: Bool
     /// 添付したスクショ（保存フォルダ内 Images/ のファイル名）
     public var imageFile: String?
+    /// メモ風に整える前の元の文（AI が本文を書き換えたときだけ）
+    public var original: String?
     /// 添付したファイル（保存フォルダ内 Images/ のファイル名）と、元のファイル名
     public var file: String?
     public var fileTitle: String?
@@ -74,6 +76,7 @@ public struct Note: Codable, Identifiable, Hashable, Sendable {
         example: Bool = false,
         filed: Bool = false,
         imageFile: String? = nil,
+        original: String? = nil,
         file: String? = nil,
         fileTitle: String? = nil,
         enriched: Bool = false,
@@ -96,6 +99,7 @@ public struct Note: Codable, Identifiable, Hashable, Sendable {
         self.example = example
         self.filed = filed
         self.imageFile = imageFile
+        self.original = original
         self.file = file
         self.fileTitle = fileTitle
         self.enriched = enriched
@@ -104,7 +108,7 @@ public struct Note: Codable, Identifiable, Hashable, Sendable {
     }
 
     enum CodingKeys: String, CodingKey {
-        case id, text, url, title, summary, category, tags, situations, remindAt, createdAt, pinned, helpful, lastSeen, example, filed, imageFile, file, fileTitle, enriched, place, updatedAt
+        case id, text, url, title, summary, category, tags, situations, remindAt, createdAt, pinned, helpful, lastSeen, example, filed, imageFile, original, file, fileTitle, enriched, place, updatedAt
     }
 
     public init(from decoder: Decoder) throws {
@@ -133,6 +137,7 @@ public struct Note: Codable, Identifiable, Hashable, Sendable {
         // Web 版のメモは整理済み（filed の項目が無い）として扱う
         filed = try c.decodeIfPresent(Bool.self, forKey: .filed) ?? true
         imageFile = try c.decodeIfPresent(String.self, forKey: .imageFile)
+        original = try c.decodeIfPresent(String.self, forKey: .original)
         file = try c.decodeIfPresent(String.self, forKey: .file)
         fileTitle = try c.decodeIfPresent(String.self, forKey: .fileTitle)
         // Web 版のメモ（項目なし）は取り出し済みとして扱う
@@ -159,6 +164,7 @@ public struct Note: Codable, Identifiable, Hashable, Sendable {
         try c.encode(example, forKey: .example)
         try c.encode(filed, forKey: .filed)
         try c.encodeIfPresent(imageFile, forKey: .imageFile)
+        try c.encodeIfPresent(original, forKey: .original)
         try c.encodeIfPresent(file, forKey: .file)
         try c.encodeIfPresent(fileTitle, forKey: .fileTitle)
         try c.encode(enriched, forKey: .enriched)

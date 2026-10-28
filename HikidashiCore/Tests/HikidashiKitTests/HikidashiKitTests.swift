@@ -98,9 +98,9 @@ final class StoreTests: XCTestCase {
 /// iPhone の中の AI の代わり
 struct FakeAI: NoteAI {
     var readsImages: Bool { false }
-    func file(_ note: Note, folders: [String], image: ClaudeClient.Image?, today: String, language: AppLanguage) async throws -> FilingResult {
+    func file(_ note: Note, folders: [String], image: ClaudeClient.Image?, today: String, language: AppLanguage, memo: Bool) async throws -> FilingResult {
         XCTAssertNil(image, "文字を読めない AI には画像を渡さない")
-        return FilingResult(text: "", title: "AI title", summary: "AI summary", category: "AI folder", tags: ["t"], situations: ["s"], remindAt: "")
+        return FilingResult(text: memo ? "・要点1\n・要点2" : "", title: "AI title", summary: "AI summary", category: "AI folder", tags: ["t"], situations: ["s"], remindAt: "")
     }
     func recall(_ query: String, notes: [Note], today: String, language: AppLanguage) async throws -> RecallResult {
         RecallResult(answer: "advice", ids: [notes[0].id])
@@ -462,5 +462,49 @@ final class FolderAndAttachmentTests: XCTestCase {
         let f = try XCTUnwrap(items.first?.file)
         XCTAssertEqual(items.first?.fileTitle, "memo.txt")
         XCTAssertTrue(FileManager.default.fileExists(atPath: SharedContainer.images(in: root).appendingPathComponent(f).path))
+    }
+}
+
+@MainActor
+final class MemoModeTests: XCTestCase {
+    func makeLibrarian() throws -> Librarian {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent("hikidashi-test-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        return Librarian(store: NoteStore(root: root), credentialProvider: { nil }, onDevice: FakeAI(), linkFetcher: { _ in nil }, textExtractor: { _, _ in nil })
+    }
+
+    func testMemoModeRewritesLongTextAndKeepsOriginal() async throws {
+        let lib = try makeLibrarian()
+        lib.memoMode = true
+        defer { lib.memoMode = false }
+        let long = String(repeating: "コピペした長い文章です。", count: 10)
+        let note = lib.save(text: long, url: nil, image: nil)
+        await lib.file(note.id)
+        let n = try XCTUnwrap(lib.store.note(note.id))
+        XCTAssertEqual(n.text, "・要点1\n・要点2")
+        XCTAssertEqual(n.original, long)
+        lib.restoreOriginal(note.id)
+        XCTAssertEqual(lib.store.note(note.id)?.text, long)
+        XCTAssertNil(lib.store.note(note.id)?.original)
+    }
+
+    func testMemoModeOffOrShortKeepsText() async throws {
+        let lib = try makeLibrarian()
+        lib.memoMode = false
+        let long = String(repeating: "長い文章。", count: 30)
+        let a = lib.save(text: long, url: nil, image: nil)
+        await lib.file(a.id)
+        XCTAssertEqual(lib.store.note(a.id)?.text, long, "オフなら書き換えない")
+        lib.memoMode = true
+        defer { lib.memoMode = false }
+        let b = lib.save(text: "短いメモ", url: nil, image: nil)
+        await lib.file(b.id)
+        XCTAssertEqual(lib.store.note(b.id)?.text, "短いメモ", "短い文はそのまま")
+    }
+
+    func testFilingPromptMentionsMemo() {
+        let p = Prompts.filing(text: "x", url: nil, hasImage: false, folders: [], today: "2026-10-28", language: .ja, memo: true)
+        XCTAssertTrue(p.contains("concise memo"))
+        XCTAssertFalse(Prompts.filing(text: "x", url: nil, hasImage: false, folders: [], today: "2026-10-28", language: .ja).contains("concise memo"))
     }
 }

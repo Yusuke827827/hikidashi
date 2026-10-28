@@ -10,7 +10,8 @@ import Foundation
 public protocol NoteAI: Sendable {
     /// スクショの文字を読み取れるか
     var readsImages: Bool { get }
-    func file(_ note: Note, folders: [String], image: ClaudeClient.Image?, today: String, language: AppLanguage) async throws -> FilingResult
+    /// memo: 本文をメモ風に整える（FilingResult.text に入れて返す。整えないときは空）
+    func file(_ note: Note, folders: [String], image: ClaudeClient.Image?, today: String, language: AppLanguage, memo: Bool) async throws -> FilingResult
     func recall(_ query: String, notes: [Note], today: String, language: AppLanguage) async throws -> RecallResult
 }
 
@@ -83,6 +84,13 @@ struct OnDeviceFiling {
 
 @available(iOS 26.0, macOS 26.0, *)
 @Generable
+struct OnDeviceMemo {
+    @Guide(description: "The note rewritten as a concise memo: short lines starting with ・, keeping key facts, numbers, steps, names and dates, dropping filler")
+    var memo: String
+}
+
+@available(iOS 26.0, macOS 26.0, *)
+@Generable
 struct OnDeviceRecall {
     @Guide(description: "2 to 3 short sentences of practical advice built only from the chosen notes")
     var answer: String
@@ -94,7 +102,7 @@ struct OnDeviceRecall {
 struct OnDeviceFiler: NoteAI {
     var readsImages: Bool { false }
 
-    func file(_ note: Note, folders: [String], image: ClaudeClient.Image?, today: String, language: AppLanguage) async throws -> FilingResult {
+    func file(_ note: Note, folders: [String], image: ClaudeClient.Image?, today: String, language: AppLanguage, memo: Bool) async throws -> FilingResult {
         let session = LanguageModelSession(instructions: """
             You file notes for a personal "tips drawer" app. The user saves tips they find on X, the web, or in daily life, \
             and wants them handed back at the moment they need them. Write every field in \(language.promptName).
@@ -108,7 +116,12 @@ struct OnDeviceFiler: NoteAI {
             \(note.text.prefix(1500))\(note.url.map { "\nSource: " + $0 } ?? "")
             """
         let r = try await session.respond(to: prompt, generating: OnDeviceFiling.self).content
-        return FilingResult(text: "", title: r.title, summary: r.summary, category: r.folder,
+        var memoText = ""
+        if memo {
+            let s = LanguageModelSession(instructions: "You turn pasted text into a concise personal memo. Write in \(language.promptName).")
+            memoText = (try? await s.respond(to: String(note.text.prefix(2500)), generating: OnDeviceMemo.self).content.memo) ?? ""
+        }
+        return FilingResult(text: memoText, title: r.title, summary: r.summary, category: r.folder,
                             tags: r.tags, situations: r.situations, remindAt: r.remindAt)
     }
 

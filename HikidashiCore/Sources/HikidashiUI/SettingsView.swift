@@ -63,6 +63,17 @@ struct SettingsView: View {
 
 
                 Section {
+                    Toggle(isOn: Binding(get: { librarian.memoMode }, set: { librarian.memoMode = $0 })) {
+                        Label(L("長い文はメモ風にまとめる", "Condense long text into a memo"), systemImage: "list.bullet.rectangle")
+                    }
+                } header: {
+                    Text(L("整理", "Filing"))
+                } footer: {
+                    Text(L("コピペした記事や長い文章を、AI が「・」で始まる短い箇条書きのメモに整えます。数字・手順・名前・日付は残します。元の文はメモの「原文と関連」から見られ、戻すこともできます。入力欄でもオン・オフできます。",
+                           "AI turns pasted articles and long text into a short bulleted memo, keeping numbers, steps, names and dates. The original stays under More on the note, and you can restore it. You can also toggle this in the input box."))
+                }
+
+                Section {
                     Toggle(isOn: Binding(get: { calendarOn }, set: { on in
                         Task {
                             if on {

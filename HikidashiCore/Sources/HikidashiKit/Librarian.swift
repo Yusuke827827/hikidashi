@@ -30,6 +30,12 @@ public final class Librarian {
     /// 整理中のメモの id
     public private(set) var filing: Set<String> = []
     public private(set) var lastError: String?
+    /// メモ風モード: コピペした文を、整理のときに AI が箇条書きのメモに整える（元の文は original に残す）
+    public static let memoModeKey = "memoMode"
+    public var memoMode: Bool = UserDefaults.standard.bool(forKey: Librarian.memoModeKey) {
+        didSet { UserDefaults.standard.set(memoMode, forKey: Self.memoModeKey) }
+    }
+
     /// AI を使えるか（Claude か iPhone の中の AI）
     public var hasAI: Bool { aiKind != .none }
 
@@ -138,12 +144,29 @@ public final class Librarian {
             : nil
         let folders = store.folders.filter { $0 != note.category || note.filed }
         do {
-            let r = try await ai.file(note, folders: folders, image: image, today: Self.today, language: .current)
-            store.update(id) { $0.apply(r, replaceText: image != nil) }
+            // メモ風に整えるのは、初めて整理する、ある程度長い文だけ
+            let memo = memoMode && !note.filed && Self.worthMemo(note.text)
+            let r = try await ai.file(note, folders: folders, image: image, today: Self.today, language: .current, memo: memo)
+            store.update(id) { $0.apply(r, replaceText: image != nil || memo) }
             lastError = nil
         } catch {
             // iPhone の中の AI が失敗したときは、簡易の整理のまま黙って続ける
             if aiKind == .claude { lastError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription }
+        }
+    }
+
+    /// メモ風に整える価値がある長さか（短いメモはそのまま）
+    static func worthMemo(_ text: String) -> Bool {
+        let t = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        return t.count >= 80 || t.components(separatedBy: "\n").count >= 4
+    }
+
+    /// メモ風に整える前の文に戻す
+    public func restoreOriginal(_ id: String) {
+        store.update(id) { n in
+            guard let o = n.original else { return }
+            n.text = o
+            n.original = nil
         }
     }
 
