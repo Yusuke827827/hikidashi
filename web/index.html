@@ -258,6 +258,40 @@ details.more[open] summary::before { content: "−"; }
 :root[data-wall] .rail { background: color-mix(in srgb, var(--surface) 70%, transparent); border: 1px solid var(--line); border-radius: 16px; padding: 16px 12px; }
 :root[data-wall] .fitem[aria-pressed="true"] { background: var(--sunk); box-shadow: none; }
 :root[data-wall] .list-head h2, :root[data-wall] .toast { background: color-mix(in srgb, var(--surface) 70%, transparent); border-radius: 8px; padding: 2px 8px; }
+.kw { margin-top: 10px; padding: 10px 14px; border-radius: 12px; background: var(--brass-soft); display: grid; gap: 4px; }
+.kw small { font: 600 11.5px var(--font-mono); color: var(--brass); letter-spacing: .06em; }
+.kw button { border: 0; background: none; text-align: left; padding: 2px 0; font-size: 14px; color: var(--ink); }
+.today { display: grid; gap: 2px; }
+.trow { display: flex; align-items: center; gap: 8px; }
+.trow .ck { border: 0; background: none; font-size: 18px; width: 28px; height: 28px; color: var(--muted); padding: 0; flex: none; }
+.trow .ck[aria-pressed="true"] { color: var(--accent); }
+.trow .tt { border: 0; background: none; text-align: left; flex: 1; min-width: 0; font-size: 14px; color: var(--ink); padding: 4px 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.trow.done .tt { text-decoration: line-through; color: var(--faint); }
+.trow time { font: 12px var(--font-mono); color: var(--muted); flex: none; }
+.today-n { margin-left: auto; font-variant-numeric: tabular-nums; }
+.today-done { font-size: 12.5px; color: var(--accent); margin: 4px 0 0; }
+.mini { border: 0; background: var(--sunk); color: var(--muted); border-radius: 8px; font-size: 12px; padding: 3px 9px; }
+.tool[aria-pressed="true"] { background: var(--ai-soft); color: var(--ai); }
+.merge { background: var(--brass-soft); border-radius: 14px; padding: 12px 14px; display: grid; gap: 8px; margin-bottom: 12px; }
+.merge p { margin: 0; font-size: 14px; }
+.merge div { display: flex; gap: 8px; }
+.merge button { border: 0; border-radius: 8px; padding: 5px 12px; font-size: 13px; background: var(--surface); color: var(--muted); }
+.merge button.yes { background: var(--accent); color: var(--accent-text); font-weight: 600; }
+.orig { display: grid; gap: 4px; margin-top: 6px; }
+.orig small { color: var(--faint); font-size: 12px; }
+.orig button { justify-self: start; border: 0; background: none; color: var(--accent); font-size: 12.5px; padding: 0; }
+.alarm { display: grid; gap: 8px; border: 1px dashed var(--line); border-radius: 10px; padding: 10px; }
+.alarm select { border: 1px solid var(--line); background: var(--bg); color: var(--ink); border-radius: 8px; padding: 6px 8px; font: 14px var(--font-body); }
+.wd { display: flex; gap: 4px; flex-wrap: wrap; }
+.wd label { display: inline-flex; align-items: center; gap: 3px; font-size: 13px; padding: 2px 6px; border: 1px solid var(--line); border-radius: 8px; }
+.memo-ta { width: 100%; min-height: 200px; border: 1px solid var(--line); border-radius: 10px; padding: 10px; background: var(--bg); color: var(--ink); font: 14.5px/1.6 var(--font-body); margin: 10px 0; }
+.frow { display: grid; grid-template-columns: auto 1fr auto auto; gap: 6px; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--line); }
+.frow .star { border: 0; background: none; font-size: 16px; color: var(--muted); padding: 0 4px; }
+.frow .star[aria-pressed="true"] { color: var(--brass); }
+.frow .n { font: 12px var(--font-mono); color: var(--faint); }
+.frow select { max-width: 120px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); border-radius: 6px; font-size: 12px; }
+.fnew { display: flex; gap: 6px; margin-top: 12px; }
+.fnew input { flex: 1; min-width: 0; border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; background: var(--bg); color: var(--ink); }
 .help { max-width: 560px; width: calc(100vw - 32px); max-height: calc(100vh - 48px); border: 1px solid var(--line); border-radius: 18px; background: var(--surface); color: var(--ink); padding: 18px 20px 22px; box-shadow: var(--shadow); }
 .help::backdrop { background: rgb(0 0 0 / .35); }
 .help-head { display: flex; align-items: center; justify-content: space-between; }
@@ -304,6 +338,8 @@ details.more[open] summary::before { content: "−"; }
 </style>
 </head>
 <body>
+<dialog id="memoDlg" class="help"></dialog>
+<dialog id="foldDlg" class="help"></dialog>
 <dialog id="help" class="help"><div class="help-head"><h2 id="helpTitle"></h2><button id="helpClose" type="button" class="help-x" aria-label="Close">×</button></div><div id="helpBody"></div></dialog>
 <div id="wall"></div><div id="wallVeil" hidden></div>
 <div class="wrap">
@@ -343,6 +379,7 @@ details.more[open] summary::before { content: "−"; }
       <div id="saveBox">
         <textarea id="noteText"></textarea>
         <div class="thumb" id="thumb" hidden><img id="thumbImg" alt=""><span id="thumbLabel"></span><button id="thumbRm"></button></div>
+        <div class="thumb" id="fileChip" hidden><span aria-hidden="true">📄</span><span id="fileName"></span><button id="fileRm"></button></div>
         <div class="omni-src" id="srcRow" hidden><input type="url" id="noteUrl"></div>
       </div>
       <div id="askBox" hidden><input type="text" id="askText"></div>
@@ -351,11 +388,14 @@ details.more[open] summary::before { content: "−"; }
         <span id="saveTools">
           <button class="tool" id="addSrc"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg><span id="addSrcLabel"></span></button>
           <label class="tool" id="imgTool" hidden><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg><span id="imgLabel"></span><input type="file" id="imgInput" accept="image/*" hidden></label>
+          <label class="tool" id="fileTool"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21 12-9 9a6 6 0 0 1-8.5-8.5l9-9a4 4 0 0 1 5.7 5.7l-9 9a2 2 0 0 1-2.8-2.8l8.5-8.5"/></svg><span id="fileLabel"></span><input type="file" id="fileInput" accept=".pdf,.txt,.md,.csv,.json,text/*,application/pdf" hidden></label>
+          <button class="tool" id="memoTool" aria-pressed="false" type="button"><span aria-hidden="true">≡</span><span id="memoLabel"></span></button>
         </span>
         <span class="kbd" id="kbd"></span>
         <button class="go" id="go"></button>
       </div>
     </div>
+    <div class="kw" id="kwBanner" hidden></div>
     <div class="suggest" id="suggest" hidden></div>
     <div class="toast" id="toast" role="status"></div>
     <div class="answer" id="answer" hidden>
@@ -367,10 +407,11 @@ details.more[open] summary::before { content: "−"; }
 
   <div class="main">
     <aside class="rail">
+      <div id="todayBox" hidden><h2><span id="todayH"></span><span class="today-n" id="todayN"></span></h2><div class="today" id="todayList"></div><button class="mini" id="notifBtn" hidden></button></div>
       <div id="pickBox" hidden><h2 id="pickH"></h2><div class="pick" id="pick"></div></div>
       <div id="remBox" hidden><h2 id="remH"></h2><div class="flist" id="remList"></div></div>
       <div>
-        <h2><span id="foldH"></span>
+        <h2><span id="foldH"></span><button class="mini" id="foldManage" type="button"></button>
           <span class="seg" role="group"><button id="byCat" aria-pressed="true"></button><button id="byDate" aria-pressed="false"></button></span>
         </h2>
         <div class="flist" id="folders"></div>
@@ -385,6 +426,7 @@ details.more[open] summary::before { content: "−"; }
         <h2 id="listH"></h2>
         <div class="filter"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input type="search" id="filter"></div>
       </div>
+      <div id="mergeBox"></div>
       <div class="slips" id="slips"></div>
     </section>
   </div>
@@ -411,9 +453,9 @@ details.more[open] summary::before { content: "−"; }
       noNotes: "Nothing saved yet. Save a few tips first.", noMatch: "Nothing related turned up.",
       kwMatch: (n) => `${n} notes look related by keyword.`, aiFallback: "Couldn't reach Claude, so these are keyword matches.",
       pickH: "Today's pick", pickSeen: "Got it", pickOther: "Another", remH: "Coming up",
-      foldH: "Folders", byCat: "Topic", byDate: "Date", all: "All notes", pinned: "Pinned",
+      foldH: "Folders", byCat: "Topic", byDate: "Date", all: "All notes", pinned: "Favorites",
       listH: (n) => `${n} ${n === 1 ? "note" : "notes"}`, filterPh: "Filter",
-      pin: "Pin", helpful: "Helpful", move: "Move", del: "Delete", delSure: "Delete?", moveGo: "Move", refile: "Re-file",
+      pin: "Favorite", helpful: "Helpful", move: "Move", del: "Delete", delSure: "Delete?", moveGo: "Move", refile: "Re-file",
       original: "Original & related", related: "Related", example: "Example",
       emptyB: "Your drawer is empty", emptyP: "Saved notes look like the examples below and land in folders on their own.", emptyBtn: "Add the 3 examples",
       none: "No notes match.", exportBtn: "Export", importText: "Import",
@@ -421,7 +463,7 @@ details.more[open] summary::before { content: "−"; }
       stCloud: "Synced", stLocal: "This device", stAi: "AI on", stBasic: "Basic",
       keyPrompt: "Paste your Anthropic API key (sk-ant-…). It stays in this browser and is sent only to Anthropic. Get one at console.anthropic.com",
       keySaved: "API key saved. Claude will file your notes.", keyRemoveQ: "Remove the saved API key from this browser?", keyRemoved: "API key removed.",
-      keyBad: "The API key didn't work. Tap the status to set it again.", useAI: "Use AI ›", help: "How to use", helpSteps: [["Save", "Type a tip or note in the box and press Save (Ctrl/⌘ + Enter). You can add a source link, or a screenshot when AI is on."], ["AI files it", "AI adds a title, summary, folder, tags and the moments it will help. Dates in the note become reminders."], ["Recall", "Switch to Recall and describe what you're about to do or what's bothering you, e.g. \"About to do laundry\". You get the notes that help, plus short advice."], ["Today's pick", "One stored note resurfaces each day. Notes you mark Helpful come first when you recall."], ["Working with notes", "Pin, mark Helpful, edit or re-file each note. Switch the list between Topic and Date, or narrow it with Filter."], ["Use AI", "Tap the status at the top right and paste your Anthropic API key (console.anthropic.com). It stays in this browser and is sent only to Anthropic. Without a key, Mindrawer files and searches by keyword."], ["Wallpaper", "Pick a wallpaper or your own image from Wallpaper at the top."], ["Your data", "Notes are saved in this browser. Use Export / Import to back them up or move them; the same file works with the iPhone app."]],
+      keyBad: "The API key didn't work. Tap the status to set it again.", useAI: "Use AI ›", help: "How to use", helpSteps: [["Save", "Type a tip or note in the box and press Save (Ctrl/⌘ + Enter). You can add a source link, or a screenshot when AI is on."], ["AI files it", "AI adds a title, summary, folder, tags and the moments it will help. Dates in the note become reminders."], ["Recall", "Switch to Recall and describe what you're about to do or what's bothering you, e.g. \"About to do laundry\". You get the notes that help, plus short advice."], ["Today's pick", "One stored note resurfaces each day. Notes you mark Helpful come first when you recall."], ["Working with notes", "Pin, mark Helpful, edit or re-file each note. Switch the list between Topic and Date, or narrow it with Filter."], ["Use AI", "Tap the status at the top right and paste your Anthropic API key (console.anthropic.com). It stays in this browser and is sent only to Anthropic. Without a key, Mindrawer files and searches by keyword."], ["Wallpaper", "Pick a wallpaper or your own image from Wallpaper at the top."], ["Condense into a memo", "Turn on Memo in the input box and AI turns long text into a bulleted memo. Edit it in the review screen before saving; the original can be restored."], ["Notifications and today's checklist", "Edit a note → Notify me to pick a date, daily, every N days, weekdays or monthly (silent). Those notes appear in Today's checklist, where you tick them off. Set words to see the note when you type them."], ["Manage folders", "Use Manage next to Folders to create, rename, merge, delete or ★ favorite folders. Similar folders get a merge suggestion."], ["Files", "Attach a PDF or text file and its text goes into the note."], ["Your data", "Notes are saved in this browser. Use Export / Import to back them up or move them; the same file works with the iPhone app."]],
       month: (d) => d.toLocaleDateString("en", { year: "numeric", month: "long" }),
       other: "Other",
       edit: "Edit", saveEdit: "Save", saveRefile: "Save & re-file with AI", cancel: "Cancel", editSaved: "Saved.",
@@ -447,9 +489,9 @@ details.more[open] summary::before { content: "−"; }
       noNotes: "まだメモがありません。先にいくつかしまってください。", noMatch: "関係しそうなメモは見つかりませんでした。",
       kwMatch: (n) => `キーワードが近いメモが ${n} 件あります。`, aiFallback: "AI に聞けなかったので、キーワードで近いメモを出しました。",
       pickH: "今日のひとつ", pickSeen: "読んだ", pickOther: "別のを見る", remH: "近日のリマインド",
-      foldH: "フォルダ", byCat: "分類", byDate: "日付", all: "すべて", pinned: "ピン留め",
+      foldH: "フォルダ", byCat: "分類", byDate: "日付", all: "すべて", pinned: "お気に入り",
       listH: (n) => `${n} 件`, filterPh: "絞り込み",
-      pin: "ピン", helpful: "役立った", move: "移動", del: "削除", delSure: "本当に削除", moveGo: "移動", refile: "再整理",
+      pin: "お気に入り", helpful: "役立った", move: "移動", del: "削除", delSure: "本当に削除", moveGo: "移動", refile: "再整理",
       original: "原文と関連メモ", related: "関連", example: "見本",
       emptyB: "ひきだしはまだ空です", emptyP: "保存したメモは下の見本のような形になり、自動でフォルダに入ります。", emptyBtn: "見本の 3 件を入れて試す",
       none: "該当するメモはありません。", exportBtn: "書き出す", importText: "読み込む",
@@ -457,7 +499,7 @@ details.more[open] summary::before { content: "−"; }
       stCloud: "アカウントに保存", stLocal: "この端末に保存", stAi: "AI 整理", stBasic: "簡易整理",
       keyPrompt: "Anthropic の API キー（sk-ant-…）を貼り付けてください。キーはこのブラウザにだけ保存され、Anthropic にだけ送られます。取得: console.anthropic.com",
       keySaved: "API キーを保存しました。Claude が整理します。", keyRemoveQ: "このブラウザに保存した API キーを削除しますか？", keyRemoved: "API キーを削除しました。",
-      keyBad: "API キーが使えませんでした。右上の表示を押して入れ直してください。", useAI: "AI を使う ›", help: "使い方", helpSteps: [["しまう", "欄に Tips やメモを書いて「しまう」を押します（Ctrl/⌘ + Enter でも可）。出典の URL や、AI がオンのときはスクショも付けられます。"], ["AI が整理", "しまったメモに、タイトル・要約・フォルダ・タグ・「役立つ場面」を AI が付けます。本文に日付があればリマインドにも入ります。"], ["ひきだす", "「ひきだす」に切り替えて、これからすることや困りごとを書きます。例:「これから洗濯する」。言葉が一致していなくても、役立つメモと短い助言が出ます。"], ["今日のひとつ", "しまったままのメモを毎日 1 件見せます。「役立った」を押したメモは、取り出しで優先されます。"], ["メモの操作", "ピン留め・役立った・編集・再整理ができます。一覧は「分類」と「日付」で切り替え、「絞り込み」で探せます。"], ["AI を使う", "右上の表示を押して、Anthropic の API キー（console.anthropic.com で取得）を貼り付けます。キーはこのブラウザにだけ保存され、Anthropic にだけ送られます。キーが無くても、キーワードで整理と検索ができます。"], ["壁紙", "上の「壁紙」から好きな壁紙や自分の画像を選べます。"], ["データ", "メモはこのブラウザの中に保存されます。「書き出す」「読み込む」でバックアップや移動ができます。iPhone アプリとも同じファイルでやり取りできます。"]],
+      keyBad: "API キーが使えませんでした。右上の表示を押して入れ直してください。", useAI: "AI を使う ›", help: "使い方", helpSteps: [["しまう", "欄に Tips やメモを書いて「しまう」を押します（Ctrl/⌘ + Enter でも可）。出典の URL や、AI がオンのときはスクショも付けられます。"], ["AI が整理", "しまったメモに、タイトル・要約・フォルダ・タグ・「役立つ場面」を AI が付けます。本文に日付があればリマインドにも入ります。"], ["ひきだす", "「ひきだす」に切り替えて、これからすることや困りごとを書きます。例:「これから洗濯する」。言葉が一致していなくても、役立つメモと短い助言が出ます。"], ["今日のひとつ", "しまったままのメモを毎日 1 件見せます。「役立った」を押したメモは、取り出しで優先されます。"], ["メモの操作", "ピン留め・役立った・編集・再整理ができます。一覧は「分類」と「日付」で切り替え、「絞り込み」で探せます。"], ["AI を使う", "右上の表示を押して、Anthropic の API キー（console.anthropic.com で取得）を貼り付けます。キーはこのブラウザにだけ保存され、Anthropic にだけ送られます。キーが無くても、キーワードで整理と検索ができます。"], ["壁紙", "上の「壁紙」から好きな壁紙や自分の画像を選べます。"], ["メモ風にまとめる", "入力欄の「メモ風」をオンにすると、長い文を AI が箇条書きのメモにまとめます。しまう前に出る画面で直せます。元の文は「原文と関連」から戻せます。"], ["通知と今日の確認リスト", "メモの「編集」→「通知する」で、日時・毎日・何日おき・曜日・毎月を選べます（音なし）。その日のメモは「今日の確認リスト」に並び、☐ でチェックできます。言葉を決めると、その言葉を入力したときにメモを出します。"], ["フォルダの管理", "フォルダの「管理」から、作る・名前を変える・まとめる・消す・★ お気に入りができます。似たフォルダができると「まとめますか？」と出ます。"], ["ファイル", "「ファイル」から PDF やテキストを付けると、中の文字を読み取ってメモに入れます。"], ["データ", "メモはこのブラウザの中に保存されます。「書き出す」「読み込む」でバックアップや移動ができます。iPhone アプリとも同じファイルでやり取りできます。"]],
       month: (d) => `${d.getFullYear()}年${d.getMonth() + 1}月`,
       other: "その他",
       edit: "編集", saveEdit: "保存", saveRefile: "保存して AI で再整理", cancel: "キャンセル", editSaved: "保存しました。",
@@ -469,6 +511,8 @@ details.more[open] summary::before { content: "−"; }
       rules: [["料理・食", /料理|レシピ|食|味|調味|野菜|肉|魚|弁当|醤油|炊/], ["健康・体", /健康|睡眠|運動|筋トレ|ストレッチ|病院|薬|肩こり|姿勢/], ["お金・節約", /お金|節約|ポイント|税|ふるさと|保険|投資|NISA|値下げ|安く|見積/], ["PC・ガジェット", /PC|Mac|Windows|iPhone|Android|ショートカット|アプリ|Excel|スクショ|⌘|Ctrl/i], ["仕事・勉強", /仕事|会議|メール|資料|プレゼン|勉強|英語|面接/], ["暮らし・家事", /掃除|洗濯|シミ|収納|片付|家事|ゴミ|引っ越/], ["おでかけ・旅行", /旅行|ホテル|新幹線|飛行機|観光|荷造り|空港/]],
     },
   };
+  Object.assign(I18N.en, { fileLabel: "File", fileReading: "Reading the file…", fileFail: "Couldn't read that file.", memoLabel: "Memo", memoOn: "Long text will be condensed into a memo.", memoOff: "Memo mode off.", memoReviewH: "Check before saving", memoReviewP: "AI condensed your text. Edit it if you like, then save.", memoOriginal: "Original text", memoKeep: "Save the original", memoSave: "Save this memo", memoBefore: "Before it was condensed", memoRestore: "Restore the original", todayH: "Today's checklist", todayDone: "All checked for today ✓", notifBtn: "Show notifications in this browser", toToday: "Add to today", fromToday: "Remove from today", kwH: "Notes for this word", alarmH: "Notify me", alarmWhen: "When", alarmDate: "Date & time", alarmEvery: "Every N days", alarmDays: "Weekdays", alarmWords: "Words that bring it up (comma-separated)", alarmHint: "Silent. It lines up in Today's checklist, and shows as a notification while this page is open.", alarmKinds: {"none": "Off (words only)", "once": "Once", "daily": "Daily", "interval": "Every N days", "weekly": "Weekdays", "monthly": "Monthly"}, manage: "Manage", foldDlgH: "Manage folders", foldNew: "New folder", foldCreate: "Create", foldRename: "Rename", foldRenameQ: "New name", foldMergeTo: "Merge into…", foldDel: "Delete", foldDelQ: "Delete this folder? Its notes move to Other.", mergeQ: (a, b) => `Merge "${a}" into "${b}"?`, mergeYes: "Merge", mergeNo: "Keep separate" });
+  Object.assign(I18N.ja, { fileLabel: "ファイル", fileReading: "ファイルを読んでいます…", fileFail: "ファイルを読めませんでした。", memoLabel: "メモ風", memoOn: "長い文はメモ風にまとめます。", memoOff: "メモ風モードをオフにしました。", memoReviewH: "しまう前に確認", memoReviewP: "AI がまとめました。直してからしまえます。", memoOriginal: "元の文", memoKeep: "元の文のまましまう", memoSave: "これでしまう", memoBefore: "メモ風に整える前の文", memoRestore: "元の文に戻す", todayH: "今日の確認リスト", todayDone: "今日の分は全部確認しました ✓", notifBtn: "このブラウザで通知を出す", toToday: "今日のリストへ", fromToday: "今日のリストから外す", kwH: "この言葉で知らせるメモ", alarmH: "通知する", alarmWhen: "いつ", alarmDate: "日時", alarmEvery: "何日おき", alarmDays: "曜日", alarmWords: "この言葉を入力したら出す（カンマ区切り）", alarmHint: "音は鳴りません。その日は「今日の確認リスト」に並び、このページを開いている間は通知にも出ます。", alarmKinds: {"none": "時刻なし（言葉だけ）", "once": "1 回", "daily": "毎日", "interval": "何日おき", "weekly": "曜日", "monthly": "毎月"}, manage: "管理", foldDlgH: "フォルダの管理", foldNew: "新しいフォルダ", foldCreate: "作る", foldRename: "名前", foldRenameQ: "新しい名前", foldMergeTo: "まとめる先…", foldDel: "消す", foldDelQ: "このフォルダを消しますか？中のメモは「その他」に移ります。", mergeQ: (a, b) => `「${a}」を「${b}」にまとめますか？`, mergeYes: "まとめる", mergeNo: "別のままにする" });
   const EXAMPLES = {
     en: [
       { text: "Coffee or soy sauce spill: don't rub. Blot with a damp cloth from the outside in, then a drop of dish soap.", category: "Home", title: "Blot stains, never rub", summary: "Work from the outside in with a damp cloth, finish with dish soap.", tags: ["stains", "laundry"], situations: ["Spilled on clothes", "Doing laundry"] },
@@ -680,15 +724,35 @@ Return JSON only:
 
   // ---------- actions ----------
   async function save() {
-    const text = $("noteText").value.trim();
+    let text = $("noteText").value.trim();
     if (!state.store) return;
-    if (!text && !state.image) { toast(T().needText); return; }
+    if (!text && !state.image && !state.file) { toast(T().needText); return; }
     const url = $("noteUrl").value.trim();
+    const file = state.file;
     busy(true);
     try {
+      if (file) text = (text ? text + "\n\n" : "") + "📄 " + file.name + (file.text ? "\n" + file.text : "");
+      let original = null;
+      // メモ風モード: 長い文は AI がまとめる。確認がオンなら、直してからしまう
+      if (state.memoMode && state.sample && !state.image && worthMemo(text)) {
+        const c = await condense(text);
+        if (c) {
+          if (state.memoPreview) {
+            busy(false);
+            const r = await reviewMemo(text, c);
+            if (!r) return;
+            busy(true);
+            original = text;
+            text = r.text;
+          } else { original = text; text = c; }
+        }
+      }
       const meta = await classify(text, url, state.image);
-      await state.store.add({ ...meta, url: url || null, createdAt: Date.now(), helpful: 0, pinned: false });
-      $("noteText").value = ""; $("noteUrl").value = ""; $("srcRow").hidden = true; clearImage();
+      const extra = {};
+      if (original && original !== meta.text) extra.original = original;
+      if (file) extra.fileTitle = file.name;
+      await state.store.add({ ...meta, ...extra, url: url || null, createdAt: Date.now(), helpful: 0, pinned: false });
+      $("noteText").value = ""; $("noteUrl").value = ""; $("srcRow").hidden = true; clearImage(); clearFile(); renderKw("");
       toast(T().saved(meta.title, meta.category, meta.remindAt));
     } catch { toast(T().saveFail); } finally { busy(false); }
   }
@@ -698,7 +762,12 @@ Return JSON only:
     $("askText").value = q;
     if (!state.notes.length) return showAnswer(q, T().noNotes, []);
     busy(true);
-    try { const r = await retrieve(q); showAnswer(q, r.answer, r.ids); } finally { busy(false); }
+    try {
+      const r = await retrieve(q);
+      // アラームの言葉に合うメモを先頭に
+      const kw = keywordAlarms(q).map((n) => n.id);
+      showAnswer(q, r.answer, [...kw, ...r.ids.filter((id) => !kw.includes(id))]);
+    } finally { busy(false); }
   }
   function busy(on) { $("go").disabled = on; $("go").textContent = on ? (state.mode === "save" ? T().saving : T().searching) : (state.mode === "save" ? T().save : T().recall); }
   function showAnswer(q, text, ids) {
@@ -755,6 +824,272 @@ Return JSON only:
     await state.store.update(n.id, rest);
   }
 
+
+  // ---------- この端末の設定 ----------
+  const PREF = { memo: "mindrawer.memoMode", memoPreview: "mindrawer.memoPreview", checks: "mindrawer.checks", folders: "mindrawer.folders", dismissed: "mindrawer.mergeDismissed", notified: "mindrawer.notified" };
+  const getJSON = (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch { return d; } };
+  const setJSON = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
+  state.memoMode = getJSON(PREF.memo, false);
+  state.memoPreview = getJSON(PREF.memoPreview, true);
+  state.file = null;
+
+  // ---------- ファイル（PDF・テキスト） ----------
+  let pdfjs = null;
+  async function loadPdfJs() {
+    if (pdfjs) return pdfjs;
+    await new Promise((ok, ng) => { const sc = document.createElement("script"); sc.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"; sc.onload = ok; sc.onerror = ng; document.head.append(sc); });
+    pdfjs = window.pdfjsLib;
+    pdfjs.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+    return pdfjs;
+  }
+  async function fileText(file) {
+    if (/\.pdf$/i.test(file.name) || file.type === "application/pdf") {
+      const lib = await loadPdfJs();
+      const doc = await lib.getDocument({ data: await file.arrayBuffer() }).promise;
+      let out = "";
+      for (let i = 1; i <= Math.min(doc.numPages, 20) && out.length < 4000; i++) {
+        const page = await doc.getPage(i);
+        out += (await page.getTextContent()).items.map((x) => x.str).join(" ") + "\n";
+      }
+      return out.replace(/[ \t]+/g, " ").trim().slice(0, 4000);
+    }
+    return (await file.text()).trim().slice(0, 4000);
+  }
+  async function setFile(file) {
+    if (!file) return;
+    toast(T().fileReading);
+    try {
+      const text = await fileText(file);
+      state.file = { name: file.name, text };
+      $("fileName").textContent = file.name; $("fileChip").hidden = false; toast("");
+    } catch { toast(T().fileFail); }
+  }
+  function clearFile() { state.file = null; $("fileChip").hidden = true; $("fileInput").value = ""; }
+
+  // ---------- メモ風モード ----------
+  const worthMemo = (t) => t.trim().length >= 80 || t.trim().split("\n").length >= 4;
+  async function condense(text) {
+    if (!state.sample) return null;
+    const prompt = `You help a user keep a personal "tips drawer". Rewrite the text as a concise memo the user can scan in seconds: short lines that each start with "・", keeping every key fact, number, step, name, date and URL, and dropping filler, greetings and repetition. Keep the original language.
+Return JSON only: {"text":""}
+
+Text:
+${text}`;
+    try { const r = await state.sample.json(prompt, { modelTier: "quick" }); const t = String(r.text || "").trim(); return t || null; } catch { return null; }
+  }
+  function reviewMemo(original, condensed) {
+    return new Promise((resolve) => {
+      const t = T(), dlg = $("memoDlg");
+      const ta = el("textarea", { class: "memo-ta" }); ta.value = condensed;
+      const done = (v) => { resolve(v); dlg.close(); };
+      dlg.replaceChildren(
+        el("div", { class: "help-head" }, el("h2", {}, t.memoReviewH), el("button", { type: "button", class: "help-x", "aria-label": t.close, onclick: () => done(null) }, "×")),
+        el("p", {}, t.memoReviewP), ta,
+        el("details", { class: "more" }, el("summary", {}, t.memoOriginal), el("p", { class: "raw" }, original)),
+        el("div", { class: "ef-acts" },
+          el("button", { type: "button", class: "ghost", onclick: () => done({ text: original }) }, t.memoKeep),
+          el("button", { type: "button", onclick: () => { const v = ta.value.trim(); if (v) done({ text: v }); } }, t.memoSave)));
+      dlg.onclose = () => resolve(null);
+      dlg.showModal();
+      setTimeout(() => ta.focus(), 0);
+    });
+  }
+  function setMemoMode(on) { state.memoMode = on; setJSON(PREF.memo, on); renderChrome(); toast(on ? T().memoOn : T().memoOff); }
+
+  // ---------- 通知（日時・繰り返し・言葉） ----------
+  const WD = { ja: ["日", "月", "火", "水", "木", "金", "土"], en: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] };
+  const sod = (ms) => { const d = new Date(ms); return new Date(d.getFullYear(), d.getMonth(), d.getDate()); };
+  const hasSchedule = (a) => !!a && !!a.kind && a.kind !== "none" && (a.kind !== "weekly" || (a.weekdays || []).length > 0);
+  function occurrences(a, after, count) {
+    if (!hasSchedule(a)) return [];
+    const base = new Date(a.date), h = base.getHours(), m = base.getMinutes();
+    const at = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate(), h, m).getTime();
+    const next = (d, n) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
+    const out = [];
+    if (a.kind === "once") return a.date > after ? [a.date] : [];
+    if (a.kind === "interval") {
+      let d = sod(a.date);
+      for (let i = 0; i < 2000 && out.length < count; i++) { const t = at(d); if (t > after) out.push(t); d = next(d, Math.max(1, a.intervalDays || 1)); }
+      return out;
+    }
+    let d = sod(Math.max(after, sod(a.date).getTime()));
+    for (let i = 0; i < 800 && out.length < count; i++) {
+      const ok = a.kind === "weekly" ? a.weekdays.includes(d.getDay() + 1) : a.kind === "monthly" ? d.getDate() === base.getDate() : true;
+      const t = at(d);
+      if (ok && t > after) out.push(t);
+      d = next(d, 1);
+    }
+    return out;
+  }
+  function alarmSummary(a) {
+    if (!a) return "";
+    const t = T(), d = new Date(a.date), hm = `${d.getHours()}:${String(d.getMinutes()).padStart(2, "0")}`;
+    const words = (a.keywords || []).length ? " · " + a.keywords.map((w) => `「${w}」`).join("") : "";
+    switch (a.kind) {
+      case "once": return d.toLocaleString(state.lang === "ja" ? "ja-JP" : "en", { month: "numeric", day: "numeric", weekday: "short", hour: "numeric", minute: "2-digit" }) + words;
+      case "daily": return t.alarmKinds.daily + " " + hm + words;
+      case "interval": return (state.lang === "ja" ? `${a.intervalDays} 日おき ` : `Every ${a.intervalDays} days `) + hm + words;
+      case "weekly": return (state.lang === "ja" ? "毎週 " : "Weekly ") + (a.weekdays || []).slice().sort().map((w) => WD[state.lang][w - 1]).join(state.lang === "ja" ? "・" : ", ") + " " + hm + words;
+      case "monthly": return (state.lang === "ja" ? `毎月 ${d.getDate()} 日 ` : `Monthly on the ${d.getDate()}th `) + hm + words;
+      default: return words ? words.slice(3) : "";
+    }
+  }
+  function keywordAlarms(text) {
+    const q = String(text || "").toLowerCase();
+    if (!q.trim()) return [];
+    return state.notes.filter((n) => (n.alarm?.keywords || []).some((w) => { const k = String(w).trim().toLowerCase(); return k && q.includes(k); }));
+  }
+  function renderKw(text) {
+    const hits = keywordAlarms(text).slice(0, 3), box = $("kwBanner");
+    box.hidden = !hits.length;
+    box.replaceChildren(...(hits.length ? [el("small", {}, "🔔 " + T().kwH), ...hits.map((n) => el("button", { onclick: () => jumpTo(n) }, "→ " + n.title))] : []));
+  }
+
+  // ---------- 今日の確認リスト ----------
+  function todayList() {
+    const start = sod(Date.now()).getTime(), end = start + 864e5, today = todayISO();
+    return state.notes.map((n) => {
+      const t = hasSchedule(n.alarm) ? occurrences(n.alarm, start - 1, 1)[0] : null;
+      if (t && t < end) return { n, t };
+      if (n.remindAt === today || n.plannedDay === today) return { n, t: null };
+      return null;
+    }).filter(Boolean).sort((a, b) => (a.t ?? Infinity) - (b.t ?? Infinity) || b.n.createdAt - a.n.createdAt);
+  }
+  const isChecked = (id) => (getJSON(PREF.checks, {})[todayISO()] || []).includes(id);
+  function toggleCheck(id) {
+    const all = getJSON(PREF.checks, {}), day = todayISO(), list = all[day] || [];
+    all[day] = list.includes(id) ? list.filter((x) => x !== id) : [...list, id];
+    const cutoff = new Date(Date.now() - 14 * 864e5).toISOString().slice(0, 10);
+    for (const k of Object.keys(all)) if (k < cutoff) delete all[k];
+    setJSON(PREF.checks, all);
+    renderToday();
+  }
+  function renderToday() {
+    const t = T(), items = todayList();
+    $("todayBox").hidden = !items.length;
+    if (!items.length) return;
+    const done = items.filter((x) => isChecked(x.n.id)).length;
+    $("todayH").textContent = t.todayH;
+    $("todayN").textContent = `${done}/${items.length}`;
+    $("todayList").replaceChildren(...items.map(({ n, t: when }) => {
+      const on = isChecked(n.id);
+      return el("div", { class: "trow" + (on ? " done" : "") },
+        el("button", { class: "ck", "aria-pressed": String(on), "aria-label": n.title, onclick: () => toggleCheck(n.id) }, on ? "☑" : "☐"),
+        el("button", { class: "tt", onclick: () => jumpTo(n) }, n.title),
+        when ? el("time", {}, new Date(when).toLocaleTimeString(state.lang === "ja" ? "ja-JP" : "en", { hour: "numeric", minute: "2-digit" })) : null);
+    }), ...(done === items.length ? [el("p", { class: "today-done" }, t.todayDone)] : []));
+    const nb = $("notifBtn");
+    nb.hidden = !("Notification" in window) || Notification.permission !== "default";
+    nb.textContent = t.notifBtn;
+  }
+  // このページを開いている間、時刻になったら音なしで通知する
+  function tickAlarms() {
+    if (!("Notification" in window) || Notification.permission !== "granted") return;
+    const now = Date.now(), sent = getJSON(PREF.notified, {});
+    for (const n of state.notes) {
+      if (!hasSchedule(n.alarm)) continue;
+      const t = occurrences(n.alarm, now - 5 * 60e3, 1)[0];
+      if (!t || t > now) continue;
+      const k = n.id + "@" + t;
+      if (sent[k]) continue;
+      sent[k] = now;
+      try {
+        const no = new Notification("🔔 " + n.title, { body: n.summary || String(n.text).slice(0, 120), silent: true, tag: k });
+        no.onclick = () => { window.focus(); jumpTo(n); };
+      } catch {}
+    }
+    for (const k of Object.keys(sent)) if (now - sent[k] > 3 * 864e5) delete sent[k];
+    setJSON(PREF.notified, sent);
+    renderToday();
+  }
+
+  // ---------- フォルダの管理・まとめる提案 ----------
+  const folderMeta = () => getJSON(PREF.folders, []);
+  const saveFolderMeta = (m) => setJSON(PREF.folders, m);
+  const isFavFolder = (name) => folderMeta().some((f) => f.name === name && f.favorite);
+  function folderNames() {
+    const counts = new Map();
+    for (const f of folderMeta()) counts.set(f.name, 0);
+    for (const n of state.notes) { const k = n.category || T().other; counts.set(k, (counts.get(k) || 0) + 1); }
+    return counts;
+  }
+  async function moveFolder(from, to) {
+    const target = String(to || "").trim().slice(0, 32);
+    if (!target || target === from) return;
+    for (const n of state.notes.filter((x) => (x.category || T().other) === from)) await state.store.update(n.id, { category: target });
+    const meta = folderMeta(), fav = meta.some((f) => f.name === from && f.favorite);
+    const rest = meta.filter((f) => f.name !== from);
+    const hit = rest.find((f) => f.name === target);
+    if (hit) { if (fav) hit.favorite = true; } else rest.push({ name: target, favorite: fav });
+    saveFolderMeta(rest);
+  }
+  function toggleFavFolder(name) {
+    const meta = folderMeta(), hit = meta.find((f) => f.name === name);
+    if (hit) hit.favorite = !hit.favorite; else meta.push({ name, favorite: true });
+    saveFolderMeta(meta); renderRail(); openFolders();
+  }
+  function openFolders() {
+    const t = T(), dlg = $("foldDlg"), counts = folderNames();
+    const names = [...counts.keys()].sort((a, b) => (isFavFolder(b) - isFavFolder(a)) || counts.get(b) - counts.get(a) || a.localeCompare(b));
+    const input = el("input", { type: "text", placeholder: t.foldNew });
+    dlg.replaceChildren(
+      el("div", { class: "help-head" }, el("h2", {}, t.foldDlgH), el("button", { type: "button", class: "help-x", "aria-label": t.close, onclick: () => dlg.close() }, "×")),
+      ...names.map((name) => {
+        const sel = el("select", { "aria-label": t.foldMergeTo }, el("option", { value: "" }, t.foldMergeTo), ...names.filter((x) => x !== name).map((x) => el("option", { value: x }, x)));
+        sel.onchange = async () => { if (sel.value) { await moveFolder(name, sel.value); openFolders(); } };
+        return el("div", { class: "frow" },
+          el("button", { class: "star", "aria-pressed": String(isFavFolder(name)), "aria-label": "★", onclick: () => toggleFavFolder(name) }, isFavFolder(name) ? "★" : "☆"),
+          el("span", {}, name, " ", el("span", { class: "n" }, String(counts.get(name)))),
+          el("button", { class: "mini", onclick: async () => { const v = prompt(t.foldRenameQ, name); if (v) { await moveFolder(name, v); openFolders(); } } }, t.foldRename),
+          name === t.other ? el("span") : el("span", {}, sel, " ",
+            el("button", { class: "mini", onclick: async () => { if (confirm(t.foldDelQ)) { await moveFolder(name, t.other); saveFolderMeta(folderMeta().filter((f) => f.name !== name)); openFolders(); } } }, t.foldDel)));
+      }),
+      el("div", { class: "fnew" }, input, el("button", { class: "mini", onclick: () => {
+        const v = input.value.trim().slice(0, 32);
+        if (!v || folderNames().has(v)) return;
+        saveFolderMeta([...folderMeta(), { name: v, favorite: false }]); renderRail(); openFolders();
+      } }, t.foldCreate)));
+    if (!dlg.open) dlg.showModal();
+  }
+  function bigrams(s) { const c = [...s.replace(/\s/g, "")]; if (c.length < 2) return new Set([s]); const b = new Set(); for (let i = 0; i < c.length - 1; i++) b.add(c[i] + c[i + 1]); return b; }
+  function jaccard(a, b) { if (!a.size || !b.size) return 0; let n = 0; for (const x of a) if (b.has(x)) n++; return n / (a.size + b.size - n); }
+  function nameSim(a, b) {
+    const x = a.toLowerCase(), y = b.toLowerCase();
+    if (x === y) return 1;
+    const [sh, lo] = x.length <= y.length ? [x, y] : [y, x];
+    if (sh.length >= 2 && lo.includes(sh)) return 0.9;
+    const sp = (s) => new Set(s.split(/[・&/、, ]/).filter((w) => w.length >= 2));
+    const wa = sp(x), wb = sp(y);
+    for (const w of wa) if (wb.has(w)) return 0.8;
+    return jaccard(bigrams(x), bigrams(y));
+  }
+  function mergeSuggestion() {
+    const other = T().other, counts = folderNames(), dismissed = new Set(getJSON(PREF.dismissed, []));
+    const names = [...counts.keys()].filter((n) => n !== other && counts.get(n) > 0);
+    const words = new Map();
+    for (const n of state.notes) { const k = n.category || other; const s = words.get(k) || new Set(); for (const w of [...(n.tags || []), ...(n.situations || [])]) s.add(String(w).toLowerCase()); words.set(k, s); }
+    let best = null;
+    for (let i = 0; i < names.length; i++) for (let j = i + 1; j < names.length; j++) {
+      const a = names[i], b = names[j];
+      const score = Math.max(nameSim(a, b), jaccard(words.get(a) || new Set(), words.get(b) || new Set()));
+      if (score < 0.5) continue;
+      const [from, into] = counts.get(a) >= counts.get(b) ? [b, a] : [a, b];
+      const key = [from, into].sort().join("|");
+      if (dismissed.has(key)) continue;
+      if (!best || score > best.score) best = { from, into, key, score };
+    }
+    return best;
+  }
+  function renderMerge() {
+    const t = T(), s = state.notes.length ? mergeSuggestion() : null, box = $("mergeBox");
+    if (!s) { box.replaceChildren(); return; }
+    box.replaceChildren(el("div", { class: "merge" },
+      el("p", {}, t.mergeQ(s.from, s.into)),
+      el("div", {},
+        el("button", { class: "yes", onclick: async () => { await moveFolder(s.from, s.into); renderMerge(); } }, t.mergeYes),
+        el("button", { onclick: () => { setJSON(PREF.dismissed, [...getJSON(PREF.dismissed, []), s.key]); renderMerge(); } }, t.mergeNo))));
+  }
+
   // ---------- render ----------
   function folderOf(n) { return state.view === "cat" ? n.category || T().other : String(monthKey(n.createdAt)); }
   function folderLabel(k) { return state.view === "cat" ? k : monthLabel(Number(k)); }
@@ -767,6 +1102,7 @@ Return JSON only:
       n.summary ? el("p", { class: "sum" }, n.summary) : null,
       el("div", { class: "chips" },
         n.remindAt ? el("span", { class: "chip rem" }, n.remindAt) : null,
+        n.alarm && alarmSummary(n.alarm) ? el("span", { class: "chip rem" }, "🔔 " + alarmSummary(n.alarm)) : null,
         (n.situations || []).map((x) => el("span", { class: "chip sit" }, x)),
         (n.tags || []).map((x) => el("span", { class: "chip" }, "#" + x))),
     );
@@ -774,6 +1110,8 @@ Return JSON only:
     const rel = related(n);
     s.append(el("details", { class: "more" }, el("summary", {}, t.original),
       el("p", { class: "raw" }, n.text),
+      n.original && n.original !== n.text ? el("div", { class: "orig" }, el("small", {}, t.memoBefore), el("p", { class: "raw" }, n.original),
+        el("button", { onclick: () => state.store.update(n.id, { text: n.original, original: null }) }, t.memoRestore)) : null,
       n.url ? el("a", { class: "src", href: n.url, target: "_blank", rel: "noopener" }, n.url) : null,
       rel.length ? el("div", { class: "related" }, el("small", {}, t.related),
         rel.map((m) => el("button", { onclick: () => jumpTo(m) }, "→ " + m.title))) : null));
@@ -783,6 +1121,7 @@ Return JSON only:
       el("button", { "aria-pressed": String(!!n.pinned), onclick: () => state.store.update(n.id, { pinned: !n.pinned }) }, (n.pinned ? "★ " : "☆ ") + t.pin),
       el("button", { onclick: () => state.store.update(n.id, { helpful: (n.helpful || 0) + 1 }) }, "↑ " + t.helpful + (n.helpful ? ` · ${n.helpful}` : "")),
       el("button", { onclick: () => { state.editing = n.id; renderList(); renderAnswer(); } }, t.edit),
+      el("button", { "aria-pressed": String(n.plannedDay === todayISO()), onclick: () => state.store.update(n.id, { plannedDay: n.plannedDay === todayISO() ? null : todayISO() }) }, "☑ " + (n.plannedDay === todayISO() ? t.fromToday : t.toToday)),
       state.sample ? el("button", { onclick: async (e) => { e.currentTarget.disabled = true; await refile(n); } }, t.refile) : null,
       el("button", { class: "del" + (armed ? " armed" : ""), onclick: async () => {
         if (armed) { state.armed = null; await state.store.remove(n.id); }
@@ -806,6 +1145,21 @@ Return JSON only:
       url: el("input", { type: "url", value: n.url || "" }),
     };
     f.text.value = n.text || "";
+    const a0 = n.alarm || { kind: "none", date: sod(Date.now() + 864e5).getTime() + 9 * 36e5, intervalDays: 3, weekdays: [], keywords: [] };
+    const pad = (x) => String(x).padStart(2, "0");
+    const toLocal = (ms) => { const d = new Date(ms); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`; };
+    const al = {
+      kind: el("select", {}, ...Object.keys(t.alarmKinds).map((k) => el("option", { value: k }, t.alarmKinds[k]))),
+      date: el("input", { type: "datetime-local", value: toLocal(a0.date) }),
+      interval: el("input", { type: "number", min: "1", max: "365", value: String(a0.intervalDays || 3) }),
+      words: el("input", { type: "text", value: list(a0.keywords) }),
+      days: el("div", { class: "wd" }, ...[1, 2, 3, 4, 5, 6, 7].map((w) => el("label", {}, el("input", { type: "checkbox", value: String(w), checked: (a0.weekdays || []).includes(w) ? "" : null }), WD[state.lang][w - 1]))),
+    };
+    al.kind.value = n.alarm ? a0.kind : "none";
+    const intervalRow = field("interval", t.alarmEvery, al.interval), daysRow = el("div", { class: "ef" }, el("span", {}, t.alarmDays), al.days), dateRow = field("adate", t.alarmDate, al.date);
+    const syncAlarm = () => { const k = al.kind.value; dateRow.hidden = k === "none"; intervalRow.hidden = k !== "interval"; daysRow.hidden = k !== "weekly"; };
+    al.kind.onchange = syncAlarm; syncAlarm();
+    const alarmBox = el("fieldset", { class: "alarm" }, el("legend", {}, "🔔 " + t.alarmH), field("akind", t.alarmWhen, al.kind), dateRow, intervalRow, daysRow, field("awords", t.alarmWords, al.words), el("p", { class: "ef-hint" }, t.alarmHint));
     const close = () => { state.editing = null; renderList(); renderAnswer(); };
     const commit = async (refileAfter) => {
       const text = f.text.value.trim();
@@ -815,6 +1169,11 @@ Return JSON only:
         category: f.category.value.trim() || T().other, situations: split(f.situations.value), tags: split(f.tags.value),
         remindAt: /^\d{4}-\d{2}-\d{2}$/.test(f.remindAt.value) ? f.remindAt.value : null, url: f.url.value.trim() || null,
       };
+      const kind = al.kind.value, kw = split(al.words.value);
+      patch.alarm = kind === "none" && !kw.length ? null : {
+        kind, date: al.date.value ? new Date(al.date.value).getTime() : Date.now(), intervalDays: Math.max(1, Number(al.interval.value) || 1),
+        weekdays: [...al.days.querySelectorAll("input:checked")].map((x) => Number(x.value)), keywords: kw,
+      };
       state.editing = null;
       await state.store.update(n.id, patch);
       if (refileAfter) { toast(T().saving); await refile({ ...n, ...patch }); toast(T().editSaved); } else toast(T().editSaved);
@@ -823,6 +1182,7 @@ Return JSON only:
       field("title", t.fTitle, f.title), field("text", t.fText, f.text), field("summary", t.fSummary, f.summary),
       el("div", { class: "ef-row" }, field("category", t.fFolder, f.category), field("remindAt", t.fRemind, f.remindAt)),
       field("situations", t.fSituations, f.situations), field("tags", t.fTags, f.tags), field("url", t.fUrl, f.url),
+      alarmBox,
       el("p", { class: "ef-hint" }, t.dictate),
       el("div", { class: "ef-acts" },
         el("button", { type: "button", class: "ghost", onclick: close }, t.cancel),
@@ -852,6 +1212,9 @@ Return JSON only:
     $("saveBox").hidden = state.mode !== "save"; $("saveTools").hidden = state.mode !== "save";
     $("askBox").hidden = state.mode !== "ask"; $("suggest").hidden = state.mode !== "ask";
     $("noteText").placeholder = t.notePh; $("askText").placeholder = t.askPh; $("noteUrl").placeholder = t.urlPh;
+    $("fileLabel").textContent = t.fileLabel; $("fileRm").textContent = t.remove;
+    $("memoLabel").textContent = t.memoLabel; $("memoTool").setAttribute("aria-pressed", String(!!state.memoMode)); $("memoTool").hidden = !state.sample;
+    $("foldManage").textContent = t.manage;
     $("addSrcLabel").textContent = t.addSrc; $("imgLabel").textContent = t.addImg; $("thumbLabel").textContent = t.imgReady; $("thumbRm").textContent = t.remove;
     $("kbd").textContent = state.mode === "save" ? t.kbdSave : t.kbdAsk;
     $("micHint").textContent = t.dictate;
@@ -874,6 +1237,7 @@ Return JSON only:
 
   function renderRail() {
     const t = T(), notes = state.notes;
+    renderToday();
     // Today's pick: least recently seen older notes, rotated daily
     const old = notes.filter((n) => Date.now() - n.createdAt > 2 * 864e5).sort((a, b) => (a.lastSeen || a.createdAt) - (b.lastSeen || b.createdAt));
     const pool = old.slice(0, 7);
@@ -896,13 +1260,14 @@ Return JSON only:
     $("remList").replaceChildren(...soon.map(({ n }) => el("button", { class: "fitem alert", onclick: () => jumpTo(n) }, el("time", {}, n.remindAt.slice(5).replace("-", "/")), el("span", {}, n.title))));
     // Folders
     const counts = new Map();
+    if (state.view === "cat") for (const f of folderMeta()) counts.set(f.name, 0);
     for (const n of notes) { const k = folderOf(n); counts.set(k, (counts.get(k) || 0) + 1); }
-    const keys = [...counts.keys()].sort(state.view === "cat" ? (a, b) => counts.get(b) - counts.get(a) || a.localeCompare(b) : (a, b) => Number(b) - Number(a));
+    const keys = [...counts.keys()].sort(state.view === "cat" ? (a, b) => (isFavFolder(b) - isFavFolder(a)) || counts.get(b) - counts.get(a) || a.localeCompare(b) : (a, b) => Number(b) - Number(a));
     const pinnedN = notes.filter((n) => n.pinned).length;
     if (!["__all", "__pin"].includes(state.folder) && !counts.has(state.folder)) state.folder = "__all";
     if (state.folder === "__pin" && !pinnedN) state.folder = "__all";
     const item = (key, label, n, dot) => el("button", { class: "fitem", "aria-pressed": String(state.folder === key), onclick: () => { state.folder = key; renderRail(); renderList(); } }, dot ? el("i", { class: "dot" }) : null, label, el("span", { class: "n" }, n));
-    $("folders").replaceChildren(...(notes.length ? [item("__all", t.all, notes.length), pinnedN ? item("__pin", "★ " + t.pinned, pinnedN) : null, ...keys.map((k) => item(k, folderLabel(k), counts.get(k), state.view === "cat"))].filter(Boolean) : []));
+    $("folders").replaceChildren(...(notes.length ? [item("__all", t.all, notes.length), pinnedN ? item("__pin", "★ " + t.pinned, pinnedN) : null, ...keys.map((k) => item(k, (state.view === "cat" && isFavFolder(k) ? "★ " : "") + folderLabel(k), counts.get(k), state.view === "cat"))].filter(Boolean) : []));
     let dl = $("folderNames");
     if (!dl) { dl = el("datalist", { id: "folderNames" }); document.body.append(dl); }
     dl.replaceChildren(...[...new Set(notes.map((n) => n.category))].map((c) => el("option", { value: c })));
@@ -910,6 +1275,7 @@ Return JSON only:
 
   function renderList() {
     const t = T(), box = $("slips");
+    renderMerge();
     if (!state.notes.length) {
       $("listH").textContent = t.listH(0);
       box.replaceChildren(
@@ -1005,6 +1371,15 @@ Return JSON only:
   $("filter").addEventListener("input", (e) => { state.filter = e.target.value; renderList(); });
   $("exportBtn").onclick = exportNotes;
   $("status").onclick = askKey;
+  $("fileInput").onchange = (e) => setFile(e.target.files[0]);
+  $("fileRm").onclick = clearFile;
+  $("memoTool").onclick = () => setMemoMode(!state.memoMode);
+  $("foldManage").onclick = openFolders;
+  $("noteText").addEventListener("input", (e) => renderKw(e.target.value));
+  $("askText").addEventListener("input", (e) => renderKw(e.target.value));
+  $("notifBtn").onclick = () => Notification.requestPermission().then(() => renderToday());
+  $("foldDlg").addEventListener("click", (e) => { if (e.target === $("foldDlg")) $("foldDlg").close(); });
+  setInterval(tickAlarms, 30e3);
   $("helpBtn").onclick = () => {
     const t = T();
     $("helpTitle").textContent = t.help;
