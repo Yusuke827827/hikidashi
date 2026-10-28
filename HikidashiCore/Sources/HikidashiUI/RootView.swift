@@ -45,12 +45,13 @@ public struct HikidashiRootView: View {
                 ScrollView {
                     LazyVStack(alignment: .leading, spacing: 18) {
                         header
-                        CaptureCard(librarian: librarian, onRecall: { recall = $0 }, onToast: show)
+                        CaptureCard(librarian: librarian, onRecall: { recall = $0 }, onToast: show, onOpen: jump)
                         if let toast {
                             Text(toast).font(.footnote).foregroundStyle(palette.accent).transition(.opacity)
                         }
                         if let e = librarian.lastError { errorBanner(e) }
                         if let recall { recallCard(recall) }
+                        todayListCard
                         if let pick = Heuristics.todaysPick(store.notes, skip: pickSkip) { pickCard(pick) }
                         upcoming
                         if let s = mergeSuggestion {
@@ -92,6 +93,15 @@ public struct HikidashiRootView: View {
         // リマインド日・タイトルが変わったときだけ、通知を予約し直す
         .task(id: Reminders.signature(store.notes)) {
             if !DemoMode.isOn { await Reminders.sync(store.notes) }
+        }
+        // アプリのアイコンに、今日まだ確認していない数を出す
+        .task(id: todayItems.filter { !store.isChecked($0.note.id, day: todayKey) }.count) {
+            guard !DemoMode.isOn else { return }
+            let left = todayItems.filter { !store.isChecked($0.note.id, day: todayKey) }.count
+            try? await UNUserNotificationCenter.current().setBadgeCount(left)
+        }
+        .task(id: Alarms.signature(store.notes)) {
+            if !DemoMode.isOn { await Alarms.sync(store.notes) }
         }
         .task(id: PlaceReminders.signature(store.notes)) {
             if !DemoMode.isOn { await PlaceReminders.sync(store.notes) }
@@ -210,6 +220,65 @@ public struct HikidashiRootView: View {
         .padding(16)
         .background(RoundedRectangle(cornerRadius: 16).fill(palette.accentSoft))
         .background { if palette.translucent { RoundedRectangle(cornerRadius: 16).fill(.ultraThinMaterial) } }
+    }
+
+    // MARK: 今日の確認リスト
+
+    private var todayItems: [TodayItem] { Heuristics.todayList(store.notes) }
+    private var todayKey: String { Heuristics.dayFormatter.string(from: Date()) }
+
+    @ViewBuilder private var todayListCard: some View {
+        let items = todayItems
+        if !items.isEmpty {
+            let done = items.filter { store.isChecked($0.note.id, day: todayKey) }.count
+            VStack(alignment: .leading, spacing: 10) {
+                HStack {
+                    Text(L("今日の確認リスト", "Today's checklist").uppercased())
+                        .font(.caption2.weight(.semibold)).tracking(1).foregroundStyle(palette.muted)
+                    Spacer()
+                    Text("\(done)/\(items.count)")
+                        .font(.caption.monospacedDigit().weight(.semibold))
+                        .foregroundStyle(done == items.count ? palette.accent : palette.muted)
+                }
+                ForEach(items, id: \.note.id) { item in todayRow(item) }
+                if done == items.count {
+                    Text(L("今日の分は全部確認しました ✓", "All checked for today ✓"))
+                        .font(.footnote).foregroundStyle(palette.accent)
+                }
+            }
+            .card()
+        }
+    }
+
+    private func todayRow(_ item: TodayItem) -> some View {
+        let checked = store.isChecked(item.note.id, day: todayKey)
+        return HStack(spacing: 10) {
+            Button {
+                withAnimation(.easeOut(duration: 0.15)) { store.toggleCheck(item.note.id, day: todayKey) }
+            } label: {
+                Image(systemName: checked ? "checkmark.circle.fill" : "circle")
+                    .font(.title3)
+                    .foregroundStyle(checked ? palette.accent : palette.muted)
+                    .frame(width: 32, height: 32)
+            }
+            .accessibilityLabel(checked ? L("確認済み", "Checked") : L("確認する", "Check"))
+            Button { jump(item.note) } label: {
+                HStack {
+                    Text(item.note.title)
+                        .font(.subheadline)
+                        .strikethrough(checked, color: palette.muted)
+                        .foregroundStyle(checked ? palette.muted : palette.text)
+                        .lineLimit(2)
+                        .multilineTextAlignment(.leading)
+                    Spacer()
+                    if let t = item.time {
+                        Text(t, format: .dateTime.hour().minute()).font(.caption.monospacedDigit()).foregroundStyle(palette.muted)
+                    } else if item.reason == .remind {
+                        Text("⏰").font(.caption)
+                    }
+                }
+            }
+        }
     }
 
     // MARK: 今日のひとつ・リマインド

@@ -53,6 +53,10 @@ public struct Note: Codable, Identifiable, Hashable, Sendable {
     public var enriched: Bool
     /// 着いたら知らせる場所
     public var place: Place?
+    /// アラーム（日時・繰り返し・言葉）
+    public var alarm: Alarm?
+    /// 「今日のリストに入れる」で入れた日（YYYY-MM-DD）
+    public var plannedDay: String?
     /// 最後に変えた日時（iCloud の同期で新しい方を残すため）
     public var updatedAt: Date?
 
@@ -81,6 +85,8 @@ public struct Note: Codable, Identifiable, Hashable, Sendable {
         fileTitle: String? = nil,
         enriched: Bool = false,
         place: Place? = nil,
+        alarm: Alarm? = nil,
+        plannedDay: String? = nil,
         updatedAt: Date? = nil
     ) {
         self.id = id
@@ -104,11 +110,13 @@ public struct Note: Codable, Identifiable, Hashable, Sendable {
         self.fileTitle = fileTitle
         self.enriched = enriched
         self.place = place
+        self.alarm = alarm
+        self.plannedDay = plannedDay
         self.updatedAt = updatedAt
     }
 
     enum CodingKeys: String, CodingKey {
-        case id, text, url, title, summary, category, tags, situations, remindAt, createdAt, pinned, helpful, lastSeen, example, filed, imageFile, original, file, fileTitle, enriched, place, updatedAt
+        case id, text, url, title, summary, category, tags, situations, remindAt, createdAt, pinned, helpful, lastSeen, example, filed, imageFile, original, file, fileTitle, enriched, place, alarm, plannedDay, updatedAt
     }
 
     public init(from decoder: Decoder) throws {
@@ -143,6 +151,8 @@ public struct Note: Codable, Identifiable, Hashable, Sendable {
         // Web 版のメモ（項目なし）は取り出し済みとして扱う
         enriched = try c.decodeIfPresent(Bool.self, forKey: .enriched) ?? true
         place = try? c.decodeIfPresent(Place.self, forKey: .place)
+        alarm = try? c.decodeIfPresent(Alarm.self, forKey: .alarm)
+        plannedDay = Self.validDay(try? c.decodeIfPresent(String.self, forKey: .plannedDay))
         updatedAt = Self.decodeDate(c, .updatedAt)
     }
 
@@ -169,6 +179,8 @@ public struct Note: Codable, Identifiable, Hashable, Sendable {
         try c.encodeIfPresent(fileTitle, forKey: .fileTitle)
         try c.encode(enriched, forKey: .enriched)
         try c.encodeIfPresent(place, forKey: .place)
+        try c.encodeIfPresent(alarm, forKey: .alarm)
+        try c.encodeIfPresent(plannedDay, forKey: .plannedDay)
         try c.encodeIfPresent(updatedAt.map(Self.millis), forKey: .updatedAt)
     }
 

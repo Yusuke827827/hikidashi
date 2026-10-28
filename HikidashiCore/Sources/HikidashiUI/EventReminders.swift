@@ -49,7 +49,7 @@ enum EventReminders {
             return EventInfo(id: e.calendarItemIdentifier, title: title, start: start, isAllDay: e.isAllDay)
         }
         let center = UNUserNotificationCenter.current()
-        for hint in EventHints.plan(events: events, notes: notes, now: now) {
+        for hint in EventHints.plan(events: events, notes: notes, now: now, limit: 8) {
             let content = UNMutableNotificationContent()
             content.title = L("「\(hint.event.title)」の前に", "Before \"\(hint.event.title)\"")
             content.body = hint.notes.map { "・" + $0.title }.joined(separator: "\n")

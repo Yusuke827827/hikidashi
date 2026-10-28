@@ -46,6 +46,10 @@ public final class NoteStore {
     /// 変わったメモ（保存・削除）を知らせる。iCloud の同期が使う
     public var onChange: ((_ saved: [String], _ deleted: [String]) -> Void)?
 
+    /// 今日の確認リストでチェックしたメモ（日付 → メモの id）
+    public private(set) var checks: [String: [String]] = [:]
+    var checksURL: URL { root.appendingPathComponent("checks.json") }
+
     /// フォルダの設定
     public private(set) var folderInfo: [FolderInfo] = []
     var foldersURL: URL { root.appendingPathComponent("folders.json") }
@@ -54,6 +58,25 @@ public final class NoteStore {
         self.root = root
         reload()
         loadFolders()
+        checks = (try? JSONDecoder().decode([String: [String]].self, from: Data(contentsOf: checksURL))) ?? [:]
+    }
+
+    // MARK: 今日の確認リスト
+
+    public func isChecked(_ id: String, day: String) -> Bool {
+        checks[day]?.contains(id) ?? false
+    }
+
+    public func toggleCheck(_ id: String, day: String) {
+        var list = checks[day] ?? []
+        if let i = list.firstIndex(of: id) { list.remove(at: i) } else { list.append(id) }
+        checks[day] = list
+        // 2 週間より前のチェックは消す
+        if let cutoff = Calendar.current.date(byAdding: .day, value: -14, to: Date()) {
+            let c = Heuristics.dayFormatter.string(from: cutoff)
+            checks = checks.filter { $0.key >= c }
+        }
+        try? JSONEncoder().encode(checks).write(to: checksURL, options: .atomic)
     }
 
     public func reload() {

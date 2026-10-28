@@ -12,6 +12,8 @@ struct CaptureCard: View {
     let librarian: Librarian
     var onRecall: (RecallOutcome) -> Void
     var onToast: (String) -> Void
+    /// アラームの言葉に合うメモを開く
+    var onOpen: (Note) -> Void = { _ in }
 
     @Environment(\.palette) private var p
     @State private var mode: Mode = .save
@@ -48,6 +50,7 @@ struct CaptureCard: View {
             .pickerStyle(.segmented)
 
             if mode == .save { saveForm } else { recallForm }
+            keywordAlarmBanner
 
             if let e = speech.error {
                 Text(e).font(.footnote).foregroundStyle(p.accent)
@@ -95,6 +98,31 @@ struct CaptureCard: View {
                     imageData = ImageTools.jpeg(data: data)
                 }
             }
+        }
+    }
+
+    // MARK: 言葉のアラーム
+
+    /// 入力中の文に、アラームの言葉が入っていたら知らせる
+    @ViewBuilder private var keywordAlarmBanner: some View {
+        let hits = Heuristics.keywordAlarms(librarian.store.notes, text: mode == .save ? text : query).prefix(3)
+        if !hits.isEmpty {
+            VStack(alignment: .leading, spacing: 6) {
+                Label(L("この言葉で知らせるメモ", "Notes for this word"), systemImage: "bell.badge")
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(p.accent)
+                ForEach(Array(hits)) { n in
+                    Button { onOpen(n) } label: {
+                        HStack {
+                            Text(n.title).font(.subheadline).foregroundStyle(p.text).lineLimit(1)
+                            Spacer()
+                            Image(systemName: "chevron.right").font(.caption).foregroundStyle(p.muted)
+                        }
+                    }
+                }
+            }
+            .padding(10)
+            .background(RoundedRectangle(cornerRadius: 10).fill(p.accentSoft))
         }
     }
 

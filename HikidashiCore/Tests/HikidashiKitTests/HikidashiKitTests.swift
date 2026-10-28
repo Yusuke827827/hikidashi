@@ -530,3 +530,81 @@ final class MemoPreviewTests: XCTestCase {
         XCTAssertNil(none, "AI が無ければ nil")
     }
 }
+
+final class AlarmTests: XCTestCase {
+    let cal = Calendar.current
+    func day(_ s: String, _ h: Int = 0, _ m: Int = 0) -> Date {
+        cal.date(bySettingHour: h, minute: m, second: 0, of: Heuristics.dayFormatter.date(from: s)!)!
+    }
+
+    func testOccurrences() {
+        let now = day("2026-10-28", 10)   // 水曜
+        XCTAssertEqual(Alarm(kind: .once, date: day("2026-10-29", 8)).occurrences(after: now, count: 3), [day("2026-10-29", 8)])
+        XCTAssertEqual(Alarm(kind: .once, date: day("2026-10-27", 8)).occurrences(after: now, count: 3), [], "過ぎた 1 回は鳴らない")
+        XCTAssertEqual(Alarm(kind: .daily, date: day("2026-10-01", 9)).occurrences(after: now, count: 2), [day("2026-10-29", 9), day("2026-10-30", 9)])
+        XCTAssertEqual(Alarm(kind: .daily, date: day("2026-10-01", 21)).occurrences(after: now, count: 1), [day("2026-10-28", 21)], "今日の分がまだなら今日")
+        XCTAssertEqual(Alarm(kind: .interval, date: day("2026-10-25", 7), intervalDays: 3).occurrences(after: now, count: 2), [day("2026-10-31", 7), day("2026-11-03", 7)])
+        // 月曜(2)と金曜(6)
+        XCTAssertEqual(Alarm(kind: .weekly, date: day("2026-10-01", 8), weekdays: [2, 6]).occurrences(after: now, count: 2), [day("2026-10-30", 8), day("2026-11-02", 8)])
+        XCTAssertEqual(Alarm(kind: .monthly, date: day("2026-09-15", 12)).occurrences(after: now, count: 1), [day("2026-11-15", 12)])
+        XCTAssertEqual(Alarm(kind: .none, keywords: ["洗濯"]).occurrences(after: now, count: 1), [])
+    }
+
+    func testRoundTripAndSummary() throws {
+        let a = Alarm(kind: .weekly, date: day("2026-10-01", 8, 30), weekdays: [2, 5], keywords: ["ジム"])
+        let n = Note(text: "t", alarm: a)
+        let back = try JSONDecoder().decode(Note.self, from: JSONEncoder().encode(n))
+        XCTAssertEqual(back.alarm?.weekdays, [2, 5])
+        XCTAssertEqual(back.alarm?.keywords, ["ジム"])
+        XCTAssertTrue(a.summary.contains("8:30"))
+    }
+
+    func testKeywordAlarms() {
+        let a = Note(id: "a", text: "", alarm: Alarm(kind: .none, keywords: ["洗濯"]))
+        let b = Note(id: "b", text: "")
+        XCTAssertEqual(Heuristics.keywordAlarms([a, b], text: "これから洗濯する").map(\.id), ["a"])
+        XCTAssertTrue(Heuristics.keywordAlarms([a, b], text: "料理").isEmpty)
+    }
+
+    func testTodayListAndSchedule() {
+        let now = day("2026-10-28", 10)
+        let alarmToday = Note(id: "a", text: "", alarm: Alarm(kind: .daily, date: day("2026-10-01", 18)))
+        let alarmMorning = Note(id: "m", text: "", alarm: Alarm(kind: .daily, date: day("2026-10-01", 7)))
+        let remind = Note(id: "r", text: "", remindAt: "2026-10-28")
+        let planned = Note(id: "p", text: "", plannedDay: "2026-10-28")
+        let other = Note(id: "o", text: "", remindAt: "2026-10-30")
+        let list = Heuristics.todayList([other, planned, remind, alarmToday, alarmMorning], now: now)
+        XCTAssertEqual(Array(list.map(\.note.id).prefix(2)), ["m", "a"])
+        XCTAssertEqual(Set(list.map(\.note.id)), ["m", "a", "r", "p"], "朝のアラームは過ぎていても今日のリストに残る")
+        XCTAssertEqual(list.first?.note.id, "m", "時刻の早い順")
+        let plan = Heuristics.alarmSchedule([alarmToday, Note(id: "i", text: "", alarm: Alarm(kind: .interval, date: day("2026-10-28", 20), intervalDays: 2))], now: now)
+        XCTAssertEqual(plan.filter { $0.note.id == "i" }.count, 3, "何日おきは 3 回分")
+        XCTAssertEqual(plan.first?.note.id, "a")
+    }
+}
+
+@MainActor
+final class ChecklistTests: XCTestCase {
+    func testChecksPersist() throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent("hikidashi-test-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        let store = NoteStore(root: root)
+        let today = Heuristics.dayFormatter.string(from: Date())
+        store.toggleCheck("x", day: today)
+        XCTAssertTrue(store.isChecked("x", day: today))
+        XCTAssertTrue(NoteStore(root: root).isChecked("x", day: today), "保存される")
+        store.toggleCheck("x", day: today)
+        XCTAssertFalse(store.isChecked("x", day: today))
+    }
+
+    func testRecallPutsKeywordAlarmFirst() async throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent("hikidashi-test-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        let store = NoteStore(root: root)
+        store.add(Note(id: "w", text: "柔軟剤は少なめ", title: "柔軟剤", alarm: Alarm(kind: .none, keywords: ["洗濯"])))
+        store.add(Note(id: "s", text: "洗濯のシミは叩く", title: "シミ"))
+        let lib = Librarian(store: store, credentialProvider: { nil }, onDevice: nil)
+        let r = await lib.recall("これから洗濯")
+        XCTAssertEqual(r.noteIDs.first, "w")
+    }
+}

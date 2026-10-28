@@ -17,13 +17,13 @@ enum Reminders {
         let old = await center.pendingNotificationRequests().map(\.identifier).filter { $0.hasPrefix(idPrefix) }
         center.removePendingNotificationRequests(withIdentifiers: old)
 
-        // iOS が予約できる通知は 64 件まで。予定の前（最大 10 件）と場所（最大 15 か所）の分を空けておく
-        let plan = Heuristics.reminderSchedule(notes, limit: 38)
+        // iOS が予約できる通知は 64 件まで。リマインド 20・予定 8・場所 12・アラーム 24 に分ける
+        let plan = Heuristics.reminderSchedule(notes, limit: 20)
         guard !plan.isEmpty else { return }
 
         var status = await center.notificationSettings().authorizationStatus
         if status == .notDetermined {
-            _ = try? await center.requestAuthorization(options: [.alert, .sound])
+            _ = try? await center.requestAuthorization(options: [.alert, .sound, .badge])
             status = await center.notificationSettings().authorizationStatus
         }
         guard status == .authorized || status == .provisional || status == .ephemeral else { return }

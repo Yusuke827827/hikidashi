@@ -30,7 +30,7 @@ enum PlaceReminders {
         let old = await center.pendingNotificationRequests().map(\.identifier).filter { $0.hasPrefix(idPrefix) }
         center.removePendingNotificationRequests(withIdentifiers: old)
         guard authorized else { return }
-        for n in Heuristics.placeNotes(notes) {
+        for n in Heuristics.placeNotes(notes, limit: 12) {
             guard let p = n.place else { continue }
             let region = CLCircularRegion(center: CLLocationCoordinate2D(latitude: p.latitude, longitude: p.longitude),
                                           radius: max(100, p.radius), identifier: idPrefix + n.id)

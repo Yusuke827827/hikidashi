@@ -77,11 +77,12 @@ struct NoteCard: View {
     }
 
     @ViewBuilder private var chips: some View {
-        let hasChips = note.remindAt != nil || !note.situations.isEmpty || !note.tags.isEmpty
+        let hasChips = note.remindAt != nil || note.alarm != nil || !note.situations.isEmpty || !note.tags.isEmpty
         if hasChips {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 6) {
                     if let r = note.remindAt { Chip(text: "⏰ " + r, kind: .remind) }
+                    if let a = note.alarm, !a.summary.isEmpty { Chip(text: "🔔 " + a.summary, kind: .remind) }
                     ForEach(note.situations, id: \.self) { Chip(text: $0, kind: .situation) }
                     ForEach(note.tags, id: \.self) { Chip(text: $0, kind: .tag) }
                 }
@@ -151,6 +152,13 @@ struct NoteCard: View {
                 Button { onEdit(note) } label: { Label(L("編集", "Edit"), systemImage: "pencil") }
                 if librarian.hasAI {
                     Button { Task { await librarian.file(note.id) } } label: { Label(L("AI で再整理", "Re-file with AI"), systemImage: "sparkles") }
+                }
+                let today = Heuristics.dayFormatter.string(from: Date())
+                Button {
+                    store.update(note.id) { $0.plannedDay = $0.plannedDay == today ? nil : today }
+                } label: {
+                    Label(note.plannedDay == today ? L("今日のリストから外す", "Remove from today's list") : L("今日のリストに入れる", "Add to today's list"),
+                          systemImage: "checklist")
                 }
                 Button {
                     sharedImage = ShareCard.image(for: note, palette: p).map(SharedImage.init)

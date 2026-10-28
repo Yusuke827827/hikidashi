@@ -214,3 +214,41 @@ extension Heuristics {
         return Double(a.intersection(b).count) / Double(a.union(b).count)
     }
 }
+
+/// 今日の確認リストの 1 行
+public struct TodayItem: Sendable, Equatable {
+    public var note: Note
+    /// アラームの時刻（今日鳴るもの）
+    public var time: Date?
+    /// なぜリストに入ったか
+    public var reason: Reason
+
+    public enum Reason: Sendable, Equatable { case alarm, remind, planned }
+}
+
+extension Heuristics {
+    /// 今日確認するメモ: 今日鳴るアラーム、今日がリマインド日、「今日のリストに入れる」で入れたもの。時刻の早い順
+    public static func todayList(_ notes: [Note], now: Date = Date()) -> [TodayItem] {
+        let cal = Calendar.current
+        let start = cal.startOfDay(for: now)
+        let today = dayFormatter.string(from: now)
+        var items: [TodayItem] = []
+        for n in notes {
+            if let a = n.alarm, a.hasSchedule, let t = a.occurrences(after: start.addingTimeInterval(-1), count: 1).first, cal.isDate(t, inSameDayAs: now) {
+                items.append(TodayItem(note: n, time: t, reason: .alarm))
+            } else if n.remindAt == today {
+                items.append(TodayItem(note: n, time: nil, reason: .remind))
+            } else if n.plannedDay == today {
+                items.append(TodayItem(note: n, time: nil, reason: .planned))
+            }
+        }
+        return items.sorted { a, b in
+            switch (a.time, b.time) {
+            case let (x?, y?): return x < y
+            case (_?, nil): return true
+            case (nil, _?): return false
+            default: return a.note.createdAt > b.note.createdAt
+            }
+        }
+    }
+}

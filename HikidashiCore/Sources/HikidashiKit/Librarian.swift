@@ -221,11 +221,14 @@ public final class Librarian {
         guard !notes.isEmpty else {
             return RecallOutcome(query: q, answer: L("まだメモがありません。先にいくつかしまってください。", "Nothing saved yet. Save a few tips first."), noteIDs: [], keywordOnly: true)
         }
+        // アラームの言葉が入っていたら、そのメモを先頭に出す
+        let alarmIDs = Heuristics.keywordAlarms(notes, text: q).map(\.id)
+        func withAlarms(_ ids: [String]) -> [String] { alarmIDs + ids.filter { !alarmIDs.contains($0) } }
         if let ai = ai {
             do {
                 let r = try await ai.recall(q, notes: notes, today: Self.today, language: .current)
                 lastError = nil
-                return RecallOutcome(query: q, answer: r.answer, noteIDs: r.ids, keywordOnly: false)
+                return RecallOutcome(query: q, answer: r.answer, noteIDs: withAlarms(r.ids), keywordOnly: false)
             } catch {
                 // iPhone の中の AI が失敗したときは、簡易の整理のまま黙って続ける
             if aiKind == .claude { lastError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription }
@@ -233,9 +236,10 @@ public final class Librarian {
         }
         let hits = Heuristics.search(notes, query: q)
         let answer = hits.isEmpty
-            ? L("関係しそうなメモは見つかりませんでした。", "Nothing related turned up.")
+            ? (alarmIDs.isEmpty ? L("関係しそうなメモは見つかりませんでした。", "Nothing related turned up.")
+                                : L("この言葉で知らせるメモがあります。", "You asked to be reminded of these notes for this word."))
             : L("キーワードが近いメモが \(hits.count) 件あります。", "\(hits.count) notes look related by keyword.")
-        return RecallOutcome(query: q, answer: answer, noteIDs: hits.map(\.id), keywordOnly: true)
+        return RecallOutcome(query: q, answer: answer, noteIDs: withAlarms(hits.map(\.id)), keywordOnly: true)
     }
 
     public func clearError() { lastError = nil }
