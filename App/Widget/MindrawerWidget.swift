@@ -1,6 +1,7 @@
 // ホーム画面とロック画面のウィジェット。「今日のひとつ」と近いリマインドを出す。
 // メモはアプリと共有している保存フォルダ（App Group）の notes.json から読むだけ。
 
+import AppIntents
 import HikidashiKit
 import SwiftUI
 import WidgetKit
@@ -128,9 +129,25 @@ struct DrawerWidget: Widget {
     }
 }
 
+/// コントロールセンター・ロック画面・アクションボタンに置ける「しまう」ボタン（iOS 18 以降）
+@available(iOS 18.0, *)
+struct QuickSaveControl: ControlWidget {
+    var body: some ControlWidgetConfiguration {
+        StaticControlConfiguration(kind: "MindrawerQuickSave") {
+            ControlWidgetButton(action: OpenURLIntent(URL(string: "mindrawer://save")!)) {
+                Label(L("しまう", "Save a tip"), systemImage: "tray.and.arrow.down")
+            }
+        }
+        .displayName(LocalizedStringResource(stringLiteral: L("Mindrawer にしまう", "Save to Mindrawer")))
+    }
+}
+
 @main
 struct MindrawerWidgets: WidgetBundle {
     var body: some Widget {
         DrawerWidget()
+        if #available(iOS 18.0, *) {
+            QuickSaveControl()
+        }
     }
 }

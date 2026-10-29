@@ -30,6 +30,9 @@ public struct HikidashiRootView: View {
     @AppStorage("onboarded") private var onboarded = false
     @AppStorage("reviewDismissedWeek") private var reviewDismissedWeek = ""
     @State private var composing: RecallOutcome?
+    @State private var noteFilter = NoteFilter()
+    @State private var showFilter = false
+    @State private var focusSave = 0
     @State private var chatting = false
     @AppStorage("autoBackup") private var autoBackup = true
     @State private var mergeRefresh = 0
@@ -50,7 +53,7 @@ public struct HikidashiRootView: View {
                 ScrollView {
                     LazyVStack(alignment: .leading, spacing: 18) {
                         header
-                        CaptureCard(librarian: librarian, onRecall: { recall = $0 }, onToast: show, onOpen: jump)
+                        CaptureCard(librarian: librarian, onRecall: { recall = $0 }, onToast: show, onOpen: jump, focusTrigger: focusSave)
                         if let toast {
                             Text(toast).font(.footnote).foregroundStyle(palette.accent).transition(.opacity)
                         }
@@ -82,6 +85,9 @@ public struct HikidashiRootView: View {
         .preferredColorScheme(wallpaper.scheme)
         .sheet(item: $editing) { n in
             NoteEditor(note: n, librarian: librarian).environment(\.palette, palette).tint(palette.accent)
+        }
+        .sheet(isPresented: $showFilter) {
+            FilterSheet(filter: $noteFilter, notes: store.notes).tint(palette.accent)
         }
         .sheet(item: $composing) { r in
             ComposeSheet(librarian: librarian, topic: r.query, noteIDs: r.noteIDs) { n in
@@ -127,6 +133,11 @@ public struct HikidashiRootView: View {
             guard let id, let note = store.note(id) else { return }
             NotificationRouter.shared.openNoteID = nil
             jump(note)
+        }
+        .onChange(of: NotificationRouter.shared.focusSave) { _, on in
+            guard on else { return }
+            NotificationRouter.shared.focusSave = false
+            focusSave += 1
         }
         .onChange(of: NotificationRouter.shared.recallQuery) { _, q in
             guard let q else { return }
@@ -478,7 +489,7 @@ public struct HikidashiRootView: View {
         let f = filter.trimmingCharacters(in: .whitespaces).lowercased()
         return store.notes.filter { n in
             let inFolder = folder == Self.allKey || (folder == Self.pinKey ? n.pinned : folderKey(n) == folder)
-            return inFolder && (f.isEmpty || n.haystack.contains(f))
+            return inFolder && (f.isEmpty || n.haystack.contains(f)) && noteFilter.matches(n)
         }
     }
 
@@ -492,6 +503,19 @@ public struct HikidashiRootView: View {
             .padding(.horizontal, 10)
             .frame(minHeight: 36)
             .background(RoundedRectangle(cornerRadius: 10).fill(palette.surface2))
+            Button { showFilter = true } label: {
+                Image(systemName: noteFilter.isActive ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease.circle")
+                    .font(.title3)
+                    .frame(width: 36, height: 36)
+                    .overlay(alignment: .topTrailing) {
+                        if noteFilter.count > 0 {
+                            Text("\(noteFilter.count)").font(.caption2.bold()).foregroundStyle(palette.accentText)
+                                .padding(3).background(Circle().fill(palette.accent)).offset(x: 4, y: -2)
+                        }
+                    }
+            }
+            .foregroundStyle(noteFilter.isActive ? palette.accent : palette.muted)
+            .accessibilityLabel(L("詳しく絞り込む", "More filters"))
         }
     }
 

@@ -52,6 +52,8 @@ public enum AppRouter {
         case "note":
             let id = url.lastPathComponent
             if !id.isEmpty, id != "/" { open(noteID: id) }
+        case "save":
+            NotificationRouter.shared.focusSave = true
         case "recall":
             if let q = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?.first(where: { $0.name == "q" })?.value, !q.isEmpty {
                 recall(q)

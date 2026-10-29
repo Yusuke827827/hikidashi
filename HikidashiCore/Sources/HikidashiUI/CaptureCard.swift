@@ -14,6 +14,8 @@ struct CaptureCard: View {
     var onToast: (String) -> Void
     /// アラームの言葉に合うメモを開く
     var onOpen: (Note) -> Void = { _ in }
+    /// 変わったら「しまう」の欄にカーソルを置く（コントロールセンターから開いたとき）
+    var focusTrigger = 0
 
     @Environment(\.palette) private var p
     @State private var mode: Mode = .save
@@ -90,6 +92,10 @@ struct CaptureCard: View {
                 }
             }
             .ignoresSafeArea()
+        }
+        .onChange(of: focusTrigger) { _, _ in
+            mode = .save
+            focused = true
         }
         .onChange(of: photo) { _, item in
             guard let item else { return }

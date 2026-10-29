@@ -57,6 +57,8 @@ final class NotificationRouter: NSObject, UNUserNotificationCenterDelegate {
     var openNoteID: String?
     /// 予定の前の知らせを押したときの「ひきだす」の問い
     var recallQuery: String?
+    /// コントロールセンターの「しまう」から開いたとき
+    var focusSave = false
 
     // アプリを開いている間に届いた通知も表示する
     nonisolated func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification) async -> UNNotificationPresentationOptions {

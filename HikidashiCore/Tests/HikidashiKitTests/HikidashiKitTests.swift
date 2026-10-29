@@ -708,3 +708,24 @@ final class ComposeChatReviewTests: XCTestCase {
     }
 }
 
+final class NoteFilterTests: XCTestCase {
+    func testMatches() {
+        let now = Date()
+        var f = NoteFilter()
+        XCTAssertFalse(f.isActive)
+        let old = Note(text: "", tags: ["節約"], createdAt: now.addingTimeInterval(-40 * 86400), pinned: true, filed: true)
+        let fresh = Note(text: "", tags: ["旅行"], createdAt: now.addingTimeInterval(-86400), filed: false, imageFile: "x.jpg")
+        f.period = .month
+        XCTAssertFalse(f.matches(old, now: now))
+        XCTAssertTrue(f.matches(fresh, now: now))
+        f = NoteFilter(); f.tags = ["節約"]
+        XCTAssertTrue(f.matches(old, now: now)); XCTAssertFalse(f.matches(fresh, now: now))
+        f = NoteFilter(); f.withAttachment = true
+        XCTAssertTrue(f.matches(fresh, now: now)); XCTAssertFalse(f.matches(old, now: now))
+        f = NoteFilter(); f.favoritesOnly = true; f.unfiledOnly = true
+        XCTAssertFalse(f.matches(old, now: now)); XCTAssertFalse(f.matches(fresh, now: now))
+        XCTAssertEqual(f.count, 2)
+        XCTAssertEqual(NoteFilter.popularTags([old, fresh, Note(text: "", tags: ["節約"])]).first, "節約")
+    }
+}
+
