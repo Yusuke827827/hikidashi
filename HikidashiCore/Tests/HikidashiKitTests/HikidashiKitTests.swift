@@ -106,6 +106,12 @@ struct FakeAI: NoteAI {
         RecallResult(answer: "advice", ids: [notes[0].id])
     }
     func condense(_ text: String, language: AppLanguage) async throws -> String { "・まとめ" }
+    func compose(topic: String, notes: [Note], language: AppLanguage) async throws -> ComposeResult {
+        ComposeResult(title: "まとめ: " + topic, text: notes.map { "☐ " + $0.title }.joined(separator: "\n"))
+    }
+    func chat(transcript: String, notes: [Note], query: String, today: String, language: AppLanguage) async throws -> RecallResult {
+        RecallResult(answer: "会話の答え（" + query + "）", ids: [notes[0].id])
+    }
 }
 
 @MainActor
@@ -649,6 +655,56 @@ final class TrashAndBackupTests: XCTestCase {
         XCTAssertEqual(Backup.list(dir).count, Backup.keep)
         let data = try Data(contentsOf: Backup.list(dir)[0])
         XCTAssertEqual(try JSONDecoder().decode(ExportFile.self, from: data).notes.count, 1)
+    }
+}
+
+@MainActor
+final class ComposeChatReviewTests: XCTestCase {
+    func makeStore() throws -> NoteStore {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent("hikidashi-test-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        return NoteStore(root: root)
+    }
+
+    func testComposeWithAIAndFallback() async throws {
+        let store = try makeStore()
+        store.add(Note(id: "a", text: "", title: "服は袋に分ける", summary: "朝迷わない"))
+        store.add(Note(id: "b", text: "", title: "充電器を先に入れる"))
+        let lib = Librarian(store: store, credentialProvider: { nil }, onDevice: FakeAI())
+        let r = await lib.compose(topic: "旅行の準備", noteIDs: ["a", "b"])
+        XCTAssertEqual(r.title, "まとめ: 旅行の準備")
+        XCTAssertTrue(r.text.contains("☐ 服は袋に分ける"))
+        let plain = await Librarian(store: store, credentialProvider: { nil }, onDevice: nil).compose(topic: "旅行の準備", noteIDs: ["a", "b"])
+        XCTAssertEqual(plain.text, "・服は袋に分ける：朝迷わない\n・充電器を先に入れる")
+        let saved = lib.saveComposed(title: r.title, text: r.text, sources: ["a", "b"], category: "まとめ")
+        XCTAssertEqual(store.note(saved.id)?.sources, ["a", "b"])
+        let back = try JSONDecoder().decode(Note.self, from: JSONEncoder().encode(saved))
+        XCTAssertEqual(back.sources, ["a", "b"])
+    }
+
+    func testChat() async throws {
+        let store = try makeStore()
+        store.add(Note(id: "a", text: "ポイントは月末に失効", title: "ポイント"))
+        let lib = Librarian(store: store, credentialProvider: { nil }, onDevice: FakeAI())
+        let reply = await lib.chat([ChatMessage(role: .user, text: "ポイントの期限は？")])
+        XCTAssertEqual(reply.role, .assistant)
+        XCTAssertEqual(reply.text, "会話の答え（ポイントの期限は？）")
+        XCTAssertEqual(reply.noteIDs, ["a"])
+        let plain = await Librarian(store: store, credentialProvider: { nil }, onDevice: nil).chat([ChatMessage(role: .user, text: "ポイント")])
+        XCTAssertEqual(plain.noteIDs, ["a"])
+    }
+
+    func testWeeklyReview() {
+        let now = Date()
+        let notes = [
+            Note(id: "new", text: "", createdAt: now.addingTimeInterval(-2 * 86400)),
+            Note(id: "old-helpful", text: "", createdAt: now.addingTimeInterval(-40 * 86400), helpful: 3),
+            Note(id: "old-seen", text: "", createdAt: now.addingTimeInterval(-40 * 86400), lastSeen: now.addingTimeInterval(-86400)),
+            Note(id: "example", text: "", createdAt: now.addingTimeInterval(-40 * 86400), example: true),
+        ]
+        let r = Heuristics.weeklyReview(notes, now: now)
+        XCTAssertEqual(r.added.map(\.id), ["new"])
+        XCTAssertEqual(r.forgotten.map(\.id), ["old-helpful"])
     }
 }
 

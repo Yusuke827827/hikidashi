@@ -10,12 +10,13 @@ import UserNotifications
 enum Alarms {
     static let idPrefix = "hikidashi.alarm."
     /// iOS が予約できる 64 件のうち、アラームに使う数
-    static let budget = 24
+    static let budget = 23
 
     static func sync(_ notes: [Note]) async {
         let center = UNUserNotificationCenter.current()
         let old = await center.pendingNotificationRequests().map(\.identifier).filter { $0.hasPrefix(idPrefix) }
         center.removePendingNotificationRequests(withIdentifiers: old)
+        await scheduleWeekly(center, hasNotes: !notes.isEmpty)
 
         let requests = makeRequests(notes)
         guard !requests.isEmpty else { return }
@@ -62,6 +63,21 @@ enum Alarms {
             }
         }
         return out
+    }
+
+    /// 週の振り返り: 毎週日曜の夜 7 時に、音なしで知らせる
+    static let weeklyID = "hikidashi.weekly"
+    static func scheduleWeekly(_ center: UNUserNotificationCenter, hasNotes: Bool) async {
+        center.removePendingNotificationRequests(withIdentifiers: [weeklyID])
+        guard hasNotes, await center.notificationSettings().authorizationStatus == .authorized else { return }
+        let content = UNMutableNotificationContent()
+        content.title = L("今週のふりかえり", "Your week in Mindrawer")
+        content.body = L("今週しまったメモと、しまったままのメモを見てみましょう。", "See what you saved this week and the tips you haven't looked at.")
+        content.sound = nil
+        var c = DateComponents()
+        c.weekday = 1
+        c.hour = 19
+        try? await center.add(UNNotificationRequest(identifier: weeklyID, content: content, trigger: UNCalendarNotificationTrigger(dateMatching: c, repeats: true)))
     }
 
     private static func request(_ n: Note, id: String, trigger: UNNotificationTrigger) -> UNNotificationRequest {

@@ -115,6 +115,12 @@ struct NoteCard: View {
             if let s = note.url, let url = URL(string: s) {
                 Link(s, destination: url).font(.footnote).lineLimit(2)
             }
+            if let src = note.sources?.compactMap({ store.note($0) }), !src.isEmpty {
+                Text(L("まとめた元のメモ", "Combined from").uppercased()).font(.caption2.weight(.semibold)).foregroundStyle(p.muted).tracking(1)
+                ForEach(src) { r in
+                    Button("→ " + r.title) { onJump(r) }.font(.footnote).foregroundStyle(p.accent)
+                }
+            }
             let related = Heuristics.related(to: note, in: store.notes)
             if !related.isEmpty {
                 Text(L("関連", "Related").uppercased()).font(.caption2.weight(.semibold)).foregroundStyle(p.muted).tracking(1)

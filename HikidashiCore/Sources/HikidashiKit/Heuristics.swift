@@ -252,3 +252,34 @@ extension Heuristics {
         }
     }
 }
+
+/// 週の振り返り
+public struct WeeklyReview: Sendable, Equatable {
+    /// この 7 日でしまったメモ
+    public var added: [Note]
+    /// しまったまま見ていない、役立ちそうなメモ（最大 3 件）
+    public var forgotten: [Note]
+    public var isEmpty: Bool { added.isEmpty && forgotten.isEmpty }
+}
+
+extension Heuristics {
+    public static func weeklyReview(_ notes: [Note], now: Date = Date()) -> WeeklyReview {
+        let weekAgo = now.addingTimeInterval(-7 * 86400)
+        let twoWeeks = now.addingTimeInterval(-14 * 86400)
+        let real = notes.filter { !$0.example }
+        let added = real.filter { $0.createdAt >= weekAgo }.sorted { $0.createdAt > $1.createdAt }
+        let forgotten = real
+            .filter { $0.createdAt < twoWeeks && ($0.lastSeen ?? .distantPast) < twoWeeks }
+            .sorted { a, b in
+                let sa = a.helpful * 2 + (a.pinned ? 3 : 0), sb = b.helpful * 2 + (b.pinned ? 3 : 0)
+                return sa != sb ? sa > sb : a.createdAt < b.createdAt
+            }
+        return WeeklyReview(added: added, forgotten: Array(forgotten.prefix(3)))
+    }
+
+    /// 週の振り返りを出すか（日曜と月曜）
+    public static func isReviewDay(_ now: Date = Date()) -> Bool {
+        let w = Calendar.current.component(.weekday, from: now)
+        return w == 1 || w == 2
+    }
+}

@@ -15,6 +15,34 @@ public struct FilingResult: Codable, Sendable, Equatable {
     public var remindAt: String
 }
 
+/// まとめノート
+public struct ComposeResult: Codable, Sendable, Equatable {
+    public var title: String
+    public var text: String
+    public init(title: String, text: String) {
+        self.title = title
+        self.text = text
+    }
+}
+
+/// メモに聞く（会話）の 1 回分
+public struct ChatMessage: Sendable, Equatable, Identifiable {
+    public enum Role: Sendable, Equatable { case user, assistant }
+    public let id = UUID()
+    public var role: Role
+    public var text: String
+    /// 答えに使ったメモ
+    public var noteIDs: [String]
+
+    public init(role: Role, text: String, noteIDs: [String] = []) {
+        self.role = role
+        self.text = text
+        self.noteIDs = noteIDs
+    }
+
+    public static func == (a: ChatMessage, b: ChatMessage) -> Bool { a.id == b.id }
+}
+
 public struct MemoResult: Codable, Sendable, Equatable {
     public var text: String
 }
@@ -57,6 +85,49 @@ public enum Prompts {
 
         Text:
         \(text)
+        """
+    }
+
+    public static let composeSchema: [String: Any] = [
+        "type": "object",
+        "properties": ["title": ["type": "string"], "text": ["type": "string"]],
+        "required": ["title", "text"],
+        "additionalProperties": false,
+    ]
+
+    static func notesJSON(_ notes: [Note], textLimit: Int) -> String {
+        let pool: [[String: Any]] = notes.map { n in
+            ["id": n.id, "title": n.title, "summary": n.summary, "text": String(n.text.prefix(textLimit)), "folder": n.category, "situations": n.situations]
+        }
+        return (try? JSONSerialization.data(withJSONObject: pool, options: [.sortedKeys])).flatMap { String(data: $0, encoding: .utf8) } ?? "[]"
+    }
+
+    /// いくつかのメモから、1 枚のまとめノートを作る
+    public static func compose(topic: String, notes: [Note], language: AppLanguage) -> String {
+        """
+        Combine the user's saved notes below into one practical note for: \(topic)
+        Organize it so it can be used right away: short headings, lines starting with "・", numbered steps, or "☐ " checklist items where they fit.
+        Use only facts from the notes; do not invent anything. Keep it under about 25 lines. Write in \(language.promptName).
+        "title": under 40 characters. "text": the note.
+
+        Notes (JSON):
+        \(notesJSON(notes, textLimit: 600))
+        """
+    }
+
+    /// メモに聞く（会話）
+    public static func chat(transcript: String, notes: [Note], today: String, language: AppLanguage) -> String {
+        """
+        You are the user's assistant for their personal tips drawer. Answer the user's latest message in the conversation, using their saved notes when they are relevant.
+        Be brief (2–5 sentences). If the notes don't cover it, say so plainly; you may add one short general tip, clearly marked as general advice.
+        Today: \(today). Answer in \(language.promptName).
+        "answer": your reply. "ids": ids of the notes you used, most relevant first, at most 6.
+
+        Conversation:
+        \(transcript)
+
+        Notes (JSON):
+        \(notesJSON(notes, textLimit: 300))
         """
     }
 
@@ -138,6 +209,18 @@ public struct Filer: Sendable {
     public func file(_ note: Note, folders: [String], image: ClaudeClient.Image?, today: String, language: AppLanguage = .current, memo: Bool = false) async throws -> FilingResult {
         let prompt = Prompts.filing(text: note.text, url: note.url, hasImage: image != nil, folders: folders, today: today, language: language, memo: memo)
         return try await client.json(FilingResult.self, prompt: prompt, schema: Prompts.filingSchema, images: image.map { [$0] } ?? [], effort: .low)
+    }
+
+    public func compose(topic: String, notes: [Note], language: AppLanguage = .current) async throws -> ComposeResult {
+        try await client.json(ComposeResult.self, prompt: Prompts.compose(topic: topic, notes: Array(notes.prefix(20)), language: language), schema: Prompts.composeSchema, effort: .medium)
+    }
+
+    public func chat(transcript: String, notes: [Note], query: String, today: String, language: AppLanguage = .current) async throws -> RecallResult {
+        let pool = notes.sorted { Heuristics.score($0, query: query) > Heuristics.score($1, query: query) }.prefix(80).map { $0 }
+        var r = try await client.json(RecallResult.self, prompt: Prompts.chat(transcript: transcript, notes: pool, today: today, language: language), schema: Prompts.recallSchema, effort: .medium)
+        let known = Set(notes.map(\.id))
+        r.ids = r.ids.filter { known.contains($0) }
+        return r
     }
 
     public func condense(_ text: String, language: AppLanguage = .current) async throws -> String {

@@ -15,7 +15,8 @@ public enum AIKind: Sendable, Equatable {
     case none
 }
 
-public struct RecallOutcome: Sendable, Equatable {
+public struct RecallOutcome: Sendable, Equatable, Identifiable {
+    public var id: String { query + "|" + noteIDs.joined(separator: ",") }
     public var query: String
     public var answer: String
     public var noteIDs: [String]
@@ -172,6 +173,56 @@ public final class Librarian {
             if aiKind == .claude { lastError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription }
             return nil
         }
+    }
+
+    // MARK: まとめノート・メモに聞く
+
+    /// いくつかのメモから、1 枚のまとめノートを作る（AI が無ければ、タイトルと要約を並べるだけ）
+    public func compose(topic: String, noteIDs: [String]) async -> ComposeResult {
+        let notes = noteIDs.compactMap { store.note($0) }
+        if let ai = ai, !notes.isEmpty {
+            do {
+                let r = try await ai.compose(topic: topic, notes: notes, language: .current)
+                if !r.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { return r }
+            } catch {
+                if aiKind == .claude { lastError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription }
+            }
+        }
+        let lines = notes.map { n in "・" + n.title + (n.summary.isEmpty ? "" : "：" + n.summary) }
+        return ComposeResult(title: String(topic.prefix(40)), text: lines.joined(separator: "\n"))
+    }
+
+    /// まとめノートを保存する（元のメモを sources に残す）
+    @discardableResult
+    public func saveComposed(title: String, text: String, sources: [String], category: String) -> Note {
+        var n = Note(text: text, title: title, category: category, filed: true, enriched: true)
+        n.sources = sources
+        n.summary = L("\(sources.count) 件のメモからまとめたノート", "A note combined from \(sources.count) notes")
+        store.add(n)
+        return n
+    }
+
+    /// メモに聞く。これまでの会話から、次の答えを返す
+    public func chat(_ history: [ChatMessage]) async -> ChatMessage {
+        guard let last = history.last(where: { $0.role == .user })?.text else { return ChatMessage(role: .assistant, text: "") }
+        let notes = store.notes
+        guard !notes.isEmpty else {
+            return ChatMessage(role: .assistant, text: L("まだメモがありません。先にいくつかしまってください。", "Nothing saved yet. Save a few tips first."))
+        }
+        if let ai = ai {
+            let transcript = history.suffix(8).map { ($0.role == .user ? "User: " : "Assistant: ") + $0.text }.joined(separator: "\n")
+            do {
+                let r = try await ai.chat(transcript: transcript, notes: notes, query: last, today: Self.today, language: .current)
+                return ChatMessage(role: .assistant, text: r.answer, noteIDs: r.ids)
+            } catch {
+                if aiKind == .claude { lastError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription }
+            }
+        }
+        let hits = Heuristics.search(notes, query: last, limit: 5)
+        return ChatMessage(role: .assistant,
+                           text: hits.isEmpty ? L("関係しそうなメモは見つかりませんでした。", "Nothing related turned up.")
+                                              : L("キーワードが近いメモが \(hits.count) 件あります。", "\(hits.count) notes look related by keyword."),
+                           noteIDs: hits.map(\.id))
     }
 
     /// メモ風に整える前の文に戻す

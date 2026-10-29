@@ -28,6 +28,9 @@ public struct HikidashiRootView: View {
     @State private var jumpTarget: String?
     @State private var managingFolders = false
     @AppStorage("onboarded") private var onboarded = false
+    @AppStorage("reviewDismissedWeek") private var reviewDismissedWeek = ""
+    @State private var composing: RecallOutcome?
+    @State private var chatting = false
     @AppStorage("autoBackup") private var autoBackup = true
     @State private var mergeRefresh = 0
 
@@ -54,6 +57,7 @@ public struct HikidashiRootView: View {
                         if let e = librarian.lastError { errorBanner(e) }
                         if let recall { recallCard(recall) }
                         todayListCard
+                        weeklyReviewCard
                         if let pick = Heuristics.todaysPick(store.notes, skip: pickSkip) { pickCard(pick) }
                         upcoming
                         if let s = mergeSuggestion {
@@ -78,6 +82,17 @@ public struct HikidashiRootView: View {
         .preferredColorScheme(wallpaper.scheme)
         .sheet(item: $editing) { n in
             NoteEditor(note: n, librarian: librarian).environment(\.palette, palette).tint(palette.accent)
+        }
+        .sheet(item: $composing) { r in
+            ComposeSheet(librarian: librarian, topic: r.query, noteIDs: r.noteIDs) { n in
+                show(L("「\(n.title)」をしまいました。", "Saved “\(n.title)”."))
+            }
+            .tint(palette.accent)
+        }
+        .sheet(isPresented: $chatting) {
+            ChatView(librarian: librarian) { n in jump(n) }
+                .environment(\.palette, palette)
+                .tint(palette.accent)
         }
         .sheet(isPresented: $managingFolders, onDismiss: { mergeRefresh += 1 }) {
             FolderManagerView(store: store).environment(\.palette, palette).tint(palette.accent)
@@ -202,6 +217,11 @@ public struct HikidashiRootView: View {
             Text("Mindrawer").font(Fonts.mincho(26)).foregroundStyle(palette.text)
             Text("引出").font(.caption.weight(.bold)).tracking(3).foregroundStyle(palette.accent)
             Spacer()
+            Button { chatting = true } label: {
+                Image(systemName: "bubble.left.and.text.bubble.right").font(.title3).frame(width: 40, height: 44)
+            }
+            .foregroundStyle(palette.text)
+            .accessibilityLabel(L("メモに聞く", "Ask your notes"))
             Text(aiLabel)
                 .font(.caption.monospaced())
                 .foregroundStyle(palette.muted)
@@ -235,6 +255,13 @@ public struct HikidashiRootView: View {
                 Button(L("閉じる", "Close")) { withAnimation { recall = nil } }.font(.footnote)
             }
             Text(r.answer).font(.body).foregroundStyle(palette.text).fixedSize(horizontal: false, vertical: true)
+            if r.noteIDs.count >= 2 {
+                Button { composing = r } label: {
+                    Label(L("このメモからまとめノートを作る", "Combine these into one note"), systemImage: "doc.on.doc")
+                        .font(.subheadline.weight(.semibold))
+                }
+                .foregroundStyle(palette.accent)
+            }
             ForEach(r.noteIDs.compactMap { store.note($0) }) { n in
                 NoteCard(note: n, librarian: librarian, highlighted: true, onEdit: { editing = $0 }, onJump: jump)
             }
@@ -242,6 +269,40 @@ public struct HikidashiRootView: View {
         .padding(16)
         .background(RoundedRectangle(cornerRadius: 16).fill(palette.accentSoft))
         .background { if palette.translucent { RoundedRectangle(cornerRadius: 16).fill(.ultraThinMaterial) } }
+    }
+
+    // MARK: 週の振り返り（日曜と月曜）
+
+    private var weekKey: String {
+        let c = Calendar.current.dateComponents([.yearForWeekOfYear, .weekOfYear], from: Date())
+        return "\(c.yearForWeekOfYear ?? 0)-\(c.weekOfYear ?? 0)"
+    }
+
+    @ViewBuilder private var weeklyReviewCard: some View {
+        if Heuristics.isReviewDay(), reviewDismissedWeek != weekKey {
+            let review = Heuristics.weeklyReview(store.notes)
+            if !review.isEmpty {
+                VStack(alignment: .leading, spacing: 10) {
+                    HStack {
+                        Text(L("今週のふりかえり", "This week").uppercased())
+                            .font(.caption2.weight(.semibold)).tracking(1).foregroundStyle(palette.muted)
+                        Spacer()
+                        Button(L("閉じる", "Close")) { withAnimation { reviewDismissedWeek = weekKey } }.font(.footnote)
+                    }
+                    Text(L("この 1 週間で \(review.added.count) 件しまいました。", "You saved \(review.added.count) notes this week."))
+                        .font(.subheadline).foregroundStyle(palette.text)
+                    if !review.forgotten.isEmpty {
+                        Text(L("しまったままのメモ", "Notes you haven't looked at")).font(.caption.weight(.bold)).foregroundStyle(palette.accent)
+                        ForEach(review.forgotten) { n in
+                            Button { jump(n) } label: {
+                                Text("→ " + n.title).font(.subheadline).foregroundStyle(palette.text).lineLimit(1)
+                            }
+                        }
+                    }
+                }
+                .card()
+            }
+        }
     }
 
     // MARK: 今日の確認リスト

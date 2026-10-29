@@ -15,6 +15,10 @@ public protocol NoteAI: Sendable {
     func recall(_ query: String, notes: [Note], today: String, language: AppLanguage) async throws -> RecallResult
     /// 長い文をメモ風に整えて返す（保存する前に確かめるとき）
     func condense(_ text: String, language: AppLanguage) async throws -> String
+    /// いくつかのメモから、1 枚のまとめノートを作る
+    func compose(topic: String, notes: [Note], language: AppLanguage) async throws -> ComposeResult
+    /// メモに聞く。query は最後の問い（メモを絞るのに使う）
+    func chat(transcript: String, notes: [Note], query: String, today: String, language: AppLanguage) async throws -> RecallResult
 }
 
 extension Filer: NoteAI {
@@ -86,6 +90,15 @@ struct OnDeviceFiling {
 
 @available(iOS 26.0, macOS 26.0, *)
 @Generable
+struct OnDeviceCompose {
+    @Guide(description: "A short title under 40 characters")
+    var title: String
+    @Guide(description: "One practical note combining the given notes, with short headings, lines starting with ・, numbered steps or ☐ checklist items")
+    var text: String
+}
+
+@available(iOS 26.0, macOS 26.0, *)
+@Generable
 struct OnDeviceMemo {
     @Guide(description: "The note rewritten as a concise memo: short lines starting with ・, keeping key facts, numbers, steps, names and dates, dropping filler")
     var memo: String
@@ -121,6 +134,31 @@ struct OnDeviceFiler: NoteAI {
         let memoText = memo ? ((try? await condense(note.text, language: language)) ?? "") : ""
         return FilingResult(text: memoText, title: r.title, summary: r.summary, category: r.folder,
                             tags: r.tags, situations: r.situations, remindAt: r.remindAt)
+    }
+
+    func compose(topic: String, notes: [Note], language: AppLanguage) async throws -> ComposeResult {
+        let session = LanguageModelSession(instructions: "You combine a user's saved notes into one practical note. Use only facts from the notes. Write in \(language.promptName).")
+        let body = notes.prefix(12).map { n in "■ \(n.title.prefix(40))\n\(n.text.prefix(250))" }.joined(separator: "\n\n")
+        let r = try await session.respond(to: "Topic: \(topic.prefix(200))\n\nNotes:\n\(body)", generating: OnDeviceCompose.self).content
+        return ComposeResult(title: r.title, text: r.text)
+    }
+
+    func chat(transcript: String, notes: [Note], query: String, today: String, language: AppLanguage) async throws -> RecallResult {
+        let pool = OnDeviceAI.recallPool(notes, query: query)
+        let session = LanguageModelSession(instructions: """
+            You answer questions about the user's saved tips. Be brief, use the notes when relevant, and say plainly when they don't cover it. \
+            Answer in \(language.promptName).
+            """)
+        let prompt = """
+            Today: \(today)
+            Conversation:
+            \(transcript.suffix(1500))
+
+            Notes:
+            \(OnDeviceAI.recallList(pool))
+            """
+        let r = try await session.respond(to: prompt, generating: OnDeviceRecall.self).content
+        return RecallResult(answer: r.answer, ids: OnDeviceAI.ids(from: r.numbers, pool: pool))
     }
 
     func condense(_ text: String, language: AppLanguage) async throws -> String {
