@@ -330,6 +330,53 @@ details.more[open] summary::before { content: "−"; }
 .wp-row input[type="range"] { width: 100%; accent-color: var(--brass); }
 .wp-row output { font: 12px var(--font-mono); min-width: 3ch; text-align: right; }
 .wp-note { font-size: 12px; color: var(--faint); margin: 0; }
+.icon-btn { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; font-size: 14px; width: 30px; height: 28px; padding: 0; color: var(--muted); display: inline-grid; place-items: center; }
+.icon-btn:hover { color: var(--ink); }
+.set-sec { border-top: 1px solid var(--line); margin-top: 14px; padding-top: 10px; display: grid; gap: 8px; }
+.set-sec h3 { margin: 0 0 2px; }
+.set-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 14px; }
+.set-row > span { flex: 1; min-width: 0; }
+.set-row input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--accent); }
+.set-note { font-size: 12.5px !important; color: var(--faint) !important; }
+.trow2 { display: grid; grid-template-columns: 1fr auto auto; gap: 6px; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
+.trow2 span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.trow2 small { color: var(--faint); font: 11.5px var(--font-mono); display: block; }
+#lock { position: fixed; inset: 0; z-index: 100; background: var(--bg); display: grid; place-items: center; padding: 16px; }
+#lock form { display: grid; gap: 12px; justify-items: center; text-align: center; max-width: 320px; }
+#lock h2 { margin: 0; font-family: var(--font-display); font-size: 24px; }
+#lock input { font: 22px var(--font-mono); letter-spacing: .3em; text-align: center; width: 200px; border: 1px solid var(--line); border-radius: 12px; padding: 10px; background: var(--surface); color: var(--ink); }
+#lock button { border: 0; border-radius: 10px; background: var(--accent); color: var(--accent-text); font-weight: 600; padding: 8px 24px; }
+#lock p { margin: 0; font-size: 12.5px; color: var(--muted); }
+#lock .err { color: var(--alert); }
+body.locked .wrap { visibility: hidden; }
+.review { background: var(--ai-soft); border-radius: 14px; padding: 12px 14px; display: grid; gap: 6px; margin-bottom: 12px; }
+.review-top { display: flex; align-items: center; gap: 8px; }
+.review-top b { font-size: 14px; }
+.review-top button { margin-left: auto; border: 0; background: none; color: var(--muted); font-size: 13px; }
+.review p { margin: 0; font-size: 13.5px; color: var(--muted); }
+.review .links { display: grid; gap: 2px; }
+.review .links button, .chat-cite button { border: 0; background: none; text-align: left; padding: 2px 0; font-size: 14px; color: var(--accent); }
+.chat-log { display: grid; gap: 10px; margin: 12px 0; max-height: 52vh; overflow: auto; }
+.chat-msg { padding: 8px 12px; border-radius: 12px; font-size: 14.5px; white-space: pre-wrap; max-width: 90%; }
+.chat-msg.user { justify-self: end; background: var(--accent); color: var(--accent-text); }
+.chat-msg.ai { justify-self: start; background: var(--sunk); color: var(--ink); }
+.chat-cite { display: grid; gap: 0; margin-top: 4px; }
+.chat-form { display: flex; gap: 6px; }
+.chat-form input { flex: 1; min-width: 0; border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; background: var(--bg); color: var(--ink); font: 15px var(--font-body); }
+.chat-form button, .comp-btn { border: 0; border-radius: 10px; background: var(--accent); color: var(--accent-text); font-weight: 600; padding: 6px 14px; }
+.comp-btn { justify-self: start; font-size: 13.5px; }
+.chat-empty { color: var(--faint) !important; }
+.ftags { display: flex; flex-wrap: wrap; gap: 6px; }
+.ftags button { border: 1px solid var(--line); background: var(--surface); color: var(--muted); border-radius: 999px; font-size: 12.5px; padding: 2px 10px; }
+.ftags button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+.help select, .help input[type="text"] { border: 1px solid var(--line); background: var(--bg); color: var(--ink); border-radius: 8px; padding: 6px 8px; font: 14px var(--font-body); }
+.help .ef { display: grid; gap: 4px; margin-top: 10px; }
+.help .ef span { font-size: 12.5px; color: var(--muted); }
+.onb-dots { display: flex; gap: 6px; justify-content: center; margin-top: 14px; }
+.onb-dots i { width: 6px; height: 6px; border-radius: 50%; background: var(--line); }
+.onb-dots i.on { background: var(--accent); }
+.onb-big { font-size: 40px; text-align: center; margin: 14px 0 4px; }
+#filtBtn[data-n]:not([data-n="0"]) { background: var(--accent); color: var(--accent-text); }
 @media (prefers-reduced-motion: no-preference) {
   .slip { transition: border-color .2s, transform .2s; }
   .answer { animation: rise .25s ease-out; }
@@ -340,6 +387,12 @@ details.more[open] summary::before { content: "−"; }
 <body>
 <dialog id="memoDlg" class="help"></dialog>
 <dialog id="foldDlg" class="help"></dialog>
+<dialog id="setDlg" class="help"></dialog>
+<dialog id="chatDlg" class="help"></dialog>
+<dialog id="compDlg" class="help"></dialog>
+<dialog id="filtDlg" class="help"></dialog>
+<dialog id="onbDlg" class="help"></dialog>
+<div id="lock" hidden></div>
 <dialog id="help" class="help"><div class="help-head"><h2 id="helpTitle"></h2><button id="helpClose" type="button" class="help-x" aria-label="Close">×</button></div><div id="helpBody"></div></dialog>
 <div id="wall"></div><div id="wallVeil" hidden></div>
 <div class="wrap">
@@ -347,6 +400,8 @@ details.more[open] summary::before { content: "−"; }
     <div class="mark"><b>Mindrawer</b><span>引出</span></div>
     <div class="top-right">
       <button class="status" id="status" type="button"></button>
+      <button class="icon-btn" id="chatBtn" type="button">💬</button>
+      <button class="icon-btn" id="setBtn" type="button">⚙</button>
       <button class="wp-btn" id="helpBtn" type="button"><span aria-hidden="true">?</span><span id="helpLabel"></span></button>
       <div class="wp">
         <button class="wp-btn" id="wpBtn" aria-expanded="false" aria-controls="wpPanel"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="m3 16 5-5 4 4 3-3 6 6"/></svg><span id="wpLabel"></span></button>
@@ -402,6 +457,7 @@ details.more[open] summary::before { content: "−"; }
       <div class="answer-top"><small id="answerHead"></small><button id="answerClose"></button></div>
       <div class="answer-text" id="answerText"></div>
       <div class="slips" id="answerSlips"></div>
+      <button class="comp-btn" id="composeBtn" type="button" hidden></button>
     </div>
   </section>
 
@@ -425,7 +481,9 @@ details.more[open] summary::before { content: "−"; }
       <div class="list-head">
         <h2 id="listH"></h2>
         <div class="filter"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input type="search" id="filter"></div>
+        <button class="mini" id="filtBtn" type="button" data-n="0"></button>
       </div>
+      <div id="reviewBox"></div>
       <div id="mergeBox"></div>
       <div class="slips" id="slips"></div>
     </section>
@@ -513,6 +571,48 @@ details.more[open] summary::before { content: "−"; }
   };
   Object.assign(I18N.en, { fileLabel: "File", fileReading: "Reading the file…", fileFail: "Couldn't read that file.", memoLabel: "Memo", memoOn: "Long text will be condensed into a memo.", memoOff: "Memo mode off.", memoReviewH: "Check before saving", memoReviewP: "AI condensed your text. Edit it if you like, then save.", memoOriginal: "Original text", memoKeep: "Save the original", memoSave: "Save this memo", memoBefore: "Before it was condensed", memoRestore: "Restore the original", todayH: "Today's checklist", todayDone: "All checked for today ✓", notifBtn: "Show notifications in this browser", toToday: "Add to today", fromToday: "Remove from today", kwH: "Notes for this word", alarmH: "Notify me", alarmWhen: "When", alarmDate: "Date & time", alarmEvery: "Every N days", alarmDays: "Weekdays", alarmWords: "Words that bring it up (comma-separated)", alarmHint: "Silent. It lines up in Today's checklist, and shows as a notification while this page is open.", alarmKinds: {"none": "Off (words only)", "once": "Once", "daily": "Daily", "interval": "Every N days", "weekly": "Weekdays", "monthly": "Monthly"}, manage: "Manage", foldDlgH: "Manage folders", foldNew: "New folder", foldCreate: "Create", foldRename: "Rename", foldRenameQ: "New name", foldMergeTo: "Merge into…", foldDel: "Delete", foldDelQ: "Delete this folder? Its notes move to Other.", mergeQ: (a, b) => `Merge "${a}" into "${b}"?`, mergeYes: "Merge", mergeNo: "Keep separate" });
   Object.assign(I18N.ja, { fileLabel: "ファイル", fileReading: "ファイルを読んでいます…", fileFail: "ファイルを読めませんでした。", memoLabel: "メモ風", memoOn: "長い文はメモ風にまとめます。", memoOff: "メモ風モードをオフにしました。", memoReviewH: "しまう前に確認", memoReviewP: "AI がまとめました。直してからしまえます。", memoOriginal: "元の文", memoKeep: "元の文のまましまう", memoSave: "これでしまう", memoBefore: "メモ風に整える前の文", memoRestore: "元の文に戻す", todayH: "今日の確認リスト", todayDone: "今日の分は全部確認しました ✓", notifBtn: "このブラウザで通知を出す", toToday: "今日のリストへ", fromToday: "今日のリストから外す", kwH: "この言葉で知らせるメモ", alarmH: "通知する", alarmWhen: "いつ", alarmDate: "日時", alarmEvery: "何日おき", alarmDays: "曜日", alarmWords: "この言葉を入力したら出す（カンマ区切り）", alarmHint: "音は鳴りません。その日は「今日の確認リスト」に並び、このページを開いている間は通知にも出ます。", alarmKinds: {"none": "時刻なし（言葉だけ）", "once": "1 回", "daily": "毎日", "interval": "何日おき", "weekly": "曜日", "monthly": "毎月"}, manage: "管理", foldDlgH: "フォルダの管理", foldNew: "新しいフォルダ", foldCreate: "作る", foldRename: "名前", foldRenameQ: "新しい名前", foldMergeTo: "まとめる先…", foldDel: "消す", foldDelQ: "このフォルダを消しますか？中のメモは「その他」に移ります。", mergeQ: (a, b) => `「${a}」を「${b}」にまとめますか？`, mergeYes: "まとめる", mergeNo: "別のままにする" });
+  Object.assign(I18N.en, {
+    settings: "Settings", chat: "Ask your notes", movedTrash: "Moved to the trash. Restore it from Settings within 30 days.",
+    secMemo: "Memo mode", memoMode: "Condense long text into a memo", memoPreviewL: "Let me edit the memo before saving",
+    secSafe: "Safety", pinOn: "Lock with a PIN", pinSet: "Set a PIN", pinChange: "Change", pinOff: "Turn off",
+    pinAsk: "Choose a PIN (4–8 digits)", pinAgain: "Enter it again", pinMismatch: "The PINs didn't match.", pinBad: "Use 4–8 digits.", pinSaved: "PIN lock is on.", pinRemoved: "PIN lock is off.",
+    pinCurrent: "Enter your current PIN", pinNote: "The lock keeps people from peeking on a shared device. Notes in the browser are not encrypted.",
+    lockH: "Mindrawer is locked", lockGo: "Unlock", lockWrong: "Wrong PIN.", lockForgot: "Forgot it? Clearing this site's data removes the lock, and the notes with it.",
+    backupH: "Weekly backups", backupNote: "Once a week a copy of your notes is kept in this browser (latest 4). Export one to keep it safe elsewhere.",
+    backupNow: "Make a copy now", backupMade: "Copy made.", backupNone: "No copies yet.", backupSave: "Export", backupRestore: "Restore", backupRestored: (n) => `Restored ${n} notes.`,
+    backupFull: "Couldn't keep a copy: the browser's storage is full. Export your notes instead.",
+    trashH: "Trash", trashNote: "Deleted notes stay here for 30 days.", trashEmpty: "The trash is empty.", trashRestore: "Restore", trashDel: "Delete", trashAll: "Empty trash", trashAllQ: "Delete everything in the trash for good?", trashDays: (d) => `${d} days left`, restored: "Restored.",
+    compose: "Combine these into one note", composeH: "Combined note", composing: "Combining…", composeSave: "Save this note", composeSaved: "Saved the combined note.", sources: "Combined from",
+    composeFallback: "AI is off, so this lists the notes. Edit it into one page.",
+    chatPh: "e.g. What did I save about travel?", chatSend: "Ask", chatThinking: "Thinking…", chatIntro: "Ask about anything you've saved. Answers come only from your notes.", chatClear: "Start over", chatNoAI: "AI is off, so these are keyword matches:",
+    filters: "Filters", fPeriod: "Saved within", periods: { all: "Any time", week: "7 days", month: "1 month", quarter: "3 months", year: "1 year" },
+    fFav: "Favorites only", fAttach: "With a file or link", fNotify: "With a notification", fUnfiled: "In Other only", fTagsH: "Tags", fReset: "Clear", fDone: "Done",
+    reviewH: "This week's review", reviewAdded: (n) => `You saved ${n} ${n === 1 ? "note" : "notes"} this week.`, reviewNone: "Nothing saved this week.", reviewForgot: "Worth another look:", reviewClose: "Done",
+    onb: [["🗂", "Save it once", "Paste tips, screenshots, files or notes to self. They land in folders on their own."], ["🔎", "It finds you", "Switch to Recall and say what you're about to do. The notes that help come back, even without matching words."], ["☑", "See it when it's due", "Give a note a date, a repeat or a word. It lines up in Today's checklist."], ["⚙", "Make it yours", "In Settings: PIN lock, weekly copies and the trash. Tap the status to use AI with your own key."]],
+    onbNext: "Next", onbStart: "Start", onbExamples: "Start with 3 examples", onbSkip: "Skip",
+  });
+  Object.assign(I18N.ja, {
+    settings: "設定", chat: "メモに聞く", movedTrash: "ゴミ箱に移しました。30 日以内なら設定から戻せます。",
+    secMemo: "メモ風", memoMode: "長い文はメモ風にまとめる", memoPreviewL: "しまう前に、まとめた文を直す",
+    secSafe: "安心", pinOn: "暗証番号（PIN）でロック", pinSet: "PIN を決める", pinChange: "変える", pinOff: "やめる",
+    pinAsk: "PIN を決めてください（数字 4〜8 桁）", pinAgain: "もう一度入れてください", pinMismatch: "PIN が一致しませんでした。", pinBad: "数字 4〜8 桁にしてください。", pinSaved: "PIN でロックします。", pinRemoved: "PIN のロックをやめました。",
+    pinCurrent: "今の PIN を入れてください", pinNote: "共有の端末でのぞき見されないためのロックです。ブラウザの中のメモは暗号化されません。",
+    lockH: "ロック中", lockGo: "開く", lockWrong: "PIN が違います。", lockForgot: "忘れたときは、このサイトのデータを消すと解除されます（メモも消えます）。",
+    backupH: "毎週の控え", backupNote: "週に 1 回、メモの控えをこのブラウザに残します（新しい 4 つ）。大事なものは「書き出す」で外に保存してください。",
+    backupNow: "今すぐ控えを作る", backupMade: "控えを作りました。", backupNone: "まだ控えはありません。", backupSave: "書き出す", backupRestore: "戻す", backupRestored: (n) => `${n} 件を戻しました。`,
+    backupFull: "ブラウザの保存領域がいっぱいで、控えを残せませんでした。「書き出す」で保存してください。",
+    trashH: "ゴミ箱", trashNote: "消したメモは 30 日ここに残ります。", trashEmpty: "ゴミ箱は空です。", trashRestore: "戻す", trashDel: "消す", trashAll: "ゴミ箱を空にする", trashAllQ: "ゴミ箱のメモを完全に消しますか？", trashDays: (d) => `あと ${d} 日`, restored: "戻しました。",
+    compose: "まとめノートを作る", composeH: "まとめノート", composing: "まとめています…", composeSave: "このノートをしまう", composeSaved: "まとめノートをしまいました。", sources: "まとめた元のメモ",
+    composeFallback: "AI がオフなので、メモを並べました。1 枚にまとめて直してください。",
+    chatPh: "例: 旅行について何をしまった？", chatSend: "聞く", chatThinking: "考えています…", chatIntro: "しまったメモについて、なんでも聞けます。答えはメモの中身だけから作ります。", chatClear: "最初から", chatNoAI: "AI がオフなので、キーワードで近いメモです:",
+    filters: "絞り込み", fPeriod: "しまった時期", periods: { all: "すべて", week: "7 日", month: "1 か月", quarter: "3 か月", year: "1 年" },
+    fFav: "お気に入りだけ", fAttach: "ファイル・出典あり", fNotify: "通知あり", fUnfiled: "「その他」だけ", fTagsH: "タグ", fReset: "解除", fDone: "決める",
+    reviewH: "今週のふりかえり", reviewAdded: (n) => `今週は ${n} 件しまいました。`, reviewNone: "今週しまったメモはありません。", reviewForgot: "もう一度見ておきたいメモ:", reviewClose: "見た",
+    onb: [["🗂", "しまうだけ", "Tips、スクショ、ファイル、備忘録を貼るだけ。自動でフォルダに入ります。"], ["🔎", "必要なときに出てくる", "「ひきだす」でこれからすることを書くと、言葉が違っても役立つメモが出てきます。"], ["☑", "その日に見える", "メモに日付・繰り返し・言葉を決めておくと、「今日の確認リスト」に並びます。"], ["⚙", "安心して使う", "設定から PIN ロック・毎週の控え・ゴミ箱が使えます。右上の表示から自分のキーで AI も使えます。"]],
+    onbNext: "次へ", onbStart: "はじめる", onbExamples: "見本の 3 件で始める", onbSkip: "スキップ",
+  });
+  I18N.en.helpSteps.push(["Trash, PIN lock and copies", "⚙ Settings → Safety: a PIN lock for shared devices, a weekly copy kept in this browser (export it to keep it safe), and a trash that keeps deleted notes for 30 days."], ["Ask your notes, combined notes", "💬 at the top lets you ask about your notes in a chat. From Recall results, Combine these into one note turns related notes into one page. On Sundays and Mondays a weekly review appears."], ["Filters and quick save", "Filters next to the list narrows by period, tags, favorites, files or notifications. Bookmark this page with #save at the end to open straight into Save."])
+  I18N.ja.helpSteps.push(["ゴミ箱・ロック・控え", "⚙ 設定の「安心」で、共有の端末向けの PIN ロック、毎週ブラウザに残す控え（「書き出す」で外に保存できます）、消したメモが 30 日残るゴミ箱を使えます。"], ["メモに聞く・まとめノート", "上の 💬 から、しまったメモについて会話で聞けます。「ひきだす」の結果からは「まとめノートを作る」で、関係するメモを 1 枚にまとめます。日曜と月曜には今週のふりかえりが出ます。"], ["絞り込みとすぐしまう", "一覧の横の「絞り込み」で、時期・タグ・お気に入り・添付・通知で絞り込めます。ページの URL の最後に #save を付けてブックマークすると、すぐ「しまう」画面で開きます。"])
   const EXAMPLES = {
     en: [
       { text: "Coffee or soy sauce spill: don't rub. Blot with a damp cloth from the outside in, then a drop of dish soap.", category: "Home", title: "Blot stains, never rub", summary: "Work from the outside in with a damp cloth, finish with dish soap.", tags: ["stains", "laundry"], situations: ["Spilled on clothes", "Doing laundry"] },
@@ -529,6 +629,7 @@ details.more[open] summary::before { content: "−"; }
   const state = {
     lang: "en", mode: "save", view: "cat", folder: "__all", filter: "", hits: null, editing: null, armed: null,
     notes: [], store: null, sample: null, downloads: null, image: null, pickSkip: 0,
+    adv: { period: "all", fav: false, attach: false, notify: false, unfiled: false, tags: [] }, chat: [],
   };
   try { const l = localStorage.getItem(LANG_KEY); state.lang = l || (/^ja/i.test(navigator.language || "") ? "ja" : "en"); } catch { state.lang = /^ja/i.test(navigator.language || "") ? "ja" : "en"; }
   const T = () => I18N[state.lang];
@@ -571,6 +672,8 @@ details.more[open] summary::before { content: "−"; }
     for (const k of kids.flat()) if (k != null && k !== false) e.append(k.nodeType ? k : String(k));
     return e;
   }
+  // replaceChildren は null を「null」という文字にしてしまうので、空の要素は外す
+  const fill = (node, ...kids) => node.replaceChildren(...kids.flat().filter((k) => k != null && k !== false));
   let toastT;
   function toast(t) { $("toast").textContent = t; clearTimeout(toastT); toastT = setTimeout(() => ($("toast").textContent = ""), 6000); }
   function heuristic(text) {
@@ -782,6 +885,8 @@ Return JSON only:
     $("answerHead").textContent = T().answerHead(a.q, a.ids.length);
     $("answerText").textContent = a.text;
     $("answerSlips").replaceChildren(...a.ids.map((id) => state.notes.find((n) => n.id === id)).filter(Boolean).map((n) => slip(n)));
+    $("composeBtn").hidden = a.ids.length < 2;
+    $("composeBtn").textContent = T().compose;
   }
   function setImage(file) {
     if (!file) return;
@@ -826,7 +931,7 @@ Return JSON only:
 
 
   // ---------- この端末の設定 ----------
-  const PREF = { memo: "mindrawer.memoMode", memoPreview: "mindrawer.memoPreview", checks: "mindrawer.checks", folders: "mindrawer.folders", dismissed: "mindrawer.mergeDismissed", notified: "mindrawer.notified" };
+  const PREF = { memo: "mindrawer.memoMode", memoPreview: "mindrawer.memoPreview", checks: "mindrawer.checks", folders: "mindrawer.folders", dismissed: "mindrawer.mergeDismissed", notified: "mindrawer.notified", trash: "mindrawer.trash", pin: "mindrawer.pinHash", backups: "mindrawer.backups", onboarded: "mindrawer.onboarded", reviewSeen: "mindrawer.reviewSeen" };
   const getJSON = (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch { return d; } };
   const setJSON = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
   state.memoMode = getJSON(PREF.memo, false);
@@ -1090,6 +1195,303 @@ ${text}`;
         el("button", { onclick: () => { setJSON(PREF.dismissed, [...getJSON(PREF.dismissed, []), s.key]); renderMerge(); } }, t.mergeNo))));
   }
 
+  // ---------- ゴミ箱（30 日） ----------
+  const TRASH_DAYS = 30;
+  const trashList = () => getJSON(PREF.trash, []);
+  function purgeTrash() {
+    const cut = Date.now() - TRASH_DAYS * 864e5, a = trashList(), b = a.filter((x) => x.deletedAt > cut);
+    if (b.length !== a.length) setJSON(PREF.trash, b);
+  }
+  async function trashNote(n) {
+    setJSON(PREF.trash, [{ ...n, deletedAt: Date.now() }, ...trashList()]);
+    await state.store.remove(n.id);
+    toast(T().movedTrash);
+  }
+  async function restoreNote(id) {
+    const a = trashList(), x = a.find((y) => y.id === id);
+    if (!x) return;
+    const { id: _, deletedAt, ...rest } = x;
+    await state.store.add(rest);
+    setJSON(PREF.trash, a.filter((y) => y.id !== id));
+    toast(T().restored);
+  }
+
+  // ---------- PIN ロック ----------
+  async function pinHash(pin) {
+    const data = new TextEncoder().encode("mindrawer:" + pin);
+    if (crypto.subtle) return [...new Uint8Array(await crypto.subtle.digest("SHA-256", data))].map((b) => b.toString(16).padStart(2, "0")).join("");
+    let h = 2166136261; for (const b of data) h = Math.imul(h ^ b, 16777619) >>> 0; return "f" + h.toString(16);
+  }
+  const hasPin = () => !!getJSON(PREF.pin, null);
+  let hiddenAt = 0;
+  function lock() {
+    if (!hasPin()) return;
+    const t = T(), box = $("lock");
+    const input = el("input", { type: "password", inputmode: "numeric", autocomplete: "off", maxlength: "8", "aria-label": "PIN" });
+    const err = el("p", { class: "err", role: "alert" });
+    const form = el("form", { onsubmit: async (e) => {
+      e.preventDefault();
+      if (await pinHash(input.value) === getJSON(PREF.pin, null)) { box.hidden = true; box.replaceChildren(); document.body.classList.remove("locked"); afterUnlock(); }
+      else { err.textContent = t.lockWrong; input.value = ""; input.focus(); }
+    } }, el("div", { class: "onb-big" }, "🔒"), el("h2", {}, t.lockH), input, err, el("button", { type: "submit" }, t.lockGo), el("p", {}, t.lockForgot));
+    for (const d of document.querySelectorAll("dialog[open]")) d.close();
+    box.replaceChildren(form); box.hidden = false; document.body.classList.add("locked");
+    setTimeout(() => input.focus(), 0);
+  }
+  const isLocked = () => !$("lock").hidden;
+  async function setPin() {
+    const t = T();
+    const a = (prompt(t.pinAsk) || "").trim();
+    if (!a) return;
+    if (!/^\d{4,8}$/.test(a)) { toast(t.pinBad); return; }
+    if ((prompt(t.pinAgain) || "").trim() !== a) { toast(t.pinMismatch); return; }
+    setJSON(PREF.pin, await pinHash(a)); toast(t.pinSaved); openSettings();
+  }
+  async function clearPin() {
+    const t = T(), cur = (prompt(t.pinCurrent) || "").trim();
+    if (!cur) return;
+    if (await pinHash(cur) !== getJSON(PREF.pin, null)) { toast(t.lockWrong); return; }
+    try { localStorage.removeItem(PREF.pin); } catch {}
+    toast(t.pinRemoved); openSettings();
+  }
+
+  // ---------- 毎週の控え ----------
+  const backups = () => getJSON(PREF.backups, []);
+  function makeBackup(force) {
+    const list = backups(), notes = state.notes.filter((n) => !n.example);
+    if (!notes.length) return false;
+    if (!force && list[0] && Date.now() - list[0].at < 7 * 864e5) return false;
+    let next = [{ at: Date.now(), notes }, ...list].slice(0, 4);
+    while (next.length) {
+      try { localStorage.setItem(PREF.backups, JSON.stringify(next)); return true; } catch { next = next.slice(0, -1); }
+    }
+    toast(T().backupFull);
+    return false;
+  }
+  function downloadJSON(notes, filename) {
+    const data = JSON.stringify({ app: "hikidashi", version: 1, exportedAt: new Date().toISOString(), notes }, null, 2);
+    if (state.downloads) { state.downloads.save({ filename, data }).then(() => toast(T().exported), () => {}); return; }
+    const a = el("a", { href: URL.createObjectURL(new Blob([data], { type: "application/json" })), download: filename });
+    document.body.append(a); a.click(); a.remove(); toast(T().exported);
+  }
+  async function restoreBackup(b) {
+    const have = new Set(state.notes.map((n) => n.createdAt + "|" + n.title));
+    let n = 0;
+    for (const x of b.notes) { if (have.has(x.createdAt + "|" + x.title)) continue; const { id, ...rest } = x; await state.store.add(rest); n++; }
+    toast(T().backupRestored(n));
+  }
+
+  // ---------- 設定 ----------
+  function openSettings() {
+    const t = T(), dlg = $("setDlg"), loc = state.lang === "ja" ? "ja-JP" : "en";
+    const check = (on, label, fn) => { const c = el("input", { type: "checkbox", checked: on ? "" : null }); c.onchange = () => fn(c.checked); return el("label", { class: "set-row" }, el("span", {}, label), c); };
+    const trash = trashList(), bk = backups();
+    fill(dlg, 
+      el("div", { class: "help-head" }, el("h2", {}, t.settings), el("button", { type: "button", class: "help-x", "aria-label": t.close, onclick: () => dlg.close() }, "×")),
+      el("div", { class: "set-sec" }, el("h3", {}, t.secMemo),
+        check(state.memoMode, t.memoMode, (v) => setMemoMode(v)),
+        check(state.memoPreview, t.memoPreviewL, (v) => { state.memoPreview = v; setJSON(PREF.memoPreview, v); })),
+      el("div", { class: "set-sec" }, el("h3", {}, t.secSafe),
+        el("div", { class: "set-row" }, el("span", {}, "🔒 " + t.pinOn),
+          hasPin() ? el("span", {}, el("button", { class: "mini", onclick: setPin }, t.pinChange), " ", el("button", { class: "mini", onclick: clearPin }, t.pinOff)) : el("button", { class: "mini", onclick: setPin }, t.pinSet)),
+        el("p", { class: "set-note" }, t.pinNote)),
+      el("div", { class: "set-sec" }, el("h3", {}, t.backupH), el("p", { class: "set-note" }, t.backupNote),
+        ...(bk.length ? bk.map((b) => el("div", { class: "trow2" },
+          el("span", {}, new Date(b.at).toLocaleString(loc, { month: "short", day: "numeric", weekday: "short", hour: "numeric", minute: "2-digit" }), el("small", {}, t.listH(b.notes.length))),
+          el("button", { class: "mini", onclick: () => downloadJSON(b.notes, `hikidashi-${new Date(b.at).toISOString().slice(0, 10)}.json`) }, t.backupSave),
+          el("button", { class: "mini", onclick: () => restoreBackup(b) }, t.backupRestore))) : [el("p", {}, t.backupNone)]),
+        el("div", { class: "set-row" }, el("button", { class: "mini", onclick: () => { if (makeBackup(true)) { toast(t.backupMade); openSettings(); } } }, t.backupNow))),
+      el("div", { class: "set-sec" }, el("h3", {}, `${t.trashH} (${trash.length})`), el("p", { class: "set-note" }, t.trashNote),
+        ...(trash.length ? trash.map((x) => el("div", { class: "trow2" },
+          el("span", {}, x.title || String(x.text).slice(0, 40), el("small", {}, t.trashDays(Math.max(0, Math.ceil((x.deletedAt + TRASH_DAYS * 864e5 - Date.now()) / 864e5))))),
+          el("button", { class: "mini", onclick: async () => { await restoreNote(x.id); openSettings(); } }, t.trashRestore),
+          el("button", { class: "mini", onclick: () => { setJSON(PREF.trash, trashList().filter((y) => y.id !== x.id)); openSettings(); } }, t.trashDel))) : [el("p", {}, t.trashEmpty)]),
+        trash.length ? el("div", { class: "set-row" }, el("button", { class: "mini", onclick: () => { if (confirm(t.trashAllQ)) { setJSON(PREF.trash, []); openSettings(); } } }, t.trashAll)) : null));
+    if (!dlg.open) dlg.showModal();
+  }
+
+  // ---------- 初回の案内 ----------
+  function openOnboarding(step = 0) {
+    const t = T(), dlg = $("onbDlg"), pages = t.onb, last = step === pages.length - 1;
+    const [icon, h, p] = pages[step];
+    const done = () => { setJSON(PREF.onboarded, true); dlg.close(); };
+    dlg.replaceChildren(
+      el("div", { class: "help-head" }, el("span"), el("button", { type: "button", class: "help-x", "aria-label": t.onbSkip, onclick: done }, "×")),
+      el("div", { class: "onb-big" }, icon), el("h2", { style: "text-align:center" }, h), el("p", { style: "text-align:center;margin-top:8px" }, p),
+      el("div", { class: "onb-dots" }, ...pages.map((_, i) => el("i", { class: i === step ? "on" : "" }))),
+      el("div", { class: "ef-acts" },
+        last && !state.notes.length ? el("button", { type: "button", class: "ghost", onclick: async () => { done(); await addExamples(); } }, t.onbExamples) : el("button", { type: "button", class: "ghost", onclick: done }, t.onbSkip),
+        el("button", { type: "button", onclick: () => (last ? done() : openOnboarding(step + 1)) }, last ? t.onbStart : t.onbNext)));
+    dlg.onclose = () => setJSON(PREF.onboarded, true);
+    if (!dlg.open) dlg.showModal();
+  }
+
+  // ---------- まとめノート ----------
+  async function composeNote(topic, ids) {
+    const notes = ids.map((id) => state.notes.find((n) => n.id === id)).filter(Boolean);
+    const t = T(), fallback = { title: (state.lang === "ja" ? "まとめ: " : "Combined: ") + topic, text: notes.map((n) => "・" + n.title + (n.summary ? "\n  " + n.summary : "")).join("\n"), category: notes[0]?.category || t.other, note: t.composeFallback };
+    if (!state.sample) return fallback;
+    const prompt = `You turn several notes from a user's personal tips drawer into one practical page about "${topic}".
+Write in ${langName()}. Merge overlapping advice, order it as steps or a checklist where that fits, keep every concrete fact, number and URL, and add nothing that isn't in the notes. Lines may start with "・" or "1.".
+"category": reuse the most fitting folder from the notes.
+Return JSON only: {"title":"under 60 chars","text":"","category":""}
+
+Notes (JSON):
+${JSON.stringify(notes.map((n) => ({ title: n.title, summary: n.summary, text: String(n.text).slice(0, 1500), folder: n.category, url: n.url || undefined })))}`;
+    try {
+      const r = await state.sample.json(prompt, { modelTier: "default" });
+      const text = String(r.text || "").trim();
+      return text ? { title: String(r.title || fallback.title).slice(0, 80), text, category: String(r.category || fallback.category).slice(0, 32) } : fallback;
+    } catch (e) {
+      if (e && e.code === "not_granted") { state.sample = null; renderChrome(); }
+      return fallback;
+    }
+  }
+  async function openCompose() {
+    const a = state.lastAnswer;
+    if (!a || a.ids.length < 2) return;
+    const t = T(), btn = $("composeBtn");
+    btn.disabled = true; btn.textContent = t.composing;
+    const r = await composeNote(a.q, a.ids);
+    btn.disabled = false; btn.textContent = t.compose;
+    const dlg = $("compDlg");
+    const title = el("input", { type: "text", value: r.title }), folder = el("input", { type: "text", value: r.category, list: "folderNames" });
+    const ta = el("textarea", { class: "memo-ta" }); ta.value = r.text;
+    fill(dlg, 
+      el("div", { class: "help-head" }, el("h2", {}, t.composeH), el("button", { type: "button", class: "help-x", "aria-label": t.close, onclick: () => dlg.close() }, "×")),
+      r.note ? el("p", {}, r.note) : null,
+      el("label", { class: "ef" }, el("span", {}, t.fTitle), title), ta, el("label", { class: "ef" }, el("span", {}, t.fFolder), folder),
+      el("div", { class: "ef-acts" },
+        el("button", { type: "button", class: "ghost", onclick: () => dlg.close() }, t.cancel),
+        el("button", { type: "button", onclick: async () => {
+          const text = ta.value.trim(); if (!text) return;
+          await state.store.add({ title: title.value.trim() || r.title, text, summary: "", category: folder.value.trim() || t.other, tags: [], situations: [], remindAt: null, url: null, sources: a.ids, createdAt: Date.now(), helpful: 0, pinned: false });
+          dlg.close(); toast(t.composeSaved);
+        } }, t.composeSave)));
+    dlg.showModal();
+  }
+
+  // ---------- メモに聞く（会話） ----------
+  async function chatAnswer(query) {
+    const t = T();
+    if (!state.sample) { const r = await retrieve(query); return { text: r.ids.length ? t.chatNoAI : t.noMatch, ids: r.ids.slice(0, 5) }; }
+    const ranked = state.notes.map((n) => ({ n, s: localScore(n, query + " " + state.chat.slice(-4).map((m) => m.text).join(" ")) })).sort((a, b) => b.s - a.s);
+    const pool = (state.notes.length > 120 ? ranked.slice(0, 120).map((x) => x.n) : state.notes).map((n) => ({ id: n.id, title: n.title, summary: n.summary || String(n.text).slice(0, 200), text: String(n.text).slice(0, 600), folder: n.category, tags: n.tags, createdAt: new Date(n.createdAt).toISOString().slice(0, 10) }));
+    const prompt = `You are the user's assistant for their personal tips drawer. Answer only from the notes below; if they don't cover it, say so plainly. Be brief and practical. Today: ${todayISO()}. Answer in ${langName()}.
+
+Conversation so far:
+${state.chat.slice(-8).map((m) => (m.role === "user" ? "User: " : "You: ") + m.text).join("\n") || "(none)"}
+
+Notes (JSON):
+${JSON.stringify(pool)}
+
+User: ${query}
+Return JSON only: {"answer":"","ids":["ids of the notes you used, max 5"]}`;
+    try {
+      const r = await state.sample.json(prompt, { modelTier: "default" });
+      const known = new Set(state.notes.map((n) => n.id));
+      return { text: String(r.answer || ""), ids: (Array.isArray(r.ids) ? r.ids : []).filter((id) => known.has(id)).slice(0, 5) };
+    } catch (e) {
+      if (e && e.code === "not_granted") { state.sample = null; renderChrome(); }
+      const r = await retrieve(query); return { text: t.aiFallback, ids: r.ids.slice(0, 5) };
+    }
+  }
+  function openChat() {
+    const t = T(), dlg = $("chatDlg");
+    const log = el("div", { class: "chat-log", "aria-live": "polite" });
+    const input = el("input", { type: "text", placeholder: t.chatPh, "aria-label": t.chat });
+    const draw = () => {
+      log.replaceChildren(...(state.chat.length ? state.chat.map((m) => el("div", { class: "chat-msg " + (m.role === "user" ? "user" : "ai") }, m.text,
+        (m.ids || []).length ? el("div", { class: "chat-cite" }, ...m.ids.map((id) => state.notes.find((n) => n.id === id)).filter(Boolean).map((n) => el("button", { onclick: () => { dlg.close(); jumpTo(n); } }, "→ " + n.title))) : null)) : [el("p", { class: "chat-empty" }, t.chatIntro)]));
+      log.scrollTop = log.scrollHeight;
+    };
+    const send = async (e) => {
+      e.preventDefault();
+      const q = input.value.trim(); if (!q || input.disabled) return;
+      input.value = ""; input.disabled = true;
+      state.chat.push({ role: "user", text: q });
+      state.chat.push({ role: "ai", text: t.chatThinking, pending: true }); draw();
+      const r = await chatAnswer(q);
+      state.chat.pop(); state.chat.push({ role: "ai", text: r.text, ids: r.ids });
+      input.disabled = false; draw(); input.focus();
+    };
+    dlg.replaceChildren(
+      el("div", { class: "help-head" }, el("h2", {}, "💬 " + t.chat),
+        el("span", {}, el("button", { type: "button", class: "mini", onclick: () => { state.chat = []; draw(); } }, t.chatClear), el("button", { type: "button", class: "help-x", "aria-label": t.close, onclick: () => dlg.close() }, "×"))),
+      log,
+      el("form", { class: "chat-form", onsubmit: send }, input, el("button", { type: "submit" }, t.chatSend)));
+    draw();
+    dlg.showModal();
+    setTimeout(() => input.focus(), 0);
+  }
+
+  // ---------- 詳しい絞り込み ----------
+  const PERIOD_DAYS = { all: 0, week: 7, month: 31, quarter: 92, year: 366 };
+  const advCount = () => { const a = state.adv; return a.tags.length + (a.period !== "all") + a.fav + a.attach + a.notify + a.unfiled; };
+  function advMatch(n) {
+    const a = state.adv;
+    if (a.tags.length && !(n.tags || []).some((x) => a.tags.includes(x))) return false;
+    if (PERIOD_DAYS[a.period] && n.createdAt < Date.now() - PERIOD_DAYS[a.period] * 864e5) return false;
+    if (a.fav && !n.pinned) return false;
+    if (a.attach && !n.fileTitle && !n.url && !n.imageFile && !n.file) return false;
+    if (a.notify && !n.alarm && !n.remindAt) return false;
+    if (a.unfiled && (n.category || T().other) !== T().other) return false;
+    return true;
+  }
+  function openFilters() {
+    const t = T(), dlg = $("filtDlg"), a = state.adv;
+    const counts = new Map();
+    for (const n of state.notes) for (const x of n.tags || []) counts.set(x, (counts.get(x) || 0) + 1);
+    const tags = [...counts.keys()].sort((x, y) => counts.get(y) - counts.get(x) || x.localeCompare(y)).slice(0, 30);
+    const period = el("select", { "aria-label": t.fPeriod }, ...Object.keys(t.periods).map((k) => el("option", { value: k }, t.periods[k])));
+    period.value = a.period;
+    period.onchange = () => { a.period = period.value; renderList(); };
+    const check = (key, label) => { const c = el("input", { type: "checkbox", checked: a[key] ? "" : null }); c.onchange = () => { a[key] = c.checked; renderList(); }; return el("label", { class: "set-row" }, el("span", {}, label), c); };
+    fill(dlg, 
+      el("div", { class: "help-head" }, el("h2", {}, t.filters), el("button", { type: "button", class: "help-x", "aria-label": t.close, onclick: () => dlg.close() }, "×")),
+      el("label", { class: "ef" }, el("span", {}, t.fPeriod), period),
+      el("div", { class: "set-sec" }, check("fav", "★ " + t.fFav), check("attach", "📎 " + t.fAttach), check("notify", "🔔 " + t.fNotify), check("unfiled", t.fUnfiled)),
+      tags.length ? el("div", { class: "set-sec" }, el("h3", {}, t.fTagsH), el("div", { class: "ftags" }, ...tags.map((x) => el("button", { type: "button", "aria-pressed": String(a.tags.includes(x)), onclick: (e) => {
+        a.tags = a.tags.includes(x) ? a.tags.filter((y) => y !== x) : [...a.tags, x];
+        e.currentTarget.setAttribute("aria-pressed", String(a.tags.includes(x))); renderList();
+      } }, "#" + x)))) : null,
+      el("div", { class: "ef-acts" },
+        el("button", { type: "button", class: "ghost", onclick: () => { state.adv = { period: "all", fav: false, attach: false, notify: false, unfiled: false, tags: [] }; renderList(); openFilters(); } }, t.fReset),
+        el("button", { type: "button", onclick: () => dlg.close() }, t.fDone)));
+    if (!dlg.open) dlg.showModal();
+  }
+
+  // ---------- 今週のふりかえり（日曜・月曜） ----------
+  function weekKey() { const d = sod(Date.now()); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return d.toISOString().slice(0, 10); }
+  function renderReview() {
+    const box = $("reviewBox"), day = new Date().getDay(), t = T();
+    if (!(day === 0 || day === 1) || !state.notes.length || getJSON(PREF.reviewSeen, "") === weekKey() + (day === 0 ? "s" : "m")) { box.replaceChildren(); return; }
+    const now = Date.now(), real = state.notes.filter((n) => !n.example);
+    const added = real.filter((n) => n.createdAt >= now - 7 * 864e5);
+    const forgotten = real.filter((n) => n.createdAt < now - 14 * 864e5 && (n.lastSeen || 0) < now - 14 * 864e5)
+      .sort((a, b) => ((b.helpful || 0) * 2 + (b.pinned ? 3 : 0)) - ((a.helpful || 0) * 2 + (a.pinned ? 3 : 0)) || a.createdAt - b.createdAt).slice(0, 3);
+    if (!added.length && !forgotten.length) { box.replaceChildren(); return; }
+    box.replaceChildren(el("div", { class: "review" },
+      el("div", { class: "review-top" }, el("b", {}, "🗓 " + t.reviewH), el("button", { onclick: () => { setJSON(PREF.reviewSeen, weekKey() + (day === 0 ? "s" : "m")); renderReview(); } }, t.reviewClose)),
+      el("p", {}, added.length ? t.reviewAdded(added.length) : t.reviewNone),
+      added.length ? el("div", { class: "links" }, ...added.slice(0, 5).map((n) => el("button", { onclick: () => jumpTo(n) }, "→ " + n.title))) : null,
+      forgotten.length ? el("p", {}, t.reviewForgot) : null,
+      forgotten.length ? el("div", { class: "links" }, ...forgotten.map((n) => el("button", { onclick: () => { state.store.update(n.id, { lastSeen: Date.now() }); jumpTo(n); } }, "→ " + n.title))) : null));
+  }
+
+  // ---------- すぐしまう（#save） ----------
+  function handleHash() {
+    if (!/^#save\b/.test(location.hash)) return;
+    if (isLocked()) return;
+    state.mode = "save"; renderChrome();
+    setTimeout(() => $("noteText").focus(), 0);
+  }
+  let firstLoad = true;
+  function afterUnlock() {
+    handleHash();
+    if (!getJSON(PREF.onboarded, false) && state.store && !state.notes.length) openOnboarding();
+  }
+
   // ---------- render ----------
   function folderOf(n) { return state.view === "cat" ? n.category || T().other : String(monthKey(n.createdAt)); }
   function folderLabel(k) { return state.view === "cat" ? k : monthLabel(Number(k)); }
@@ -1113,6 +1515,7 @@ ${text}`;
       n.original && n.original !== n.text ? el("div", { class: "orig" }, el("small", {}, t.memoBefore), el("p", { class: "raw" }, n.original),
         el("button", { onclick: () => state.store.update(n.id, { text: n.original, original: null }) }, t.memoRestore)) : null,
       n.url ? el("a", { class: "src", href: n.url, target: "_blank", rel: "noopener" }, n.url) : null,
+      (() => { const src = (n.sources || []).map((id) => state.notes.find((m) => m.id === id)).filter(Boolean); return src.length ? el("div", { class: "related" }, el("small", {}, t.sources), src.map((m) => el("button", { onclick: () => jumpTo(m) }, "→ " + m.title))) : null; })(),
       rel.length ? el("div", { class: "related" }, el("small", {}, t.related),
         rel.map((m) => el("button", { onclick: () => jumpTo(m) }, "→ " + m.title))) : null));
     if (state.editing === n.id) { s.replaceChildren(editForm(n)); return s; }
@@ -1124,7 +1527,7 @@ ${text}`;
       el("button", { "aria-pressed": String(n.plannedDay === todayISO()), onclick: () => state.store.update(n.id, { plannedDay: n.plannedDay === todayISO() ? null : todayISO() }) }, "☑ " + (n.plannedDay === todayISO() ? t.fromToday : t.toToday)),
       state.sample ? el("button", { onclick: async (e) => { e.currentTarget.disabled = true; await refile(n); } }, t.refile) : null,
       el("button", { class: "del" + (armed ? " armed" : ""), onclick: async () => {
-        if (armed) { state.armed = null; await state.store.remove(n.id); }
+        if (armed) { state.armed = null; await trashNote(n); }
         else { state.armed = n.id; renderList(); setTimeout(() => { if (state.armed === n.id) { state.armed = null; renderList(); } }, 3000); }
       } }, armed ? t.delSure : t.del)));
     return s;
@@ -1230,6 +1633,7 @@ ${text}`;
     st.textContent = state.store ? `${state.store.kind === "db" ? t.stCloud : t.stLocal} · ${state.sample ? t.stAi : t.stBasic}` : "";
     if (!state.inClaude && !state.sample && state.store) st.textContent += " · " + t.useAI;
     $("helpLabel").textContent = t.help;
+    $("chatBtn").title = t.chat; $("chatBtn").setAttribute("aria-label", t.chat); $("setBtn").title = t.settings; $("setBtn").setAttribute("aria-label", t.settings);
     st.title = state.inClaude ? "" : (state.sample ? t.keyRemoveQ : t.keyPrompt);
     st.classList.toggle("on", !!state.sample);
     renderAnswer();
@@ -1245,7 +1649,7 @@ ${text}`;
     if (pool.length) {
       const day = Number(todayISO().replace(/-/g, ""));
       const p = pool[(day + state.pickSkip) % pool.length];
-      $("pick").replaceChildren(
+      fill($("pick"), 
         el("span", { class: "f" }, p.category), el("b", {}, p.title), p.summary ? el("p", {}, p.summary) : null,
         el("div", { class: "pick-actions" },
           el("button", { onclick: () => state.store.update(p.id, { lastSeen: Date.now() }) }, t.pickSeen),
@@ -1284,8 +1688,11 @@ ${text}`;
       return;
     }
     const f = state.filter.toLowerCase();
+    renderReview();
     const shown = state.notes.filter((n) =>
-      (state.folder === "__all" || (state.folder === "__pin" ? n.pinned : folderOf(n) === state.folder)) && (!f || hay(n).includes(f)));
+      (state.folder === "__all" || (state.folder === "__pin" ? n.pinned : folderOf(n) === state.folder)) && (!f || hay(n).includes(f)) && advMatch(n));
+    $("filtBtn").dataset.n = String(advCount());
+    $("filtBtn").textContent = T().filters + (advCount() ? ` · ${advCount()}` : "");
     $("listH").textContent = t.listH(shown.length);
     box.replaceChildren(...(shown.length ? shown.map((n) => slip(n)) : [el("div", { class: "none" }, t.none)]));
   }
@@ -1389,6 +1796,18 @@ ${text}`;
   $("helpClose").onclick = () => $("help").close();
   $("help").addEventListener("click", (e) => { if (e.target === $("help")) $("help").close(); });
   $("importInput").onchange = (e) => e.target.files[0] && importNotes(e.target.files[0]);
+  $("setBtn").onclick = openSettings;
+  $("chatBtn").onclick = openChat;
+  $("filtBtn").onclick = openFilters;
+  $("composeBtn").onclick = openCompose;
+  for (const id of ["setDlg", "chatDlg", "compDlg", "filtDlg"]) $(id).addEventListener("click", (e) => { if (e.target === $(id)) $(id).close(); });
+  window.addEventListener("hashchange", handleHash);
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) hiddenAt = Date.now();
+    else if (hiddenAt && Date.now() - hiddenAt > 60e3 && !isLocked()) lock();
+  });
+  purgeTrash();
+  if (hasPin()) lock();
 
   renderAll();
 
@@ -1408,7 +1827,10 @@ ${text}`;
       if (db && uid) store = dbStore(db, uid);
     }
     state.store = store || localStore();
-    state.store.subscribe((arr) => { state.notes = arr.slice().sort((a, b) => b.createdAt - a.createdAt); renderAll(); });
+    state.store.subscribe((arr) => {
+      state.notes = arr.slice().sort((a, b) => b.createdAt - a.createdAt); renderAll();
+      if (firstLoad) { firstLoad = false; makeBackup(false); if (!isLocked()) afterUnlock(); }
+    });
   })();
 })();
 </script>
