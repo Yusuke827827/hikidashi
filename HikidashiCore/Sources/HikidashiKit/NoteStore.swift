@@ -31,6 +31,18 @@ public struct FolderInfo: Codable, Hashable, Sendable {
     }
 }
 
+/// ゴミ箱に入れたメモ（30 日で消える）
+public struct TrashedNote: Codable, Hashable, Sendable, Identifiable {
+    public var note: Note
+    public var deletedAt: Date
+    public var id: String { note.id }
+
+    public init(note: Note, deletedAt: Date) {
+        self.note = note
+        self.deletedAt = deletedAt
+    }
+}
+
 public enum ImportError: Error, Equatable {
     case notHikidashi
 }
@@ -58,6 +70,7 @@ public final class NoteStore {
         self.root = root
         reload()
         loadFolders()
+        loadTrash()
         checks = (try? JSONDecoder().decode([String: [String]].self, from: Data(contentsOf: checksURL))) ?? [:]
     }
 
@@ -113,13 +126,63 @@ public final class NoteStore {
         onChange?([id], [])
     }
 
+    /// ゴミ箱へ移す（30 日は元に戻せる。画像やファイルも残す）
     public func remove(_ id: String) {
-        if let n = note(id) {
-            for f in [n.imageFile, n.file].compactMap({ $0 }) { try? FileManager.default.removeItem(at: imageURL(f)) }
-        }
+        guard let n = note(id) else { return }
+        trash.insert(TrashedNote(note: n, deletedAt: Date()), at: 0)
+        saveTrash()
         notes.removeAll { $0.id == id }
         persist()
         onChange?([], [id])
+    }
+
+    // MARK: ゴミ箱
+
+    public private(set) var trash: [TrashedNote] = []
+    var trashURL: URL { root.appendingPathComponent("trash.json") }
+    public static let trashDays = 30
+
+    /// ゴミ箱から戻す
+    public func restore(_ id: String) {
+        guard let i = trash.firstIndex(where: { $0.id == id }) else { return }
+        var n = trash.remove(at: i).note
+        n.updatedAt = Date()
+        saveTrash()
+        notes.append(n)
+        notes.sort { $0.createdAt > $1.createdAt }
+        persist()
+        onChange?([n.id], [])
+    }
+
+    /// ゴミ箱から完全に消す
+    public func deleteForever(_ ids: [String]) {
+        let set = Set(ids)
+        for t in trash where set.contains(t.id) {
+            for f in [t.note.imageFile, t.note.file].compactMap({ $0 }) { try? FileManager.default.removeItem(at: imageURL(f)) }
+        }
+        trash.removeAll { set.contains($0.id) }
+        saveTrash()
+    }
+
+    public func emptyTrash() { deleteForever(trash.map(\.id)) }
+
+    /// 30 日を過ぎたものを消す（アプリを開くたび）
+    public func purgeTrash(now: Date = Date()) {
+        let limit = now.addingTimeInterval(-Double(Self.trashDays) * 86400)
+        let old = trash.filter { $0.deletedAt < limit }.map(\.id)
+        if !old.isEmpty { deleteForever(old) }
+    }
+
+    private func loadTrash() {
+        let dec = JSONDecoder()
+        dec.dateDecodingStrategy = .millisecondsSince1970
+        trash = (try? dec.decode([TrashedNote].self, from: Data(contentsOf: trashURL))) ?? []
+    }
+
+    private func saveTrash() {
+        let enc = JSONEncoder()
+        enc.dateEncodingStrategy = .millisecondsSince1970
+        try? enc.encode(trash).write(to: trashURL, options: .atomic)
     }
 
     public func imageURL(_ name: String) -> URL {
@@ -298,8 +361,9 @@ public final class NoteStore {
         let gone = Set(deleted)
         if notes.contains(where: { gone.contains($0.id) }) {
             for n in notes where gone.contains(n.id) {
-                if let img = n.imageFile { try? FileManager.default.removeItem(at: imageURL(img)) }
+                trash.insert(TrashedNote(note: n, deletedAt: Date()), at: 0)
             }
+            saveTrash()
             notes.removeAll { gone.contains($0.id) }
             changed = true
         }

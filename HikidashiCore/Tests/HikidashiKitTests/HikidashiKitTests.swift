@@ -608,3 +608,47 @@ final class ChecklistTests: XCTestCase {
         XCTAssertEqual(r.noteIDs.first, "w")
     }
 }
+
+@MainActor
+final class TrashAndBackupTests: XCTestCase {
+    func makeStore() throws -> NoteStore {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent("hikidashi-test-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        return NoteStore(root: root)
+    }
+
+    func testTrashRestoreAndPurge() throws {
+        let store = try makeStore()
+        store.add(Note(id: "a", text: "a"))
+        store.add(Note(id: "b", text: "b"))
+        store.remove("a")
+        XCTAssertNil(store.note("a"))
+        XCTAssertEqual(store.trash.map(\.id), ["a"])
+        XCTAssertEqual(NoteStore(root: store.root).trash.map(\.id), ["a"], "ゴミ箱も保存される")
+        store.restore("a")
+        XCTAssertNotNil(store.note("a"))
+        XCTAssertTrue(store.trash.isEmpty)
+
+        store.remove("b")
+        store.purgeTrash(now: Date().addingTimeInterval(29 * 86400))
+        XCTAssertEqual(store.trash.count, 1, "30 日までは残る")
+        store.purgeTrash(now: Date().addingTimeInterval(31 * 86400))
+        XCTAssertTrue(store.trash.isEmpty)
+    }
+
+    func testBackupWeeklyAndKeepsEight() throws {
+        let store = try makeStore()
+        store.add(Note(text: "x"))
+        let dir = store.root.appendingPathComponent("Backups")
+        let now = Date()
+        XCTAssertNotNil(Backup.runIfDue(store, last: nil, now: now, dir: dir))
+        XCTAssertNil(Backup.runIfDue(store, last: now, now: now.addingTimeInterval(3 * 86400), dir: dir), "1 週間たつまでは書かない")
+        for i in 1...10 {
+            _ = try Backup.write(store, now: now.addingTimeInterval(Double(i) * 8 * 86400), dir: dir)
+        }
+        XCTAssertEqual(Backup.list(dir).count, Backup.keep)
+        let data = try Data(contentsOf: Backup.list(dir)[0])
+        XCTAssertEqual(try JSONDecoder().decode(ExportFile.self, from: data).notes.count, 1)
+    }
+}
+

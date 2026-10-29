@@ -21,6 +21,9 @@ struct SettingsView: View {
     @State private var cloudOn = CloudSync.isOn
     @State private var managingFolders = false
     @AppStorage("memoPreview") private var memoPreview = true
+    @AppStorage("autoBackup") private var autoBackup = true
+    @State private var lockOn = AppLock.shared.isOn
+    @State private var lastBackup = UserDefaults.standard.object(forKey: "lastBackup") as? Date
 
     var body: some View {
         NavigationStack {
@@ -127,6 +130,42 @@ struct SettingsView: View {
                         Text(L("同じ Apple ID の iPhone・iPad でメモをそろえます。メモはあなたの iCloud にだけ置かれ、Mindrawer のサーバーは通りません。スクショは同期しません。",
                                "Keeps notes in step across your iPhone and iPad with the same Apple ID. Notes live only in your iCloud and never pass through Mindrawer's servers. Screenshots aren't synced."))
                     }
+                }
+
+                Section {
+                    Toggle(isOn: Binding(get: { lockOn }, set: { on in
+                        Task { lockOn = await AppLock.shared.setOn(on) }
+                    })) {
+                        Label(L("\(AppLock.biometryName) でロック", "Lock with \(AppLock.biometryName)"), systemImage: "lock")
+                    }
+                    Toggle(isOn: $autoBackup) {
+                        Label(L("毎週の自動バックアップ", "Weekly auto-backup"), systemImage: "externaldrive.badge.timemachine")
+                    }
+                    Button {
+                        if (try? Backup.write(librarian.store)) != nil {
+                            lastBackup = Date()
+                            UserDefaults.standard.set(lastBackup, forKey: "lastBackup")
+                            message = L("バックアップしました。", "Backed up.")
+                        }
+                    } label: {
+                        Label(L("今すぐバックアップ", "Back up now"), systemImage: "arrow.down.doc")
+                    }
+                    NavigationLink {
+                        TrashView(store: librarian.store)
+                    } label: {
+                        HStack {
+                            Label(L("ゴミ箱", "Trash"), systemImage: "trash")
+                            Spacer()
+                            if !librarian.store.trash.isEmpty { Text("\(librarian.store.trash.count)").foregroundStyle(.secondary) }
+                        }
+                    }
+                } header: {
+                    Text(L("安心", "Safety"))
+                } footer: {
+                    Text(L("バックアップは「ファイル」アプリの「このiPhone内 → Mindrawer → Backups」に 8 回分残ります（画像は含みません）。最後のバックアップ: ",
+                           "Backups are kept (last 8) in the Files app under On My iPhone → Mindrawer → Backups (images not included). Last backup: ")
+                         + (lastBackup.map { $0.formatted(date: .abbreviated, time: .shortened) } ?? L("まだありません", "none yet"))
+                         + L("。消したメモはゴミ箱に 30 日残ります。", ". Deleted notes stay in the trash for 30 days."))
                 }
 
                 Section(L("壁紙", "Wallpaper")) {

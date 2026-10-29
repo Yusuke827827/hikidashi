@@ -72,7 +72,7 @@ struct NoteCard: View {
             if highlighted { RoundedRectangle(cornerRadius: 14).stroke(p.accent, lineWidth: 2) }
         }
         .confirmationDialog(L("このメモを削除しますか？", "Delete this note?"), isPresented: $confirmDelete, titleVisibility: .visible) {
-            Button(L("削除", "Delete"), role: .destructive) { store.remove(note.id) }
+            Button(L("ゴミ箱へ（30 日は戻せます）", "Move to trash (restorable for 30 days)"), role: .destructive) { store.remove(note.id) }
         }
     }
 

@@ -27,6 +27,8 @@ public struct HikidashiRootView: View {
     @State private var toast: String?
     @State private var jumpTarget: String?
     @State private var managingFolders = false
+    @AppStorage("onboarded") private var onboarded = false
+    @AppStorage("autoBackup") private var autoBackup = true
     @State private var mergeRefresh = 0
 
     @MainActor
@@ -126,7 +128,22 @@ public struct HikidashiRootView: View {
             AppRouter.reloadWidgets()
             Spotlight.index(notes)
         }
+        // 初めて開いたときの案内（見本モードでは出さない）
+        .fullScreenCover(isPresented: Binding(get: { !onboarded && !DemoMode.isOn }, set: { _ in })) {
+            OnboardingView { addExamples in
+                if addExamples { librarian.addExamples() }
+                onboarded = true
+            }
+            .environment(\.palette, palette)
+        }
+        // ロック中は中身を隠す
+        .overlay {
+            if AppLock.shared.locked, !DemoMode.isOn {
+                LockScreen().environment(\.palette, palette)
+            }
+        }
         .onChange(of: scenePhase) { _, phase in
+            if phase == .background { AppLock.shared.lockIfNeeded() }
             if phase == .active { Task { await refresh() } }
         }
     }
@@ -153,6 +170,11 @@ public struct HikidashiRootView: View {
         let n = librarian.ingestInbox()
         if n > 0 { show(L("共有シートから \(n) 件届きました。", "\(n) items arrived from the share sheet.")) }
         if CloudSync.isOn { await CloudSync.shared.fetch() }
+        store.purgeTrash()
+        if autoBackup {
+            let last = UserDefaults.standard.object(forKey: "lastBackup") as? Date
+            if Backup.runIfDue(store, last: last) != nil { UserDefaults.standard.set(Date(), forKey: "lastBackup") }
+        }
         await librarian.fileAll()
         await EventReminders.sync(store.notes)
     }
