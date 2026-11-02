@@ -73,3 +73,29 @@ Claude（claude-opus-5-5）の料金は、100 万トークンあたり入力 4 �
 - `MONTHLY_LIMIT`（既定 1500 回）: 回数の上限（念のため）
 
 おすすめの値段は **月 980 円 / 6.99 ドル**。Apple の手数料（小規模事業者は 15%）を引くと約 5.9 ドルが残り、上限 3 ドルまで使われても赤字にならない。3 ドルあれば、メモ 60 件の整理と 30 回の取り出しくらいに足りる。値段を下げるなら、`MONTHLY_BUDGET_USD` も手取りより小さくなるよう下げること。
+
+## メール・LINE で送ってメモにする（任意）
+
+アプリの設定「メール・LINE で送る」を使うときだけ設定します。どちらか片方だけでも使えます。
+
+**メール**（自分のドメインが Cloudflare にあるとき）
+
+1. Cloudflare のダッシュボード →「Email」→「Email Routing」を有効にする
+2. 「Routing rules」→「Catch-all address」の動作を「Send to a Worker」にして `mindrawer-server` を選ぶ
+3. GitHub の Variables（またはサーバーの変数）に `INBOX_EMAIL_DOMAIN`（例: `in.example.com`）を入れて公開し直す
+
+アプリには `受け取り箱のid@そのドメイン` という自分だけの送り先が出ます。
+
+**LINE**
+
+1. LINE Developers で Messaging API のチャネル（公式アカウント）を作る
+2. Webhook URL に `https://…workers.dev/line` を入れて「Webhook の利用」をオンにする
+3. チャネルシークレットとチャネルアクセストークンを、サーバーの秘密の値として登録する
+   - `npx wrangler secret put LINE_CHANNEL_SECRET`
+   - `npx wrangler secret put LINE_CHANNEL_TOKEN`
+
+アプリに出る「連携 …」を公式アカウントに送るとつながり、そのあと送ったメッセージがメモになります。
+
+## 公開リンク・共有フォルダ
+
+追加の設定はいりません（利用回数と同じ KV に保存します）。
