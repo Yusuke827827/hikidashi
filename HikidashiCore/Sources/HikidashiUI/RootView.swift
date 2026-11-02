@@ -140,6 +140,14 @@ public struct HikidashiRootView: View {
             let left = todayItems.filter { !store.isChecked($0.note.id, day: todayKey) }.count
             try? await UNUserNotificationCenter.current().setBadgeCount(left)
         }
+        // Apple Watch と、今日の確認リストのウィジェットに、今の内容を送る
+        .task(id: todayItems.map { $0.note.id + (store.isChecked($0.note.id, day: todayKey) ? "1" : "0") + $0.note.title }.joined(separator: "|") + todayKey) {
+            guard !DemoMode.isOn else { return }
+            #if canImport(WatchConnectivity)
+            WatchBridge.shared.start(store: store)
+            #endif
+            AppRouter.reloadWidgets()
+        }
         .task(id: Alarms.signature(store.notes)) {
             if !DemoMode.isOn { await Alarms.sync(store.notes) }
         }
@@ -230,6 +238,7 @@ public struct HikidashiRootView: View {
         if n > 0 { show(L("共有シートから \(n) 件届きました。", "\(n) items arrived from the share sheet.")) }
         if CloudSync.isOn { await CloudSync.shared.fetch() }
         await librarian.syncShares()
+        store.reloadChecks()
         if let c = NotificationRouter.shared.joinCode { NotificationRouter.shared.joinCode = nil; joinCode = c }
         store.purgeTrash()
         if autoBackup {

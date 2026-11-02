@@ -80,6 +80,25 @@ public final class NoteStore {
         checks[day]?.contains(id) ?? false
     }
 
+    /// アプリの外（ウィジェット）から、チェックを読む
+    public nonisolated static func loadChecks(root: URL = SharedContainer.root) -> [String: [String]] {
+        (try? JSONDecoder().decode([String: [String]].self, from: Data(contentsOf: root.appendingPathComponent("checks.json")))) ?? [:]
+    }
+
+    /// アプリの外（ウィジェット）から、チェックを付け外しする
+    public nonisolated static func toggleCheck(_ id: String, day: String, root: URL = SharedContainer.root) {
+        var all = loadChecks(root: root)
+        var list = all[day] ?? []
+        if let i = list.firstIndex(of: id) { list.remove(at: i) } else { list.append(id) }
+        all[day] = list
+        try? JSONEncoder().encode(all).write(to: root.appendingPathComponent("checks.json"), options: .atomic)
+    }
+
+    /// ウィジェットや Apple Watch で付けたチェックを読み直す
+    public func reloadChecks() {
+        checks = (try? JSONDecoder().decode([String: [String]].self, from: Data(contentsOf: checksURL))) ?? [:]
+    }
+
     public func toggleCheck(_ id: String, day: String) {
         var list = checks[day] ?? []
         if let i = list.firstIndex(of: id) { list.remove(at: i) } else { list.append(id) }

@@ -34,6 +34,7 @@ xcodebuild build -quiet \
   CODE_SIGNING_ALLOWED=NO
 APP=build/Build/Products/Debug-iphonesimulator/Hikidashi.app
 for ext in "$APP"/PlugIns/*.appex; do [ -e "$ext" ] && codesign --force --sign - "$ext"; done
+for w in "$APP"/Watch/*.app; do [ -e "$w" ] && codesign --force --sign - "$w"; done
 codesign --force --sign - "$APP"
 
 xcrun simctl boot "$UDID" 2>/dev/null || true

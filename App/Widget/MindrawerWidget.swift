@@ -142,10 +142,151 @@ struct QuickSaveControl: ControlWidget {
     }
 }
 
+// MARK: 今日の確認リスト（ロック画面・ホーム画面。iOS 17 以降はその場でチェックできる）
+
+struct TodayEntry: TimelineEntry {
+    let date: Date
+    let items: [TodayItem]
+    let checked: Set<String>
+    var done: Int { items.filter { checked.contains($0.note.id) }.count }
+}
+
+struct TodayProvider: TimelineProvider {
+    static func entry(at date: Date = Date()) -> TodayEntry {
+        let items = Heuristics.todayList(DrawerProvider.loadNotes(), now: date)
+        let day = Heuristics.dayFormatter.string(from: date)
+        let checked = Set(NoteStore.loadChecks()[day] ?? [])
+        return TodayEntry(date: date, items: items, checked: checked)
+    }
+
+    func placeholder(in context: Context) -> TodayEntry {
+        TodayEntry(date: Date(), items: [
+            TodayItem(note: Note(id: "p1", text: "", title: L("最初の 30 秒だけ暗記する", "Memorize just the first 30 seconds")), time: nil, reason: .planned),
+            TodayItem(note: Note(id: "p2", text: "", title: L("服は 1 日ずつ袋に分ける", "Pack each day's clothes in a bag")), time: nil, reason: .planned),
+        ], checked: ["p2"])
+    }
+
+    func getSnapshot(in context: Context, completion: @escaping (TodayEntry) -> Void) {
+        completion(context.isPreview ? placeholder(in: context) : Self.entry())
+    }
+
+    func getTimeline(in context: Context, completion: @escaping (Timeline<TodayEntry>) -> Void) {
+        // アラームの時刻と、日付が変わったときに描き直す
+        let cal = Calendar.current
+        let now = Date()
+        let tomorrow = cal.date(byAdding: .minute, value: 1, to: cal.startOfDay(for: cal.date(byAdding: .day, value: 1, to: now)!))!
+        let times = Heuristics.todayList(DrawerProvider.loadNotes(), now: now).compactMap(\.time).filter { $0 > now }
+        let dates = [now] + times
+        completion(Timeline(entries: dates.map { Self.entry(at: $0) }, policy: .after(tomorrow)))
+    }
+}
+
+/// ウィジェットの ○ を押したとき（アプリを開かずにチェックする）
+struct ToggleCheckIntent: AppIntent {
+    static var title: LocalizedStringResource = "Toggle a checklist item"
+    static var isDiscoverable = false
+
+    @Parameter(title: "Note ID") var noteID: String
+
+    init() {}
+    init(noteID: String) { self.noteID = noteID }
+
+    func perform() async throws -> some IntentResult {
+        NoteStore.toggleCheck(noteID, day: Heuristics.dayFormatter.string(from: Date()))
+        return .result()
+    }
+}
+
+struct TodayWidgetView: View {
+    let entry: TodayEntry
+    @Environment(\.widgetFamily) private var family
+    private let accent = Color(red: 0.78, green: 0.33, blue: 0.24)
+
+    var body: some View {
+        Group {
+            switch family {
+            case .accessoryCircular: circular
+            case .accessoryInline: inline
+            case .accessoryRectangular: rectangular
+            default: list(limit: family == .systemSmall ? 3 : (family == .systemLarge ? 8 : 4))
+            }
+        }
+        .containerBackground(for: .widget) { Color(red: 0.965, green: 0.96, blue: 0.95) }
+        .widgetURL(URL(string: "mindrawer://")!)
+    }
+
+    private var total: Int { entry.items.count }
+
+    private var circular: some View {
+        Gauge(value: Double(entry.done), in: 0...Double(max(total, 1))) {
+            Image(systemName: "checklist")
+        } currentValueLabel: {
+            Text("\(entry.done)/\(total)").font(.caption2.monospacedDigit())
+        }
+        .gaugeStyle(.accessoryCircularCapacity)
+    }
+
+    private var inline: some View {
+        let next = entry.items.first { !entry.checked.contains($0.note.id) }
+        return Text(next.map { "☐ " + $0.note.title } ?? (total == 0 ? L("今日の確認はありません", "Nothing to check today") : L("今日の分は全部確認しました", "All checked today")))
+    }
+
+    private var rectangular: some View {
+        VStack(alignment: .leading, spacing: 1) {
+            Text(L("今日の確認 \(entry.done)/\(total)", "Today \(entry.done)/\(total)")).font(.caption2.weight(.semibold))
+            let open = entry.items.filter { !entry.checked.contains($0.note.id) }.prefix(2)
+            if open.isEmpty {
+                Text(total == 0 ? L("確認するメモはありません", "Nothing to check") : L("全部確認しました ✓", "All done ✓")).font(.caption)
+            }
+            ForEach(Array(open), id: \.note.id) { i in
+                Text("☐ " + i.note.title).font(.caption).lineLimit(1)
+            }
+        }
+    }
+
+    private func list(limit: Int) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                Text(L("今日の確認リスト", "TODAY'S CHECKLIST")).font(.caption2.weight(.bold)).foregroundStyle(accent)
+                Spacer()
+                Text("\(entry.done)/\(total)").font(.caption2.monospacedDigit()).foregroundStyle(.black.opacity(0.5))
+            }
+            if entry.items.isEmpty {
+                Text(L("今日確認するメモはありません", "Nothing to check today")).font(.caption).foregroundStyle(.secondary)
+            }
+            ForEach(entry.items.prefix(limit), id: \.note.id) { i in
+                let on = entry.checked.contains(i.note.id)
+                Button(intent: ToggleCheckIntent(noteID: i.note.id)) {
+                    HStack(spacing: 6) {
+                        Image(systemName: on ? "checkmark.circle.fill" : "circle").foregroundStyle(on ? accent : .black.opacity(0.4))
+                        Text(i.note.title).font(.caption).foregroundStyle(on ? .black.opacity(0.4) : .black).strikethrough(on).lineLimit(1)
+                        Spacer(minLength: 0)
+                        if let t = i.time { Text(t, style: .time).font(.caption2.monospacedDigit()).foregroundStyle(.black.opacity(0.5)) }
+                    }
+                }
+                .buttonStyle(.plain)
+            }
+            Spacer(minLength: 0)
+        }
+    }
+}
+
+struct TodayWidget: Widget {
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: "MindrawerToday", provider: TodayProvider()) { entry in
+            TodayWidgetView(entry: entry)
+        }
+        .configurationDisplayName(L("今日の確認リスト", "Today's checklist"))
+        .description(L("今日確認するメモを並べ、その場でチェックできます。", "Lists today's notes; check them off right here."))
+        .supportedFamilies([.systemSmall, .systemMedium, .systemLarge, .accessoryRectangular, .accessoryInline, .accessoryCircular])
+    }
+}
+
 @main
 struct MindrawerWidgets: WidgetBundle {
     var body: some Widget {
         DrawerWidget()
+        TodayWidget()
         if #available(iOS 18.0, *) {
             QuickSaveControl()
         }

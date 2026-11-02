@@ -206,6 +206,12 @@ public struct TodayItem: Sendable, Equatable {
     public var reason: Reason
 
     public enum Reason: Sendable, Equatable { case alarm, remind, planned }
+
+    public init(note: Note, time: Date?, reason: Reason) {
+        self.note = note
+        self.time = time
+        self.reason = reason
+    }
 }
 
 extension Heuristics {
