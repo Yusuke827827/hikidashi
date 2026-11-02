@@ -77,12 +77,14 @@ struct NoteCard: View {
     }
 
     @ViewBuilder private var chips: some View {
-        let hasChips = note.remindAt != nil || note.alarm != nil || !note.situations.isEmpty || !note.tags.isEmpty
+        let hasChips = note.remindAt != nil || note.alarm != nil || note.review != nil || note.linkBroken == true || !note.situations.isEmpty || !note.tags.isEmpty
         if hasChips {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 6) {
                     if let r = note.remindAt { Chip(text: "⏰ " + r, kind: .remind) }
                     if let a = note.alarm, !a.summary.isEmpty { Chip(text: "🔔 " + a.summary, kind: .remind) }
+                    if note.review != nil { Chip(text: L("🧠 復習中", "🧠 Learning"), kind: .remind) }
+                    if note.linkBroken == true { Chip(text: L("リンク切れ", "Broken link"), kind: .remind) }
                     ForEach(note.situations, id: \.self) { Chip(text: $0, kind: .situation) }
                     ForEach(note.tags, id: \.self) { Chip(text: $0, kind: .tag) }
                 }
@@ -165,6 +167,12 @@ struct NoteCard: View {
                 } label: {
                     Label(note.plannedDay == today ? L("今日のリストから外す", "Remove from today's list") : L("今日のリストに入れる", "Add to today's list"),
                           systemImage: "checklist")
+                }
+                Button {
+                    store.update(note.id) { $0.review = $0.review == nil ? .start() : nil }
+                } label: {
+                    Label(note.review == nil ? L("覚える（復習に出す）", "Learn it (add to review)") : L("復習から外す", "Stop reviewing"),
+                          systemImage: "brain.head.profile")
                 }
                 Button {
                     sharedImage = ShareCard.image(for: note, palette: p).map(SharedImage.init)

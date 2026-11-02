@@ -31,6 +31,8 @@ public struct HikidashiRootView: View {
     @AppStorage("reviewDismissedWeek") private var reviewDismissedWeek = ""
     @State private var composing: RecallOutcome?
     @State private var noteFilter = NoteFilter()
+    @State private var smartFolders = SmartFolders.load()
+    @State private var upkeepRefresh = 0
     @State private var showFilter = false
     @State private var focusSave = 0
     @State private var chatting = false
@@ -63,7 +65,10 @@ public struct HikidashiRootView: View {
                         if let e = librarian.lastError { errorBanner(e) }
                         if let recall { recallCard(recall) }
                         todayListCard
+                        let due = Heuristics.dueReviews(store.notes)
+                        if !due.isEmpty { ReviewCard(notes: due, store: store) }
                         weeklyReviewCard
+                        upkeepCards
                         if let pick = Heuristics.todaysPick(store.notes, skip: pickSkip) { pickCard(pick) }
                         upcoming
                         if let s = mergeSuggestion {
@@ -93,7 +98,7 @@ public struct HikidashiRootView: View {
             NoteEditor(note: n, librarian: librarian).environment(\.palette, palette).tint(palette.accent)
         }
         .sheet(isPresented: $showFilter) {
-            FilterSheet(filter: $noteFilter, notes: store.notes).tint(palette.accent)
+            FilterSheet(filter: $noteFilter, notes: store.notes, onSave: saveSmartFolder).tint(palette.accent)
         }
         .sheet(item: $composing) { r in
             ComposeSheet(librarian: librarian, topic: r.query, noteIDs: r.noteIDs) { n in
@@ -113,6 +118,7 @@ public struct HikidashiRootView: View {
             SettingsView(librarian: librarian, wallpaperRaw: $wallpaperRaw).environment(\.palette, palette).tint(palette.accent)
         }
         .task { await refresh() }
+        .task { if !DemoMode.isOn { await librarian.checkLinksIfNeeded() } }
         .task { if !DemoMode.isOn { await Subscription.shared.start() } }
         .task { if !DemoMode.isOn, CloudSync.isOn { CloudSync.shared.start(store: store) } }
         // 購読が始まったら、たまっている未整理のメモを整理する
@@ -456,6 +462,39 @@ public struct HikidashiRootView: View {
         return moves.isEmpty || ResortCard.isDismissed(moves) ? nil : moves
     }
 
+    // MARK: 手入れ（ダブり・見直し）
+
+    @ViewBuilder private var upkeepCards: some View {
+        let _ = upkeepRefresh
+        if !DemoMode.isOn {
+            let stale = Heuristics.staleNotes(store.notes)
+            if !stale.isEmpty { StaleCard(items: stale, librarian: librarian) { editing = $0 } }
+            if let pair = Heuristics.duplicates(store.notes, dismissed: DuplicateDismissals.all).first {
+                DuplicateCard(pair: pair, librarian: librarian) { withAnimation { upkeepRefresh += 1 } }
+            }
+        }
+    }
+
+    // MARK: スマートフォルダ
+
+    static let smartPrefix = "smart:"
+
+    private func saveSmartFolder(_ name: String) {
+        let realFolder = folderMode == .topic && folder != Self.allKey && folder != Self.pinKey && !folder.hasPrefix(Self.smartPrefix) ? folder : nil
+        let sf = SmartFolder(name: name, query: filter, folder: realFolder, filter: noteFilter)
+        smartFolders.append(sf)
+        SmartFolders.save(smartFolders)
+        filter = ""
+        noteFilter = NoteFilter()
+        folder = Self.smartPrefix + sf.id
+    }
+
+    private func deleteSmartFolder(_ id: String) {
+        smartFolders.removeAll { $0.id == id }
+        SmartFolders.save(smartFolders)
+        if folder == Self.smartPrefix + id { folder = Self.allKey }
+    }
+
     private var folderBar: some View {
         let counts = folderMode == .topic ? store.folderCounts : Dictionary(grouping: store.notes, by: folderKey).mapValues(\.count)
         let keys = folderMode == .topic ? store.folders : counts.keys.sorted(by: >)
@@ -481,6 +520,12 @@ public struct HikidashiRootView: View {
                 HStack(spacing: 6) {
                     folderTab(Self.allKey, L("すべて", "All"), store.notes.count)
                     if pinned > 0 { folderTab(Self.pinKey, "★ " + L("お気に入り", "Favorites"), pinned) }
+                    ForEach(smartFolders) { sf in
+                        folderTab(Self.smartPrefix + sf.id, "⚡︎ " + sf.name, store.notes.filter { sf.matches($0) }.count)
+                            .contextMenu {
+                                Button(role: .destructive) { deleteSmartFolder(sf.id) } label: { Label(L("このスマートフォルダを消す", "Delete smart folder"), systemImage: "trash") }
+                            }
+                    }
                     ForEach(keys, id: \.self) { k in
                         folderTab(k, (folderMode == .topic && store.isFavoriteFolder(k) ? "★ " : "") + folderLabel(k), counts[k] ?? 0)
                     }
@@ -505,8 +550,10 @@ public struct HikidashiRootView: View {
 
     private var shownNotes: [Note] {
         let f = filter.trimmingCharacters(in: .whitespaces).lowercased()
+        let smart = folder.hasPrefix(Self.smartPrefix) ? smartFolders.first { Self.smartPrefix + $0.id == folder } : nil
         return store.notes.filter { n in
-            let inFolder = folder == Self.allKey || (folder == Self.pinKey ? n.pinned : folderKey(n) == folder)
+            if let smart, !smart.matches(n) { return false }
+            let inFolder = smart != nil || folder == Self.allKey || (folder == Self.pinKey ? n.pinned : folderKey(n) == folder)
             return inFolder && (f.isEmpty || n.haystack.contains(f)) && noteFilter.matches(n)
         }
     }

@@ -16,6 +16,7 @@ struct SettingsView: View {
     @State private var hasKey = APIKeyStore.load() != nil
     @State private var message: String?
     @State private var importing = false
+    @State private var importingOther = false
     @State private var exportURL: URL?
     @State private var calendarOn = EventReminders.isOn
     @State private var cloudOn = CloudSync.isOn
@@ -235,6 +236,24 @@ struct SettingsView: View {
                         ShareLink(item: exportURL) { Label(L("書き出す（JSON）", "Export (JSON)"), systemImage: "square.and.arrow.up") }
                     }
                     Button { importing = true } label: { Label(L("読み込む（JSON）", "Import (JSON)"), systemImage: "square.and.arrow.down") }
+                    Button { importingOther = true } label: {
+                        Label(L("他のアプリから取り込む", "Import from other apps"), systemImage: "tray.and.arrow.down.fill")
+                    }
+                    .fileImporter(isPresented: $importingOther, allowedContentTypes: [.data, .plainText, .json, .xml, .commaSeparatedText, .html],
+                                  allowsMultipleSelection: true) { result in
+                        guard case let .success(urls) = result else { return }
+                        var parsed: [Note] = []
+                        for url in urls {
+                            let scoped = url.startAccessingSecurityScopedResource()
+                            defer { if scoped { url.stopAccessingSecurityScopedResource() } }
+                            if let data = try? Data(contentsOf: url) { parsed += Importer.parse(data, filename: url.lastPathComponent) }
+                        }
+                        let n = librarian.importNotes(parsed)
+                        message = n > 0
+                            ? L("\(n) 件を取り込みました。順に整理します。", "Imported \(n) notes. Filing them now.")
+                            : L("取り込めるメモが見つかりませんでした。", "No notes found in that file.")
+                        if n > 0 { Task { await librarian.fileAll() } }
+                    }
                     Button { managingFolders = true } label: {
                         Label(L("フォルダの管理", "Manage folders"), systemImage: "folder.badge.gearshape")
                     }
@@ -245,8 +264,8 @@ struct SettingsView: View {
                 } header: {
                     Text(L("データ", "Data"))
                 } footer: {
-                    Text(L("Web 版（claude.ai）の Mindrawer で書き出したファイルも読み込めます。書き出したファイルは Web 版にも読み込めます。",
-                           "Files exported from the web version can be imported here, and vice versa."))
+                    Text(L("Web 版の Mindrawer で書き出したファイルも読み込めます。「他のアプリから取り込む」は、Evernote（.enex）・Google Keep（Google データエクスポートの .json）・CSV・テキスト／Markdown・HTML に対応しています。Apple メモは、メモを共有 →「Mindrawer」で入れられます。Notion は書き出した .zip をファイル App で展開して、.md を選んでください。",
+                           "Files exported from the web version can be imported here, and vice versa. Import from other apps reads Evernote (.enex), Google Keep (Takeout .json), CSV, text/Markdown and HTML. For Apple Notes, share a note to Mindrawer. For Notion, unzip the export in Files and pick the .md files."))
                 }
 
                 Section(L("共有シートから保存する", "Save from the share sheet")) {

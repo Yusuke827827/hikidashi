@@ -7,6 +7,9 @@ import SwiftUI
 struct FilterSheet: View {
     @Binding var filter: NoteFilter
     let notes: [Note]
+    /// 今の条件をスマートフォルダとして保存する（名前を渡す）
+    var onSave: ((String) -> Void)? = nil
+    @State private var smartName = ""
 
     @Environment(\.dismiss) private var dismiss
 
@@ -39,6 +42,19 @@ struct FilterSheet: View {
                 if !tags.isEmpty {
                     Section(L("タグ（どれかが付いているもの）", "Tags (any of)")) {
                         FlowTags(tags: tags, selected: $filter.tags)
+                    }
+                }
+                if let onSave {
+                    Section {
+                        TextField(L("名前（例: ★ 今月の料理）", "Name (e.g. ★ Recent recipes)"), text: $smartName)
+                        Button(L("スマートフォルダとして保存", "Save as a smart folder")) {
+                            onSave(smartName.trimmingCharacters(in: .whitespaces))
+                            dismiss()
+                        }
+                        .disabled(smartName.trimmingCharacters(in: .whitespaces).isEmpty)
+                    } footer: {
+                        Text(L("今の絞り込み（文字・フォルダ・ここでの条件）に名前を付けて、フォルダの列から 1 回で開けるようにします。長押しで消せます。",
+                               "Saves the current filter (text, folder and these options) so you can open it from the folder row. Long-press it to delete."))
                     }
                 }
             }
