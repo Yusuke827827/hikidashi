@@ -279,7 +279,7 @@ struct SettingsView: View {
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) { Button(L("完了", "Done")) { dismiss() } }
             }
-            .sheet(isPresented: $managingFolders) { FolderManagerView(store: librarian.store) }
+            .sheet(isPresented: $managingFolders) { FolderManagerView(store: librarian.store, librarian: librarian) }
             .fileImporter(isPresented: $importing, allowedContentTypes: [.json]) { result in
                 guard case let .success(url) = result else { return }
                 let scoped = url.startAccessingSecurityScopedResource()

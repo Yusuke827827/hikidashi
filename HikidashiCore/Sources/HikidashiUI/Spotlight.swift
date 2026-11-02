@@ -54,6 +54,10 @@ public enum AppRouter {
             if !id.isEmpty, id != "/" { open(noteID: id) }
         case "save":
             NotificationRouter.shared.focusSave = true
+        case "join":
+            if let c = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?.first(where: { $0.name == "c" })?.value, !c.isEmpty {
+                NotificationRouter.shared.joinCode = c
+            }
         case "recall":
             if let q = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?.first(where: { $0.name == "q" })?.value, !q.isEmpty {
                 recall(q)

@@ -913,3 +913,38 @@ final class ImporterTests: XCTestCase {
         XCTAssertEqual(lib.store.notes.count, 2)
     }
 }
+
+final class ShareTests: XCTestCase {
+    func testShareCodeRoundTrip() throws {
+        let code = ShareCode.encode(server: "https://s.example.workers.dev", id: "abcDEF123456", key: "k".padding(toLength: 24, withPad: "x", startingAt: 0))
+        XCTAssertTrue(code.hasPrefix("MD1-"))
+        let d = try XCTUnwrap(ShareCode.decode("参加してね mindrawer://join?c=\(code) よろしく"))
+        XCTAssertEqual(d.server, "https://s.example.workers.dev")
+        XCTAssertEqual(d.id, "abcDEF123456")
+        XCTAssertNil(ShareCode.decode("MD1-" + Data("ftp://x|a|b".utf8).base64EncodedString()), "https のサーバーだけ")
+        XCTAssertNil(ShareCode.decode("hello"))
+    }
+
+    func testOutgoingDropsLocalOnlyFields() throws {
+        var n = Note(text: "x", category: "家事")
+        n.imageFile = "a.jpg"
+        n.review = .start()
+        n.place = Place(name: "駅", latitude: 1, longitude: 2)
+        let o = SharedFolders.outgoing(n)
+        XCTAssertNil(o.imageFile)
+        XCTAssertNil(o.review)
+        XCTAssertNil(o.place)
+        XCTAssertNotNil(o.updatedAt)
+        let i = SharedFolders.incoming(o, local: n, folder: "家事（共有）")
+        XCTAssertEqual(i.category, "家事（共有）")
+        XCTAssertEqual(i.imageFile, "a.jpg", "この端末の写真は残す")
+        XCTAssertNotNil(i.review)
+    }
+
+    func testDecodeRemote() throws {
+        let json = #"{"name":"家事","notes":[{"id":"n1","text":"シミは叩く","title":"シミ","category":"家事","createdAt":1700000000000,"updatedAt":1700000000500}],"deleted":["n9"],"updatedAt":1}"#
+        let r = try ShareClient.decodeRemote(Data(json.utf8))
+        XCTAssertEqual(r.notes.first?.id, "n1")
+        XCTAssertEqual(r.deleted, ["n9"])
+    }
+}

@@ -59,6 +59,8 @@ final class NotificationRouter: NSObject, UNUserNotificationCenterDelegate {
     var recallQuery: String?
     /// コントロールセンターの「しまう」から開いたとき
     var focusSave = false
+    /// 共有フォルダのリンク（mindrawer://join?c=…）から開いたときの共有コード
+    var joinCode: String?
 
     // アプリを開いている間に届いた通知も表示する
     nonisolated func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification) async -> UNNotificationPresentationOptions {

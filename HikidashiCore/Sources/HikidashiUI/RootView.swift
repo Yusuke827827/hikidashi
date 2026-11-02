@@ -33,6 +33,7 @@ public struct HikidashiRootView: View {
     @State private var noteFilter = NoteFilter()
     @State private var smartFolders = SmartFolders.load()
     @State private var upkeepRefresh = 0
+    @State private var joinCode: String?
     @State private var showFilter = false
     @State private var focusSave = 0
     @State private var chatting = false
@@ -112,7 +113,7 @@ public struct HikidashiRootView: View {
                 .tint(palette.accent)
         }
         .sheet(isPresented: $managingFolders, onDismiss: { mergeRefresh += 1 }) {
-            FolderManagerView(store: store).environment(\.palette, palette).tint(palette.accent)
+            FolderManagerView(store: store, librarian: librarian).environment(\.palette, palette).tint(palette.accent)
         }
         .sheet(isPresented: $showSettings) {
             SettingsView(librarian: librarian, wallpaperRaw: $wallpaperRaw).environment(\.palette, palette).tint(palette.accent)
@@ -149,6 +150,22 @@ public struct HikidashiRootView: View {
             guard let id, let note = store.note(id) else { return }
             NotificationRouter.shared.openNoteID = nil
             jump(note)
+        }
+        // 共有フォルダのリンクから開いたら参加の画面を出す
+        .onChange(of: NotificationRouter.shared.joinCode) { _, c in
+            guard let c else { return }
+            NotificationRouter.shared.joinCode = nil
+            joinCode = c
+        }
+        .sheet(item: Binding(get: { joinCode.map(JoinRequest.init) }, set: { joinCode = $0?.code })) { r in
+            JoinShareSheet(librarian: librarian, initial: r.code) { name in show(L("共有フォルダ「\(name)」に参加しました", "Joined the shared folder \(name)")) }
+                .tint(palette.accent)
+        }
+        // 共有フォルダは、開いたときと、その中のメモが変わったとき（少し待ってから）に同期する
+        .task(id: shareSignature) {
+            guard !DemoMode.isOn, !librarian.sharedFolders.isEmpty else { return }
+            try? await Task.sleep(for: .seconds(2))
+            await librarian.syncShares()
         }
         .onChange(of: NotificationRouter.shared.focusSave) { _, on in
             guard on else { return }
@@ -212,6 +229,8 @@ public struct HikidashiRootView: View {
         let n = librarian.ingestInbox()
         if n > 0 { show(L("共有シートから \(n) 件届きました。", "\(n) items arrived from the share sheet.")) }
         if CloudSync.isOn { await CloudSync.shared.fetch() }
+        await librarian.syncShares()
+        if let c = NotificationRouter.shared.joinCode { NotificationRouter.shared.joinCode = nil; joinCode = c }
         store.purgeTrash()
         if autoBackup {
             let last = UserDefaults.standard.object(forKey: "lastBackup") as? Date
@@ -462,6 +481,14 @@ public struct HikidashiRootView: View {
         return moves.isEmpty || ResortCard.isDismissed(moves) ? nil : moves
     }
 
+    /// 共有フォルダのメモの変わり目（同期のきっかけ）
+    private var shareSignature: String {
+        let shared = Set(librarian.sharedFolders.map(\.folder))
+        guard !shared.isEmpty else { return "" }
+        let ns = store.notes.filter { shared.contains($0.category) }
+        return "\(shared.count)|\(ns.count)|\(ns.map(\.modifiedAt).max()?.timeIntervalSince1970 ?? 0)"
+    }
+
     // MARK: 手入れ（ダブり・見直し）
 
     @ViewBuilder private var upkeepCards: some View {
@@ -621,5 +648,12 @@ public struct HikidashiRootView: View {
     private func sectionTitle(_ s: String) -> some View {
         Text(s.uppercased()).font(.caption.weight(.semibold)).tracking(1).foregroundStyle(palette.muted)
     }
+}
+#endif
+
+#if os(iOS)
+private struct JoinRequest: Identifiable {
+    let code: String
+    var id: String { code }
 }
 #endif

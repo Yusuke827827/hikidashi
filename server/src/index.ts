@@ -5,6 +5,7 @@
 
 import { PRIVACY_HTML, SUPPORT_HTML } from "./pages.generated";
 import { VerificationError, verifyTransaction } from "./verify";
+import { handleShare } from "./share";
 
 export interface Env {
   ANTHROPIC_API_KEY: string;
@@ -73,6 +74,9 @@ export function sanitize(body: unknown): Record<string, unknown> | null {
 export async function handle(request: Request, env: Env, deps: Deps): Promise<Response> {
   const url = new URL(request.url);
   if (request.method === "GET" && url.pathname === "/health") return json(200, { ok: true });
+  // 共有フォルダ（共有コードを知っている人だけが読み書きできる）
+  const shared = await handleShare(request, env.USAGE, deps.now().getTime());
+  if (shared) return shared;
   // App Store に載せるプライバシーポリシーとサポートのページ
   if (request.method === "GET" && (url.pathname === "/privacy" || url.pathname === "/support")) {
     const html = url.pathname === "/privacy" ? PRIVACY_HTML : SUPPORT_HTML;

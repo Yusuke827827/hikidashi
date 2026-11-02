@@ -102,6 +102,8 @@ struct MergeSuggestionCard: View {
 
 struct FolderManagerView: View {
     let store: NoteStore
+    /// 共有フォルダに使う（無ければ共有の操作は出さない）
+    var librarian: Librarian? = nil
 
     @Environment(\.dismiss) private var dismiss
     @State private var creating = false
@@ -111,6 +113,8 @@ struct FolderManagerView: View {
     @State private var merging: String?
     @State private var deleting: String?
     @State private var refresh = 0
+    @State private var sharing: String?
+    @State private var joining = false
 
     private var suggestions: [FolderMergeSuggestion] {
         _ = refresh
@@ -144,8 +148,8 @@ struct FolderManagerView: View {
                 } header: {
                     Text(L("フォルダ", "Folders"))
                 } footer: {
-                    Text(L("★ でお気に入りにすると、一覧の先頭に出ます。左にスワイプで消す・名前を変える・まとめる。消したフォルダのメモは「その他」に移ります。",
-                           "Tap ★ to favorite a folder; favorites come first. Swipe left to delete, rename or merge. Notes in a deleted folder move to Other."))
+                    Text(L("★ でお気に入りにすると、一覧の先頭に出ます。左にスワイプで消す・名前を変える・まとめる。消したフォルダのメモは「その他」に移ります。右にスワイプで、家族や友だちとフォルダを共有できます（右上の 👥＋ で参加）。",
+                           "Tap ★ to favorite a folder; favorites come first. Swipe left to delete, rename or merge. Notes in a deleted folder move to Other. Swipe right to share a folder with family or friends (join with 👥+ at the top)."))
                 }
             }
             .navigationTitle(L("フォルダの管理", "Manage folders"))
@@ -155,6 +159,12 @@ struct FolderManagerView: View {
                 ToolbarItem(placement: .primaryAction) {
                     Button { newName = ""; creating = true } label: { Image(systemName: "folder.badge.plus") }
                         .accessibilityLabel(L("新しいフォルダ", "New folder"))
+                }
+                if librarian != nil {
+                    ToolbarItem(placement: .primaryAction) {
+                        Button { joining = true } label: { Image(systemName: "person.2.badge.plus") }
+                            .accessibilityLabel(L("共有フォルダに参加", "Join a shared folder"))
+                    }
                 }
             }
             .alert(L("新しいフォルダ", "New folder"), isPresented: $creating) {
@@ -176,6 +186,12 @@ struct FolderManagerView: View {
                     deleting = nil
                 }
             }
+            .sheet(item: Binding(get: { sharing.map(MergeSource.init) }, set: { sharing = $0?.name; refresh += 1 })) { src in
+                if let librarian { ShareFolderSheet(folder: src.name, librarian: librarian) }
+            }
+            .sheet(isPresented: $joining, onDismiss: { refresh += 1 }) {
+                if let librarian { JoinShareSheet(librarian: librarian) }
+            }
             .sheet(item: Binding(get: { merging.map(MergeSource.init) }, set: { merging = $0?.name })) { src in
                 MergeTargetPicker(store: store, source: src.name) { merging = nil }
             }
@@ -192,8 +208,21 @@ struct FolderManagerView: View {
             .buttonStyle(.borderless)
             .accessibilityLabel(L("お気に入り", "Favorite"))
             Text(name)
+            if librarian?.isShared(name) == true {
+                Image(systemName: "person.2.fill").font(.caption).foregroundStyle(.secondary).accessibilityLabel(L("共有中", "Shared"))
+            }
             Spacer()
             Text("\(count)").monospacedDigit().foregroundStyle(.secondary)
+        }
+        .swipeActions(edge: .leading) {
+            if let librarian, name != Heuristics.otherFolder {
+                if librarian.isShared(name) {
+                    Button { sharing = name } label: { Label(L("コード", "Code"), systemImage: "person.2") }.tint(.green)
+                    Button(role: .destructive) { librarian.leaveShare(name); refresh += 1 } label: { Label(L("共有をやめる", "Stop sharing"), systemImage: "person.2.slash") }
+                } else {
+                    Button { sharing = name } label: { Label(L("共有", "Share"), systemImage: "person.2") }.tint(.green)
+                }
+            }
         }
         .swipeActions(edge: .trailing) {
             if name != Heuristics.otherFolder {
