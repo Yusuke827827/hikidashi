@@ -107,6 +107,7 @@ struct FakeAI: NoteAI {
         RecallResult(answer: "advice", ids: [notes[0].id])
     }
     func condense(_ text: String, language: AppLanguage) async throws -> String { "・まとめ" }
+    func translate(_ text: String, language: AppLanguage) async throws -> String { "【訳】" + text }
     func compose(topic: String, notes: [Note], language: AppLanguage) async throws -> ComposeResult {
         ComposeResult(title: "まとめ: " + topic, text: notes.map { "☐ " + $0.title }.joined(separator: "\n"))
     }
@@ -946,5 +947,67 @@ final class ShareTests: XCTestCase {
         let r = try ShareClient.decodeRemote(Data(json.utf8))
         XCTAssertEqual(r.notes.first?.id, "n1")
         XCTAssertEqual(r.deleted, ["n9"])
+    }
+}
+
+final class ExtrasTests: XCTestCase {
+    func testTemplateFill() {
+        let t = NoteTemplate(name: "x", title: "会議 {{日付}}", text: "{{date}} のメモ")
+        let now = Date(timeIntervalSince1970: 1_800_000_000)
+        let d = Heuristics.dayFormatter.string(from: now)
+        XCTAssertEqual(t.filled(now: now).title, "会議 " + d)
+        XCTAssertEqual(t.filled(now: now).text, d + " のメモ")
+        XCTAssertGreaterThanOrEqual(Templates.builtIn.count, 5)
+    }
+
+    func testLooksForeign() {
+        XCTAssertTrue(Heuristics.looksForeign("To remove a coffee stain, blot from the outside in and never rub it.", language: .ja))
+        XCTAssertFalse(Heuristics.looksForeign("コーヒーのシミは、こすらず外から内へ叩く。Mac の ⌘+Shift+4 も便利", language: .ja))
+        XCTAssertFalse(Heuristics.looksForeign("short", language: .ja))
+        XCTAssertTrue(Heuristics.looksForeign("コーヒーのシミは、こすらずに外側から内側へ叩いて落とすのがコツです", language: .en))
+    }
+
+    func testUsageStats() {
+        let now = Date(timeIntervalSince1970: 1_800_000_000)
+        var r = Note(text: "a", category: "料理", helpful: 3)
+        r.review = Review(step: 5, due: now)
+        let notes = [r, Note(text: "b", category: "料理", createdAt: now.addingTimeInterval(-40 * 86400), pinned: true), Note(text: "c", category: "お金", createdAt: now)]
+        let s = Heuristics.usageStats(notes, now: now)
+        XCTAssertEqual(s.total, 3)
+        XCTAssertEqual(s.perMonth.count, 12)
+        XCTAssertEqual(s.perFolder.first?.folder, "料理")
+        XCTAssertEqual(s.topHelpful.first?.helpful, 3)
+        XCTAssertEqual(s.favorites, 1)
+        XCTAssertEqual(s.learned, 1)
+    }
+
+    func testICS() {
+        var n = Note(id: "x1", text: "本文, セミコロン; 改行\nあり", title: "ゴミの日")
+        XCTAssertNil(ICS.event(for: n))
+        n.remindAt = "2026-11-03"
+        let e = ICS.event(for: n)!
+        XCTAssertTrue(e.contains("DTSTART;VALUE=DATE:20261103"))
+        XCTAssertTrue(e.contains("DTEND;VALUE=DATE:20261104"))
+        XCTAssertTrue(e.contains("本文\\, セミコロン\; 改行\\nあり"))
+        n.alarm = Alarm(kind: .weekly, date: Date(timeIntervalSince1970: 1_800_000_000), weekdays: [2, 5])
+        XCTAssertTrue(ICS.event(for: n)!.contains("RRULE:FREQ=WEEKLY;BYDAY=MO,TH"))
+        let cal = ICS.calendar([n, Note(text: "no date")])
+        XCTAssertTrue(cal.hasPrefix("BEGIN:VCALENDAR"))
+        XCTAssertEqual(cal.components(separatedBy: "BEGIN:VEVENT").count, 2)
+    }
+
+    @MainActor
+    func testTranslateKeepsOriginal() async throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent("tr-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        let lib = Librarian(store: NoteStore(root: root), credentialProvider: { nil }, onDevice: FakeAI())
+        lib.translateMode = true
+        defer { UserDefaults.standard.removeObject(forKey: "translateMode") }
+        let en = "To remove a coffee stain, blot from the outside in and never rub it hard."
+        let note = lib.save(text: en, url: nil, image: nil)
+        await lib.file(note.id)
+        let n = try XCTUnwrap(lib.store.note(note.id))
+        XCTAssertEqual(n.original, en)
+        XCTAssertTrue(n.text.hasPrefix("【訳】"))
     }
 }

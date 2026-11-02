@@ -174,3 +174,5 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: $(BUNDLE_PREFIX).watchkitapp
         TARGETED_DEVICE_FAMILY: "4"
+        # iPhone の中の AI（FoundationModels）は Watch では使わない
+        OTHER_LDFLAGS: ""

@@ -231,6 +231,11 @@ public struct Filer: Sendable {
         return r
     }
 
+    public func translate(_ text: String, language: AppLanguage = .current) async throws -> String {
+        let prompt = "Translate this note from a personal tips app into natural \(language.promptName). Keep URLs, product names, numbers and line breaks as they are. Return JSON with the translation in \"text\".\n\nNote:\n" + text
+        return try await client.json(MemoResult.self, prompt: prompt, schema: Prompts.memoSchema, effort: .low).text
+    }
+
     public func condense(_ text: String, language: AppLanguage = .current) async throws -> String {
         try await client.json(MemoResult.self, prompt: Prompts.memo(text: text, language: language), schema: Prompts.memoSchema, effort: .low).text
     }

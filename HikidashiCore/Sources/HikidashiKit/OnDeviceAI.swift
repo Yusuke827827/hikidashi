@@ -15,6 +15,8 @@ public protocol NoteAI: Sendable {
     func recall(_ query: String, notes: [Note], today: String, language: AppLanguage) async throws -> RecallResult
     /// 長い文をメモ風に整えて返す（保存する前に確かめるとき）
     func condense(_ text: String, language: AppLanguage) async throws -> String
+    /// 外国語の文を、アプリの言葉に訳す
+    func translate(_ text: String, language: AppLanguage) async throws -> String
     /// いくつかのメモから、1 枚のまとめノートを作る
     func compose(topic: String, notes: [Note], language: AppLanguage) async throws -> ComposeResult
     /// メモに聞く。query は最後の問い（メモを絞るのに使う）
@@ -167,6 +169,11 @@ struct OnDeviceFiler: NoteAI {
     func condense(_ text: String, language: AppLanguage) async throws -> String {
         let s = LanguageModelSession(instructions: "You turn pasted text into a concise personal memo. Write in \(language.promptName).")
         return try await s.respond(to: String(text.prefix(2500)), generating: OnDeviceMemo.self).content.memo
+    }
+
+    func translate(_ text: String, language: AppLanguage) async throws -> String {
+        let s = LanguageModelSession(instructions: "Translate the user's note into natural \(language.promptName). Keep URLs, names, numbers and line breaks. Output only the translation.")
+        return try await s.respond(to: String(text.prefix(2500))).content
     }
 
     func recall(_ query: String, notes: [Note], today: String, language: AppLanguage) async throws -> RecallResult {

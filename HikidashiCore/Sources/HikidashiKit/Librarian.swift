@@ -62,6 +62,11 @@ public final class Librarian {
     /// まとめて取り込んだメモ（1 件ずつ「どのフォルダ？」とは聞かない）
     private var quiet: Set<String> = []
 
+    /// 外国語のメモを、しまうときにアプリの言葉に訳す（元の文は original に残す）
+    public var translateMode: Bool = UserDefaults.standard.bool(forKey: "translateMode") {
+        didSet { UserDefaults.standard.set(translateMode, forKey: "translateMode") }
+    }
+
     /// AI を使えるか（Claude か iPhone の中の AI）
     public var hasAI: Bool { aiKind != .none }
 
@@ -183,6 +188,13 @@ public final class Librarian {
         do {
             // メモ風に整えるのは、初めて整理する、ある程度長い文だけ
             let memo = memoMode && !note.filed && note.original == nil && Self.worthMemo(note.text)
+            // 外国語のメモは、初めて整理するときに訳す
+            if translateMode, !note.filed, note.original == nil, Heuristics.looksForeign(note.text),
+               let t = try? await ai.translate(note.text, language: .current), !t.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                let before = note.text
+                store.update(id) { $0.original = before; $0.text = t }
+                if let updated = store.note(id) { note = updated }
+            }
             let log = NamingHabits.load()
             var r = try await ai.file(note, folders: folders, image: image, today: Self.today, language: .current, memo: memo,
                                       habits: NamingHabits.promptHint(log))
