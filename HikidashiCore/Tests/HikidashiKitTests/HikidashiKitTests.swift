@@ -1003,7 +1003,10 @@ final class ExtrasTests: XCTestCase {
         let lib = Librarian(store: NoteStore(root: root), credentialProvider: { nil }, onDevice: FakeAI())
         lib.translateMode = true
         defer { UserDefaults.standard.removeObject(forKey: "translateMode") }
-        let en = "To remove a coffee stain, blot from the outside in and never rub it hard."
+        // テストを動かす端末の言葉から見て外国語の文を使う
+        let en = AppLanguage.current == .ja
+            ? "To remove a coffee stain, blot from the outside in and never rub it hard."
+            : "コーヒーのシミは、こすらずに外側から内側へ叩いて落とすのがコツです"
         let note = lib.save(text: en, url: nil, image: nil)
         await lib.file(note.id)
         let n = try XCTUnwrap(lib.store.note(note.id))
