@@ -988,7 +988,7 @@ final class ExtrasTests: XCTestCase {
         let e = ICS.event(for: n)!
         XCTAssertTrue(e.contains("DTSTART;VALUE=DATE:20261103"))
         XCTAssertTrue(e.contains("DTEND;VALUE=DATE:20261104"))
-        XCTAssertTrue(e.contains("本文\\, セミコロン\; 改行\\nあり"))
+        XCTAssertTrue(e.contains(#"本文\, セミコロン\; 改行\nあり"#))
         n.alarm = Alarm(kind: .weekly, date: Date(timeIntervalSince1970: 1_800_000_000), weekdays: [2, 5])
         XCTAssertTrue(ICS.event(for: n)!.contains("RRULE:FREQ=WEEKLY;BYDAY=MO,TH"))
         let cal = ICS.calendar([n, Note(text: "no date")])

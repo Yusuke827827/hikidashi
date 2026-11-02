@@ -1,6 +1,7 @@
 // 手書き・スケッチ。Apple Pencil や指で描き、画像として添付する（中の文字は、しまうときに読み取る）。
 
 #if os(iOS)
+import HikidashiKit
 import PencilKit
 import SwiftUI
 
