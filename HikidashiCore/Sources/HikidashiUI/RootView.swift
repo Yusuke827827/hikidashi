@@ -53,37 +53,39 @@ public struct HikidashiRootView: View {
     public var body: some View {
         NavigationStack {
             ScrollViewReader { proxy in
-                ScrollView {
-                    LazyVStack(alignment: .leading, spacing: 18) {
-                        header
-                        CaptureCard(librarian: librarian, onRecall: { recall = $0 }, onToast: show, onOpen: jump, focusTrigger: focusSave)
-                        if let req = librarian.folderChoice {
-                            FolderChoiceCard(request: req, librarian: librarian).id(req.noteID)
+                Group {
+                    if wide {
+                        // iPad・Mac: 左に入力欄やカード、右にフォルダとメモの一覧
+                        HStack(alignment: .top, spacing: 0) {
+                            ScrollView {
+                                LazyVStack(alignment: .leading, spacing: 18) { mainColumn }
+                                    .padding(.horizontal, 20)
+                                    .padding(.bottom, 48)
+                            }
+                            .frame(width: 400)
+                            .scrollDismissesKeyboard(.interactively)
+                            Divider().opacity(0.4)
+                            ScrollView {
+                                LazyVStack(alignment: .leading, spacing: 18) { listColumn }
+                                    .padding(.horizontal, 20)
+                                    .padding(.top, 16)
+                                    .padding(.bottom, 48)
+                                    .frame(maxWidth: 820)
+                                    .frame(maxWidth: .infinity)
+                            }
                         }
-                        if let toast {
-                            Text(toast).font(.footnote).foregroundStyle(palette.accent).transition(.opacity)
+                    } else {
+                        ScrollView {
+                            LazyVStack(alignment: .leading, spacing: 18) {
+                                mainColumn
+                                listColumn
+                            }
+                            .padding(.horizontal, 16)
+                            .padding(.bottom, 48)
                         }
-                        if let e = librarian.lastError { errorBanner(e) }
-                        if let recall { recallCard(recall) }
-                        todayListCard
-                        let due = Heuristics.dueReviews(store.notes)
-                        if !due.isEmpty { ReviewCard(notes: due, store: store) }
-                        weeklyReviewCard
-                        upkeepCards
-                        if let pick = Heuristics.todaysPick(store.notes, skip: pickSkip) { pickCard(pick) }
-                        upcoming
-                        if let s = mergeSuggestion {
-                            MergeSuggestionCard(suggestion: s, store: store) { withAnimation { mergeRefresh += 1 } }
-                        }
-                        if let moves = resortMoves {
-                            ResortCard(moves: moves, store: store) { withAnimation { mergeRefresh += 1 } }
-                        }
-                        if store.notes.isEmpty { emptyState } else { folderBar; listHeader; notesList }
+                        .scrollDismissesKeyboard(.interactively)
                     }
-                    .padding(.horizontal, 16)
-                    .padding(.bottom, 48)
                 }
-                .scrollDismissesKeyboard(.interactively)
                 .onChange(of: jumpTarget) { _, id in
                     guard let id else { return }
                     withAnimation { proxy.scrollTo(id, anchor: .center) }
@@ -239,6 +241,11 @@ public struct HikidashiRootView: View {
         if CloudSync.isOn { await CloudSync.shared.fetch() }
         await librarian.syncShares()
         store.reloadChecks()
+        let mailed = await librarian.pullInbox()
+        if mailed > 0 {
+            show(L("メール・LINE から \(mailed) 件届きました。", "\(mailed) notes arrived by email or LINE."))
+            await librarian.fileAll()
+        }
         if let c = NotificationRouter.shared.joinCode { NotificationRouter.shared.joinCode = nil; joinCode = c }
         store.purgeTrash()
         if autoBackup {
@@ -496,6 +503,42 @@ public struct HikidashiRootView: View {
         guard !shared.isEmpty else { return "" }
         let ns = store.notes.filter { shared.contains($0.category) }
         return "\(shared.count)|\(ns.count)|\(ns.map(\.modifiedAt).max()?.timeIntervalSince1970 ?? 0)"
+    }
+
+    // MARK: 画面の組み立て
+
+    @Environment(\.horizontalSizeClass) private var sizeClass
+    /// iPad・Mac の広い画面
+    private var wide: Bool { sizeClass == .regular }
+
+    @ViewBuilder private var mainColumn: some View {
+        header
+        CaptureCard(librarian: librarian, onRecall: { recall = $0 }, onToast: show, onOpen: jump, focusTrigger: focusSave)
+        if let req = librarian.folderChoice {
+            FolderChoiceCard(request: req, librarian: librarian).id(req.noteID)
+        }
+        if let toast {
+            Text(toast).font(.footnote).foregroundStyle(palette.accent).transition(.opacity)
+        }
+        if let e = librarian.lastError { errorBanner(e) }
+        if let recall { recallCard(recall) }
+        todayListCard
+        let due = Heuristics.dueReviews(store.notes)
+        if !due.isEmpty { ReviewCard(notes: due, store: store) }
+        weeklyReviewCard
+        upkeepCards
+        if let pick = Heuristics.todaysPick(store.notes, skip: pickSkip) { pickCard(pick) }
+        upcoming
+        if let s = mergeSuggestion {
+            MergeSuggestionCard(suggestion: s, store: store) { withAnimation { mergeRefresh += 1 } }
+        }
+        if let moves = resortMoves {
+            ResortCard(moves: moves, store: store) { withAnimation { mergeRefresh += 1 } }
+        }
+    }
+
+    @ViewBuilder private var listColumn: some View {
+        if store.notes.isEmpty { emptyState } else { folderBar; listHeader; notesList }
     }
 
     // MARK: 手入れ（ダブり・見直し）

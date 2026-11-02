@@ -28,6 +28,8 @@ struct CaptureCard: View {
     @State private var attachment: (data: Data, name: String)?
     @State private var importingFile = false
     @State private var scanning = false
+    @State private var sketching = false
+    @State private var templates = Templates.all()
     /// メモ風にまとめた結果を、しまう前に確かめる
     @AppStorage("memoPreview") private var memoPreview = true
     @State private var memoDraft: MemoDraft?
@@ -83,6 +85,12 @@ struct CaptureCard: View {
             }
             .environment(\.palette, p)
             .tint(p.accent)
+        }
+        .fullScreenCover(isPresented: $sketching) {
+            SketchView { data in
+                sketching = false
+                if let data { imageData = data; onToast(L("手書きを添付しました。中の文字を読み取ってしまいます。", "Sketch attached. Its text will be read when you save.")) }
+            }
         }
         .fullScreenCover(isPresented: $scanning) {
             DocumentScanner { pdf in
@@ -208,6 +216,23 @@ struct CaptureCard: View {
                     Image(systemName: "link").frame(width: 40, height: 40)
                 }
                 .accessibilityLabel(L("出典 URL", "Source URL"))
+                Menu {
+                    Section(L("テンプレート", "Templates")) {
+                        ForEach(templates) { t in
+                            Button(t.icon + " " + t.name) {
+                                let f = t.filled()
+                                text = [f.title, f.text].filter { !$0.isEmpty }.joined(separator: "\n")
+                            }
+                        }
+                    }
+                    if !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                        Button { saveAsTemplate() } label: { Label(L("今の文をテンプレートにする", "Save this as a template"), systemImage: "square.and.arrow.down.on.square") }
+                    }
+                    Button { sketching = true } label: { Label(L("手書き・スケッチ", "Handwriting or sketch"), systemImage: "pencil.tip.crop.circle") }
+                } label: {
+                    Image(systemName: "plus.circle").frame(width: 40, height: 40)
+                }
+                .accessibilityLabel(L("テンプレート・手書き", "Templates and sketch"))
                 Spacer()
                 Button(action: save) {
                     if condensing { ProgressView().tint(p.accentText) } else { Text(L("しまう", "Save")) }
@@ -217,6 +242,16 @@ struct CaptureCard: View {
             }
             .foregroundStyle(p.muted)
         }
+    }
+
+    private func saveAsTemplate() {
+        let body = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        let first = body.components(separatedBy: "\n").first ?? body
+        var mine = Templates.mine()
+        mine.insert(NoteTemplate(icon: "⭐️", name: String(first.prefix(20)), text: body), at: 0)
+        Templates.saveMine(Array(mine.prefix(20)))
+        templates = Templates.all()
+        onToast(L("テンプレートにしました。＋ から使えます。", "Saved as a template. Find it under +."))
     }
 
     private func save() {

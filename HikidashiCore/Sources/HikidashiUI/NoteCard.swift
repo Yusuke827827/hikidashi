@@ -17,6 +17,8 @@ struct NoteCard: View {
     @State private var confirmDelete = false
     @State private var sharedImage: SharedImage?
     @State private var previewURL: URL?
+    @State private var publishing = false
+    @State private var exportMessage: String?
 
     private var store: NoteStore { librarian.store }
 
@@ -180,6 +182,15 @@ struct NoteCard: View {
                 if let s = note.url, let url = URL(string: s) {
                     ShareLink(item: url) { Label(L("出典を共有", "Share source"), systemImage: "square.and.arrow.up") }
                 }
+                Button { publishing = true } label: {
+                    Label(PublicLinks.all()[note.id] == nil ? L("公開リンクを作る", "Create a public link") : L("公開リンク", "Public link"), systemImage: "globe")
+                }
+                Button { Task { exportMessage = await CalendarExport.addEvent(note) } } label: {
+                    Label(L("カレンダーに入れる", "Add to Calendar"), systemImage: "calendar.badge.plus")
+                }
+                Button { Task { exportMessage = await CalendarExport.addReminder(note) } } label: {
+                    Label(L("リマインダーに入れる", "Add to Reminders"), systemImage: "checklist.checked")
+                }
                 Button(role: .destructive) { confirmDelete = true } label: { Label(L("削除", "Delete"), systemImage: "trash") }
             } label: {
                 Image(systemName: "ellipsis").frame(width: 36, height: 32)
@@ -187,6 +198,10 @@ struct NoteCard: View {
         }
         .font(.footnote)
         .foregroundStyle(p.muted)
+        .sheet(isPresented: $publishing) { PublicLinkSheet(note: note) }
+        .alert(exportMessage ?? "", isPresented: Binding(get: { exportMessage != nil }, set: { if !$0 { exportMessage = nil } })) {
+            Button("OK") { exportMessage = nil }
+        }
         .sheet(item: $sharedImage) { item in
             ActivityView(items: [item.image]).presentationDetents([.medium, .large])
         }

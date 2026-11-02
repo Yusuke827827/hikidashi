@@ -84,6 +84,8 @@ targets:
         UIFileSharingEnabled: true
         LSSupportsOpeningDocumentsInPlace: true
         NSLocationWhenInUseUsageDescription: メモに付けた場所に着いたときに知らせるために使います。位置は iPhone が見張るだけで、アプリは記録しません。
+        NSCalendarsWriteOnlyAccessUsageDescription: メモの日付を、カレンダーの予定として入れるために使います。
+        NSRemindersFullAccessUsageDescription: メモをリマインダー App に入れるために使います。
         NSCalendarsUsageDescription: 予定の前に、関係するメモを知らせるために予定を読みます。予定はこの iPhone の中だけで使います。
         ITSAppUsesNonExemptEncryption: false
     settings:

@@ -35,6 +35,11 @@ struct SettingsView: View {
                     } label: {
                         Label(L("使い方", "How to use"), systemImage: "questionmark.circle")
                     }
+                    NavigationLink {
+                        StatsView(notes: librarian.store.notes)
+                    } label: {
+                        Label(L("使われ方のまとめ", "Your stats"), systemImage: "chart.bar")
+                    }
                 }
 
                 if Subscription.isAvailable { plusSection }
@@ -68,6 +73,9 @@ struct SettingsView: View {
 
 
                 Section {
+                    Toggle(isOn: Binding(get: { librarian.translateMode }, set: { librarian.translateMode = $0 })) {
+                        Label(L("外国語のメモを日本語に訳す", "Translate notes in other languages"), systemImage: "character.book.closed")
+                    }
                     Toggle(isOn: Binding(get: { librarian.memoMode }, set: { librarian.memoMode = $0 })) {
                         Label(L("長い文はメモ風にまとめる", "Condense long text into a memo"), systemImage: "list.bullet.rectangle")
                     }
@@ -268,6 +276,8 @@ struct SettingsView: View {
                            "Files exported from the web version can be imported here, and vice versa. Import from other apps reads Evernote (.enex), Google Keep (Takeout .json), CSV, text/Markdown and HTML. For Apple Notes, share a note to Mindrawer. For Notion, unzip the export in Files and pick the .md files."))
                 }
 
+                inboxSection
+
                 Section(L("共有シートから保存する", "Save from the share sheet")) {
                     Text(L("X・Safari・写真などで共有ボタンを押し、「Mindrawer」を選ぶと保存できます。出てこないときは、共有シートの一番右の「その他」から追加してください。保存したものは、次にアプリを開いたときに整理されます。",
                            "Tap Share in X, Safari, Photos and more, then pick Mindrawer. If it isn't listed, add it from More at the end of the app row. Shared items are filed the next time you open the app."))
@@ -292,6 +302,51 @@ struct SettingsView: View {
                 }
             }
             .task { exportURL = writeExport() }
+        }
+    }
+
+    // MARK: メール・LINE で送る
+
+    @State private var inbox = InboxClient.load()
+    @State private var inboxBusy = false
+
+    @ViewBuilder private var inboxSection: some View {
+        Section {
+            if let c = inbox {
+                if let email = c.email {
+                    LabeledContent(L("送り先のメール", "Email to"), value: email)
+                    Button { UIPasteboard.general.string = email; message = L("メールアドレスをコピーしました。", "Copied the address.") } label: {
+                        Label(L("アドレスをコピー", "Copy address"), systemImage: "doc.on.doc")
+                    }
+                }
+                if c.line {
+                    LabeledContent(L("LINE で送る言葉", "Send on LINE"), value: L("連携 ", "link ") + c.id)
+                    Button { UIPasteboard.general.string = L("連携 ", "link ") + c.id; message = L("コピーしました。Mindrawer の LINE 公式アカウントに送ってください。", "Copied. Send it to the Mindrawer LINE account.") } label: {
+                        Label(L("連携の言葉をコピー", "Copy the link word"), systemImage: "doc.on.doc")
+                    }
+                }
+                if c.email == nil && !c.line {
+                    Text(L("中継サーバーで、メール（Email Routing）か LINE の設定がまだです。", "Email (Email Routing) or LINE isn't set up on the relay server yet.")).font(.footnote)
+                }
+                Button(L("受け取りをやめる", "Turn off"), role: .destructive) { InboxClient.save(nil); inbox = nil }
+            } else {
+                Button {
+                    guard let server = Subscription.serverURL?.absoluteString else { message = ShareError.noServer.errorDescription; return }
+                    inboxBusy = true
+                    Task {
+                        do { let c = try await InboxClient.create(server: server); InboxClient.save(c); inbox = c }
+                        catch { message = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription }
+                        inboxBusy = false
+                    }
+                } label: {
+                    if inboxBusy { ProgressView() } else { Label(L("メール・LINE で送れるようにする", "Turn on email and LINE"), systemImage: "envelope.badge") }
+                }
+            }
+        } header: {
+            Text(L("メール・LINE で送る", "Save by email or LINE"))
+        } footer: {
+            Text(L("自分だけの送り先にメールを転送したり、LINE で送ったりすると、次にアプリを開いたときにメモとして入ります。送り先は人に教えないでください。",
+                   "Forward an email to your own address or send a LINE message, and it becomes a note the next time you open the app. Keep the address private."))
         }
     }
 
