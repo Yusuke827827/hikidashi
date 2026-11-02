@@ -116,7 +116,7 @@ extension Heuristics {
 // MARK: 覚えるメモの復習
 
 /// 間隔をあけて出す（1・3・7・14・30・90・180 日）
-public struct Review: Codable, Sendable, Equatable {
+public struct Review: Codable, Sendable, Hashable {
     public static let intervals = [1, 3, 7, 14, 30, 90, 180]
     /// 何回続けて覚えていたか
     public var step: Int

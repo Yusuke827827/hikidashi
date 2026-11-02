@@ -89,7 +89,16 @@ public enum Importer {
         let data = hasHeader ? Array(rows.dropFirst()) : rows
         return data.compactMap { r in
             func cell(_ i: Int?) -> String { i.flatMap { $0 < r.count ? r[$0] : nil } ?? "" }
-            let body = hasHeader ? (xi != nil ? cell(xi) : r.enumerated().filter { $0.offset != ti && $0.offset != ui && $0.offset != gi }.map(\.element).joined(separator: "\n")) : r.joined(separator: "\n")
+            let body: String
+            if !hasHeader {
+                body = r.joined(separator: "\n")
+            } else if xi != nil {
+                body = cell(xi)
+            } else {
+                var rest: [String] = []
+                for (i, c) in r.enumerated() where i != ti && i != ui && i != gi { rest.append(c) }
+                body = rest.joined(separator: "\n")
+            }
             let title = cell(ti)
             var n = plain(body.isEmpty ? title : body, fallbackTitle: title)
             if !title.isEmpty { n?.title = title }
@@ -101,18 +110,26 @@ public enum Importer {
 
     static func csvRows(_ text: String) -> [[String]] {
         var rows: [[String]] = [], row: [String] = [], cell = "", quoted = false
-        var it = Array(text.replacingOccurrences(of: "\r\n", with: "\n")).makeIterator()
-        var pending: Character? = nil
-        while let ch = pending ?? it.next() {
-            pending = nil
+        let chars = Array(text.replacingOccurrences(of: "\r\n", with: "\n"))
+        var i = 0
+        while i < chars.count {
+            let ch = chars[i]
             if quoted {
                 if ch == "\"" {
-                    if let nx = it.next() { if nx == "\"" { cell.append("\"") } else { quoted = false; pending = nx } } else { quoted = false }
-                } else { cell.append(ch) }
-            } else if ch == "\"" { quoted = true }
-            else if ch == "," { row.append(cell); cell = "" }
-            else if ch == "\n" { row.append(cell); rows.append(row); row = []; cell = "" }
-            else { cell.append(ch) }
+                    if i + 1 < chars.count, chars[i + 1] == "\"" { cell.append("\""); i += 1 } else { quoted = false }
+                } else {
+                    cell.append(ch)
+                }
+            } else if ch == "\"" {
+                quoted = true
+            } else if ch == "," {
+                row.append(cell); cell = ""
+            } else if ch == "\n" {
+                row.append(cell); rows.append(row); row = []; cell = ""
+            } else {
+                cell.append(ch)
+            }
+            i += 1
         }
         if !cell.isEmpty || !row.isEmpty { row.append(cell); rows.append(row) }
         return rows.filter { !$0.allSatisfy { $0.trimmingCharacters(in: .whitespaces).isEmpty } }
