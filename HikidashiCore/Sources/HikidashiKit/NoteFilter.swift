@@ -2,8 +2,8 @@
 
 import Foundation
 
-public struct NoteFilter: Equatable, Sendable {
-    public enum Period: String, CaseIterable, Sendable {
+public struct NoteFilter: Equatable, Sendable, Codable {
+    public enum Period: String, CaseIterable, Sendable, Codable {
         case all, week, month, quarter, year
         /// 今からさかのぼる日数（all は制限なし）
         var days: Int? {

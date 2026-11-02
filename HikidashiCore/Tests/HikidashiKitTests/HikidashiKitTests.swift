@@ -805,3 +805,111 @@ final class NoteFilterTests: XCTestCase {
     }
 }
 
+
+final class UpkeepTests: XCTestCase {
+    func testDuplicatesAndMerge() {
+        let a = Note(id: "a", text: "コーヒーのシミは、こすらず外側から内側へ叩いて落とす", title: "シミ抜き", tags: ["シミ"], helpful: 2)
+        let b = Note(id: "b", text: "コーヒーのシミは、こすらず外側から内側へ叩いて落とす。仕上げに中性洗剤", title: "シミ抜き", tags: ["洗濯"])
+        let c = Note(id: "c", text: "新幹線は早めに予約すると安い", title: "新幹線")
+        let pairs = Heuristics.duplicates([a, b, c])
+        XCTAssertEqual(pairs.count, 1)
+        XCTAssertEqual(Set([pairs[0].keep, pairs[0].drop]), ["a", "b"])
+        XCTAssertTrue(Heuristics.duplicates([a, b, c], dismissed: [pairs[0].key]).isEmpty)
+        let m = Heuristics.merged(a, with: b)
+        XCTAssertTrue(m.text.contains("中性洗剤"), "長い方の本文を残す")
+        XCTAssertEqual(Set(m.tags), ["シミ", "洗濯"])
+        XCTAssertEqual(m.helpful, 2)
+        XCTAssertEqual(Heuristics.similarNote(text: "新幹線は早めに予約すると安い！", url: nil, in: [a, c])?.id, "c")
+        XCTAssertEqual(Heuristics.duplicateScore(Note(text: "x", url: "https://e.com"), Note(text: "y", url: "https://e.com")), 1)
+    }
+
+    func testStaleNotes() {
+        let now = Date(timeIntervalSince1970: 1_800_000_000)
+        let day = Heuristics.dayFormatter.string(from: now.addingTimeInterval(-10 * 86400))
+        let expired = Note(id: "e", text: "キャンペーンは今月末まで", remindAt: day, createdAt: now.addingTimeInterval(-20 * 86400))
+        let old = Note(id: "o", text: "古いメモ", createdAt: now.addingTimeInterval(-400 * 86400))
+        var link = Note(id: "l", text: "リンク", createdAt: now)
+        link.linkBroken = true
+        var checked = old
+        checked.id = "k"
+        checked.checkedAt = now.addingTimeInterval(-10 * 86400)
+        let s = Heuristics.staleNotes([expired, old, link, checked, Note(text: "新しい", createdAt: now)], now: now)
+        XCTAssertEqual(s.map(\.note.id), ["l", "e", "o"], "リンク切れ → 期限切れ → 古い。確かめたものは出さない")
+    }
+
+    func testReviewIntervals() {
+        let now = Date(timeIntervalSince1970: 1_800_000_000)
+        let cal = Calendar.current
+        var r = Review.start(now: now)
+        XCTAssertEqual(cal.dateComponents([.day], from: cal.startOfDay(for: now), to: r.due).day, 1)
+        r = r.answered(remembered: true, now: now)
+        XCTAssertEqual(r.step, 1)
+        XCTAssertEqual(cal.dateComponents([.day], from: cal.startOfDay(for: now), to: r.due).day, 3)
+        r = r.answered(remembered: false, now: now)
+        XCTAssertEqual(r.step, 0)
+        var n = Note(text: "x")
+        n.review = Review(step: 2, due: now.addingTimeInterval(-1))
+        XCTAssertEqual(Heuristics.dueReviews([n, Note(text: "y")], now: now).count, 1)
+        let data = try! JSONEncoder().encode(n)
+        XCTAssertEqual(try! JSONDecoder().decode(Note.self, from: data).review?.step, 2)
+    }
+
+    func testSmartFolderRoundTrip() throws {
+        var f = NoteFilter()
+        f.favoritesOnly = true
+        let sf = SmartFolder(name: "★料理", query: "鶏", folder: "料理・食", filter: f)
+        let back = try JSONDecoder().decode(SmartFolder.self, from: JSONEncoder().encode(sf))
+        XCTAssertEqual(back, sf)
+        XCTAssertTrue(sf.matches(Note(text: "鶏むね肉", category: "料理・食", pinned: true)))
+        XCTAssertFalse(sf.matches(Note(text: "鶏むね肉", category: "料理・食")))
+    }
+}
+
+final class ImporterTests: XCTestCase {
+    func testEvernote() {
+        let enex = """
+        <?xml version="1.0"?><en-export><note><title>買い物リスト</title><content><![CDATA[<en-note><div>牛乳</div><div>卵 &amp; パン</div><en-todo checked="true"/>洗剤</en-note>]]></content><created>20240105T093000Z</created><tag>家</tag><note-attributes><source-url>https://example.com/a</source-url></note-attributes></note></en-export>
+        """
+        let n = Importer.parse(Data(enex.utf8), filename: "my.enex")
+        XCTAssertEqual(n.count, 1)
+        XCTAssertEqual(n[0].title, "買い物リスト")
+        XCTAssertTrue(n[0].text.contains("卵 & パン"))
+        XCTAssertTrue(n[0].text.contains("☑ 洗剤"))
+        XCTAssertEqual(n[0].tags, ["家"])
+        XCTAssertEqual(n[0].url, "https://example.com/a")
+        XCTAssertFalse(n[0].filed)
+    }
+
+    func testGoogleKeep() {
+        let json = #"{"title":"旅行","textContent":"","listContent":[{"text":"パスポート","isChecked":false},{"text":"充電器","isChecked":true}],"labels":[{"name":"旅"}],"createdTimestampUsec":1700000000000000,"isTrashed":false,"isPinned":true}"#
+        let n = Importer.parse(Data(json.utf8), filename: "旅行.json")
+        XCTAssertEqual(n.first?.title, "旅行")
+        XCTAssertEqual(n.first?.text, "☐ パスポート\n☑ 充電器")
+        XCTAssertEqual(n.first?.tags, ["旅"])
+        XCTAssertEqual(n.first?.pinned, true)
+    }
+
+    func testCSVAndMarkdown() {
+        let csv = "title,text,tags\n\"シミ\",\"こすらず、叩く\",\"洗濯,家事\"\n新幹線,早めに予約,\n"
+        let c = Importer.parse(Data(csv.utf8), filename: "notes.csv")
+        XCTAssertEqual(c.map(\.title), ["シミ", "新幹線"])
+        XCTAssertEqual(c[0].text, "こすらず、叩く")
+        XCTAssertEqual(c[0].tags, ["洗濯", "家事"])
+        let md = "# 1 つ目\n本文 A https://a.example\n---\n# 2 つ目\n本文 B"
+        let m = Importer.parse(Data(md.utf8), filename: "x.md")
+        XCTAssertEqual(m.map(\.title), ["1 つ目", "2 つ目"])
+        XCTAssertEqual(m[0].url, "https://a.example")
+        XCTAssertEqual(Importer.parse(Data("<html><title>T</title><body><p>a</p><p>b</p></body></html>".utf8), filename: "n.html").first?.text, "a\nb")
+    }
+
+    @MainActor
+    func testImportSkipsDuplicates() throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent("imp-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        let lib = Librarian(store: NoteStore(root: root), credentialProvider: { nil }, onDevice: nil)
+        let notes = Importer.parse(Data("# a\nx\n---\n# b\ny".utf8), filename: "x.md")
+        XCTAssertEqual(lib.importNotes(notes), 2)
+        XCTAssertEqual(lib.importNotes(Importer.parse(Data("# a\nx".utf8), filename: "x.md")), 0)
+        XCTAssertEqual(lib.store.notes.count, 2)
+    }
+}

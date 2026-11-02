@@ -61,6 +61,12 @@ public struct Note: Codable, Identifiable, Hashable, Sendable {
     public var sources: [String]?
     /// フォルダを自分で選んだか（再整理でフォルダを変えない）
     public var folderChosen: Bool?
+    /// 「まだ使える」と確かめた日時（古いメモの知らせを止める）
+    public var checkedAt: Date?
+    /// 出典のリンクが切れている
+    public var linkBroken: Bool?
+    /// 覚えるメモの復習（間隔をあけて出す）
+    public var review: Review?
     /// 最後に変えた日時（iCloud の同期で新しい方を残すため）
     public var updatedAt: Date?
 
@@ -120,7 +126,7 @@ public struct Note: Codable, Identifiable, Hashable, Sendable {
     }
 
     enum CodingKeys: String, CodingKey {
-        case id, text, url, title, summary, category, tags, situations, remindAt, createdAt, pinned, helpful, lastSeen, example, filed, imageFile, original, file, fileTitle, enriched, place, alarm, plannedDay, sources, folderChosen, updatedAt
+        case id, text, url, title, summary, category, tags, situations, remindAt, createdAt, pinned, helpful, lastSeen, example, filed, imageFile, original, file, fileTitle, enriched, place, alarm, plannedDay, sources, folderChosen, checkedAt, linkBroken, review, updatedAt
     }
 
     public init(from decoder: Decoder) throws {
@@ -159,6 +165,9 @@ public struct Note: Codable, Identifiable, Hashable, Sendable {
         plannedDay = Self.validDay(try? c.decodeIfPresent(String.self, forKey: .plannedDay))
         sources = try? c.decodeIfPresent([String].self, forKey: .sources)
         folderChosen = try? c.decodeIfPresent(Bool.self, forKey: .folderChosen)
+        checkedAt = Self.decodeDate(c, .checkedAt)
+        linkBroken = try? c.decodeIfPresent(Bool.self, forKey: .linkBroken)
+        review = try? c.decodeIfPresent(Review.self, forKey: .review)
         updatedAt = Self.decodeDate(c, .updatedAt)
     }
 
@@ -189,6 +198,9 @@ public struct Note: Codable, Identifiable, Hashable, Sendable {
         try c.encodeIfPresent(plannedDay, forKey: .plannedDay)
         try c.encodeIfPresent(sources, forKey: .sources)
         try c.encodeIfPresent(folderChosen, forKey: .folderChosen)
+        try c.encodeIfPresent(checkedAt.map(Self.millis), forKey: .checkedAt)
+        try c.encodeIfPresent(linkBroken, forKey: .linkBroken)
+        try c.encodeIfPresent(review, forKey: .review)
         try c.encodeIfPresent(updatedAt.map(Self.millis), forKey: .updatedAt)
     }
 

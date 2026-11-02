@@ -59,6 +59,8 @@ public final class Librarian {
     public private(set) var folderChoice: FolderChoiceRequest?
     /// 自動で整えたときの知らせ（画面で一度出したら消す）
     public var tidyMessage: String?
+    /// まとめて取り込んだメモ（1 件ずつ「どのフォルダ？」とは聞かない）
+    private var quiet: Set<String> = []
 
     /// AI を使えるか（Claude か iPhone の中の AI）
     public var hasAI: Bool { aiKind != .none }
@@ -194,7 +196,7 @@ public final class Librarian {
             if let first = options.first { r.category = first.name }
             if keep { r.category = note.category }
             store.update(id) { $0.apply(r, replaceText: image != nil || memo) }
-            if firstTime, folderMode == .ask, !options.isEmpty {
+            if firstTime, folderMode == .ask, !options.isEmpty, !quiet.contains(id) {
                 folderChoice = FolderChoiceRequest(noteID: id, title: r.title.isEmpty ? note.title : r.title, options: options)
             }
             lastError = nil
@@ -240,6 +242,50 @@ public final class Librarian {
         let msg = parts.isEmpty ? nil : parts.joined(separator: L("。", ". "))
         if msg != nil { tidyMessage = msg }
         return msg
+    }
+
+    // MARK: 取り込み
+
+    /// 他のアプリのメモを取り込む。同じタイトルと本文のメモは飛ばす。取り込んだ件数を返す（整理は fileAll で）
+    @discardableResult
+    public func importNotes(_ notes: [Note]) -> Int {
+        var have = Set(store.notes.map { $0.title + "|" + $0.text.prefix(200) })
+        var n = 0
+        for var note in notes {
+            let key = note.title + "|" + note.text.prefix(200)
+            guard have.insert(key).inserted else { continue }
+            note.enriched = note.imageFile == nil && note.file == nil
+            let title = note.title
+            Heuristics.file(&note, notes: store.notes, folders: store.folders)
+            if !title.isEmpty { note.title = title }
+            quiet.insert(note.id)
+            store.add(note)
+            n += 1
+        }
+        return n
+    }
+
+    // MARK: 手入れ
+
+    /// ダブったメモをまとめる（drop はゴミ箱へ）
+    public func mergeDuplicate(_ pair: DuplicatePair) {
+        guard let keep = store.note(pair.keep), let drop = store.note(pair.drop) else { return }
+        let m = Heuristics.merged(keep, with: drop)
+        store.update(pair.keep) { $0 = m }
+        store.remove(pair.drop)
+    }
+
+    /// 出典のリンクが切れていないか、週に 1 回確かめる（1 回に 40 件まで）
+    public func checkLinksIfNeeded(now: Date = Date()) async {
+        let key = "linkCheckAt"
+        if let last = UserDefaults.standard.object(forKey: key) as? Date, now.timeIntervalSince(last) < 7 * 86400 { return }
+        UserDefaults.standard.set(now, forKey: key)
+        let targets = store.notes.filter { ($0.url ?? "").hasPrefix("http") }.sorted { $0.createdAt < $1.createdAt }.prefix(40)
+        for n in targets {
+            guard let u = n.url, let ok = await LinkChecker.check(u) else { continue }
+            let broken: Bool? = ok ? nil : true
+            if store.note(n.id)?.linkBroken != broken { store.update(n.id) { $0.linkBroken = broken } }
+        }
     }
 
     /// メモ風に整える価値がある長さか（短いメモはそのまま）
