@@ -6,6 +6,7 @@
 import { PRIVACY_HTML, SUPPORT_HTML } from "./pages.generated";
 import { VerificationError, verifyTransaction } from "./verify";
 import { handleShare } from "./share";
+import { handleEmail, handleExtras } from "./extras";
 
 export interface Env {
   ANTHROPIC_API_KEY: string;
@@ -18,6 +19,11 @@ export interface Env {
   /** 1 人あたり月の Claude の料金の上限（米ドル）。売上から Apple の手数料を引いた額より小さくする */
   MONTHLY_BUDGET_USD?: string;
   USAGE: KVNamespace;
+  /** LINE の公式アカウント（Messaging API）。あれば LINE から送ったメッセージがメモになる */
+  LINE_CHANNEL_SECRET?: string;
+  LINE_CHANNEL_TOKEN?: string;
+  /** メールで送る宛先のドメイン（Cloudflare の Email Routing を設定したもの） */
+  INBOX_EMAIL_DOMAIN?: string;
 }
 
 const ANTHROPIC_URL = "https://api.anthropic.com/v1/messages";
@@ -77,6 +83,9 @@ export async function handle(request: Request, env: Env, deps: Deps): Promise<Re
   // 共有フォルダ（共有コードを知っている人だけが読み書きできる）
   const shared = await handleShare(request, env.USAGE, deps.now().getTime());
   if (shared) return shared;
+  // 公開リンク・メールと LINE の受け取り箱
+  const extra = await handleExtras(request, env, deps.now().getTime(), deps.fetch);
+  if (extra) return extra;
   // App Store に載せるプライバシーポリシーとサポートのページ
   if (request.method === "GET" && (url.pathname === "/privacy" || url.pathname === "/support")) {
     const html = url.pathname === "/privacy" ? PRIVACY_HTML : SUPPORT_HTML;
@@ -145,6 +154,10 @@ export async function handle(request: Request, env: Env, deps: Deps): Promise<Re
 }
 
 export default {
+  // Email Routing から回ってきたメールを受け取り箱に入れる
+  async email(message: { to: string; headers: Headers; raw: ReadableStream; rawSize: number }, env: Env): Promise<void> {
+    await handleEmail(message, env, Date.now());
+  },
   fetch(request: Request, env: Env): Promise<Response> {
     return handle(request, env, { fetch: (...a) => fetch(...a), now: () => new Date() });
   },
