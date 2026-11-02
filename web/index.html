@@ -591,6 +591,8 @@ body.locked .wrap { visibility: hidden; }
     onb: [["🗂", "Save it once", "Paste tips, screenshots, files or notes to self. They land in folders on their own."], ["🔎", "It finds you", "Switch to Recall and say what you're about to do. The notes that help come back, even without matching words."], ["☑", "See it when it's due", "Give a note a date, a repeat or a word. It lines up in Today's checklist."], ["⚙", "Make it yours", "In Settings: PIN lock, weekly copies and the trash. Tap the status to use AI with your own key."]],
     onbNext: "Next", onbStart: "Start", onbExamples: "Start with 3 examples", onbSkip: "Skip",
   });
+  Object.assign(I18N.en, { aiFiledBasic: "Couldn't reach Claude, so it was filed by keyword.", resortQ: (n, f) => `Move ${n} ${n === 1 ? "note" : "notes"} from Other into ${f.slice(0, 3).join(", ")}${f.length > 3 ? " and more" : ""}?`, resortYes: "Sort them", resortNo: "Not now", resortDone: (n) => `Sorted ${n} notes.` });
+  Object.assign(I18N.ja, { aiFiledBasic: "AI に届かなかったので、キーワードで整理しました。", resortQ: (n, f) => `「その他」の ${n} 件を、${f.slice(0, 3).map((x) => `「${x}」`).join("・")}${f.length > 3 ? " など" : ""}に分けますか？`, resortYes: "振り分ける", resortNo: "今はしない", resortDone: (n) => `${n} 件を振り分けました。` });
   Object.assign(I18N.ja, {
     settings: "設定", chat: "メモに聞く", movedTrash: "ゴミ箱に移しました。30 日以内なら設定から戻せます。",
     secMemo: "メモ風", memoMode: "長い文はメモ風にまとめる", memoPreviewL: "しまう前に、まとめた文を直す",
@@ -677,9 +679,82 @@ body.locked .wrap { visibility: hidden; }
   let toastT;
   function toast(t) { $("toast").textContent = t; clearTimeout(toastT); toastT = setTimeout(() => ($("toast").textContent = ""), 6000); }
   function heuristic(text) {
-    const r = T().rules.find(([, re]) => re.test(text));
     const first = text.split(/[\n。.!?]/)[0].trim();
-    return { title: first.slice(0, 48) || "Note", summary: "", category: r ? r[0] : T().other, tags: [], situations: [], remindAt: null };
+    const r = autoFolder(text, state.notes, getJSON("mindrawer.folders", []).map((f) => f.name));
+    return { title: first.slice(0, 48) || "Note", summary: "", category: r.folder, tags: r.tags, situations: [], remindAt: null };
+  }
+
+  // ---------- AI を使わないときのフォルダ分け（スマホ版の AutoFolder.swift と同じ規則） ----------
+  // 1) 本文にフォルダ名が出てくればそこへ 2) 今までのメモと言葉が近いフォルダへ 3) 話題の辞書で一番多く当たった分類へ
+  const TOPICS = { ja: [["料理・食", ["料理", "レシピ", "食べ", "食材", "調味", "野菜", "肉", "魚", "弁当", "醤油", "味噌", "炊", "焼く", "煮", "茹で", "ご飯", "パン", "卵", "冷凍", "冷蔵", "作り置き", "包丁", "フライパン", "レンジ", "おかず", "スープ", "カレー", "パスタ", "コーヒー", "お茶", "スイーツ", "お菓子", "外食", "ランチ", "カフェ", "居酒屋"]], ["健康・体", ["健康", "睡眠", "寝る", "寝つき", "運動", "筋トレ", "ストレッチ", "病院", "薬", "肩こり", "腰痛", "頭痛", "姿勢", "ダイエット", "体重", "風邪", "歯", "目の疲れ", "疲れ", "むくみ", "ヨガ", "ランニング", "散歩", "サプリ", "ビタミン", "花粉", "メンタル", "ストレス", "呼吸"]], ["美容・ファッション", ["肌", "スキンケア", "化粧", "メイク", "髪", "ヘア", "ネイル", "服", "コーデ", "ファッション", "靴", "香水", "日焼け", "美容"]], ["お金・節約", ["お金", "節約", "ポイント", "税", "ふるさと納税", "保険", "投資", "NISA", "iDeCo", "値下げ", "安く", "見積", "家計", "貯金", "クレカ", "クレジット", "割引", "クーポン", "セール", "銀行", "ローン", "年金", "給料", "副業", "確定申告", "支払", "料金", "円"]], ["PC・ガジェット", ["PC", "パソコン", "Mac", "Windows", "iPhone", "iPad", "Android", "スマホ", "ショートカット", "アプリ", "Excel", "Word", "スプレッドシート", "スクショ", "⌘", "Ctrl", "Chrome", "ブラウザ", "Wi-Fi", "WiFi", "充電", "バッテリー", "イヤホン", "キーボード", "ChatGPT", "Claude", "プログラ", "コード", "Git"]], ["仕事・勉強", ["仕事", "会議", "ミーティング", "メール", "資料", "プレゼン", "勉強", "英語", "面接", "上司", "部下", "会社", "職場", "転職", "就活", "履歴書", "報告", "企画", "締め切り", "締切", "タスク", "資格", "試験", "読書", "暗記", "学習", "単語"]], ["暮らし・家事", ["掃除", "洗濯", "シミ", "収納", "片付", "家事", "ゴミ", "引っ越", "部屋", "インテリア", "家具", "洗剤", "カビ", "トイレ", "風呂", "植物", "防災", "DIY", "修理", "電気代", "水道"]], ["家族・子育て", ["子ども", "子供", "赤ちゃん", "育児", "子育て", "保育園", "幼稚園", "学校", "宿題", "家族", "妊娠", "離乳食"]], ["ペット", ["ペット", "犬", "猫", "散歩させ", "トリミング", "動物病院"]], ["おでかけ・旅行", ["旅行", "旅", "ホテル", "新幹線", "飛行機", "観光", "荷造り", "空港", "電車", "駅", "ドライブ", "キャンプ", "温泉", "海外", "パスポート", "地図", "レジャー"]], ["買い物", ["買い物", "購入", "通販", "Amazon", "楽天", "おすすめ", "レビュー", "100均", "ダイソー", "無印", "ユニクロ", "コンビニ", "スーパー", "買う"]], ["趣味・エンタメ", ["映画", "ドラマ", "アニメ", "漫画", "マンガ", "小説", "音楽", "ゲーム", "カメラ", "写真", "推し", "ライブ", "Netflix", "YouTube"]], ["人づきあい", ["会話", "人間関係", "友達", "友人", "雑談", "話し方", "伝え方", "謝罪", "お礼", "敬語", "マナー", "プレゼント", "贈り物", "冠婚葬祭"]], ["手続き・書類", ["手続き", "書類", "役所", "申請", "免許", "マイナンバー", "住民票", "証明書", "契約", "更新", "解約"]], ["習慣・考え方", ["習慣", "考え方", "メモ術", "時間術", "朝活", "集中", "モチベーション", "目標", "やる気", "継続", "先延ばし"]]], en: [["Food & Cooking", ["cook", "recipe", "food", "kitchen", "meal", "bake", "fry", "boil", "rice", "bread", "egg", "freez", "fridge", "lunch", "dinner", "breakfast", "coffee", "tea", "snack", "restaurant", "sauce", "vegetable"]], ["Health", ["sleep", "health", "exercise", "workout", "stretch", "posture", "doctor", "medicine", "headache", "back pain", "diet", "weight", "cold", "fever", "teeth", "tired", "yoga", "run", "walk", "vitamin", "stress", "breath"]], ["Beauty & Style", ["skin", "makeup", "hair", "nail", "outfit", "clothes", "fashion", "shoes", "perfume", "sunscreen"]], ["Money", ["money", "save", "saving", "budget", "tax", "price", "deal", "quote", "insurance", "invest", "bank", "loan", "credit", "coupon", "discount", "sale", "salary", "pay", "bill", "$"]], ["Tech", ["mac", "windows", "iphone", "ipad", "android", "phone", "shortcut", "app", "excel", "chrome", "browser", "wifi", "wi-fi", "battery", "charge", "keyboard", "laptop", "computer", "code", "git", "chatgpt", "claude"]], ["Work & Study", ["work", "meeting", "email", "slides", "present", "study", "interview", "boss", "office", "job", "resume", "report", "deadline", "task", "exam", "learn", "read", "book"]], ["Home", ["clean", "laundry", "stain", "storage", "move", "moving", "room", "furniture", "detergent", "mold", "toilet", "bath", "plant", "repair", "diy"]], ["Family & Kids", ["kid", "child", "baby", "parent", "school", "homework", "family", "daycare"]], ["Pets", ["pet", "dog", "cat", "vet", "puppy", "kitten"]], ["Travel", ["travel", "trip", "hotel", "flight", "pack", "airport", "train", "drive", "camp", "passport", "map", "vacation"]], ["Shopping", ["shop", "buy", "amazon", "review", "store", "groceries"]], ["Hobbies", ["movie", "film", "drama", "anime", "manga", "novel", "music", "game", "camera", "photo", "concert", "netflix", "youtube"]], ["People", ["conversation", "friend", "talk", "apolog", "thank", "manners", "gift", "wedding", "funeral"]], ["Paperwork", ["paperwork", "apply", "application", "license", "certificate", "contract", "renew", "cancel"]], ["Habits & Mindset", ["habit", "mindset", "focus", "motivation", "goal", "procrastinat", "routine", "productiv"]]] };
+  const escRe = (x) => x.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  function topicHits(text) {
+    const lower = text.toLowerCase(), en = state.lang !== "ja";
+    return TOPICS[en ? "en" : "ja"].map(([name, ws]) => [name, ws.filter((w) => {
+      const k = w.toLowerCase();
+      return en && /^[a-z]/.test(k) ? new RegExp("(^|[^a-z])" + escRe(k)).test(lower) : lower.includes(k);
+    })]).filter(([, h]) => h.length);
+  }
+  const isKK = (ch) => { const u = ch.codePointAt(0); return (u >= 0x4e00 && u <= 0x9fff) || (u >= 0x3400 && u <= 0x4dbf) || (u >= 0x30a0 && u <= 0x30ff); };
+  function grams(str) {
+    const out = new Set(); let ascii = "", run = "";
+    const fa = () => { if (ascii.length >= 3) out.add(ascii); ascii = ""; };
+    const fr = () => { const c = [...run]; if (c.length >= 2) { if (c.length <= 6) out.add(run); for (let i = 0; i < c.length - 1; i++) out.add(c[i] + c[i + 1]); } else if (c.length === 1) out.add(run); run = ""; };
+    for (const ch of String(str).toLowerCase()) {
+      if (/[a-z0-9]/.test(ch)) { fr(); ascii += ch; } else if (isKK(ch)) { fa(); run += ch; } else { fa(); fr(); }
+    }
+    fa(); fr();
+    return out;
+  }
+  function folderProfiles(notes) {
+    const other = T().other, prof = new Map();
+    for (const n of notes) {
+      if (!n.category || n.category === other || n.example) continue;
+      if (!prof.has(n.category)) prof.set(n.category, grams(n.category));
+      const set = prof.get(n.category);
+      for (const g of grams([n.title, String(n.text || "").slice(0, 400), n.summary, ...(n.tags || []), ...(n.situations || [])].join(" "))) set.add(g);
+    }
+    return prof;
+  }
+  function learnedFolder(text, prof) {
+    if (!prof.size) return null;
+    const mine = grams(text), total = prof.size;
+    let best = null;
+    for (const [name, set] of prof) {
+      let sc = 0;
+      for (const g of mine) {
+        if (!set.has(g)) continue;
+        let df = 0; for (const s2 of prof.values()) if (s2.has(g)) df++;
+        sc += Math.log(1 + total / df) * ([...g].length >= 3 ? 1.5 : [...g].length === 1 ? 0.4 : 1);
+      }
+      if (sc > (best?.score || 0)) best = { name, score: sc };
+    }
+    return best;
+  }
+  function autoFolder(text, notes, folders, prof) {
+    const other = T().other, lower = String(text).toLowerCase();
+    const existing = [...new Set([...(folders || []), ...notes.map((n) => n.category)])].filter((x) => x && x !== other);
+    const hits = topicHits(text).map((h, i) => [h, i]).sort((a, b) => b[0][1].length - a[0][1].length || a[1] - b[1]).map((x) => x[0]);
+    const tags = hits.length ? hits[0][1].slice(0, 3) : [];
+    for (const name of existing.slice().sort((a, b) => b.length - a.length)) {
+      const parts = [name, ...name.split(/[・&/、, ]/).filter((p) => p.length >= 2)];
+      if (parts.some((p) => p.length >= 2 && lower.includes(p.toLowerCase()))) return { folder: name, tags };
+    }
+    const learned = learnedFolder(text, prof || folderProfiles(notes));
+    if (learned && learned.score >= 3) return { folder: learned.name, tags };
+    if (hits.length) {
+      const top = hits[0][0];
+      const near = existing.map((x) => [x, nameSim(x, top)]).sort((a, b) => b[1] - a[1])[0];
+      return { folder: near && near[1] >= 0.5 ? near[0] : top, tags };
+    }
+    if (learned && learned.score >= 1.5) return { folder: learned.name, tags };
+    return { folder: other, tags };
+  }
+  const isCatchAll = (x) => ["", "その他", "そのほか", "未分類", "雑多", "other", "others", "misc", "miscellaneous", "uncategorized", "general"].includes(String(x || "").trim().toLowerCase());
+  function resortMoves() {
+    const other = T().other, filed = state.notes.filter((n) => n.category !== other), prof = folderProfiles(filed);
+    const folders = getJSON("mindrawer.folders", []).map((f) => f.name);
+    return state.notes.filter((n) => n.category === other && !n.example).map((n) => ({ id: n.id, folder: autoFolder([n.title, n.text, n.summary].join("\n"), filed, folders, prof).folder })).filter((m) => m.folder !== other);
   }
   function words(q) { return q.toLowerCase().split(/[\s、。,.!?？！「」“”"']+/).filter((w) => w.length >= 2); }
   function hay(n) { return [n.title, n.summary, n.text, n.category, ...(n.tags || []), ...(n.situations || [])].join(" ").toLowerCase(); }
@@ -769,7 +844,7 @@ body.locked .wrap { visibility: hidden; }
     const prompt = `You file notes for a personal "tips drawer" app.
 Today: ${todayISO()}. Write every field in ${langName()} (keep proper nouns and code as-is).
 Existing folders: ${cats.length ? cats.join(" / ") : "(none yet)"}
-Reuse an existing folder name exactly when it fits; otherwise invent a short, broad folder name (1–3 words) that future notes could share.
+Reuse an existing folder name exactly when it fits; otherwise invent a short, broad folder name (1–3 words) that future notes could share. Never use a catch-all such as "Other", "Misc", "その他" or "未分類"; always name the actual topic.
 "situations": 2–4 moments when this note would help, phrased the way the user would describe what they're doing (e.g. "Doing laundry", "Before a presentation").
 "remindAt": if the note mentions a date or deadline, give it as YYYY-MM-DD resolved against today; else null.
 ${image ? '"text": transcribe the useful content of the attached screenshot (e.g. a post on X) as clean plain text, merged with any typed note. Drop UI chrome, usernames and counts unless they matter.' : '"text": return the note text unchanged.'}
@@ -782,6 +857,8 @@ ${text || "(see screenshot)"}${url ? "\nSource: " + url : ""}`;
       const r = await state.sample.json(prompt, { modelTier: image ? "default" : "quick", images: image ? [image] : undefined });
       const finalText = String(r.text || text).trim() || text;
       const h = heuristic(finalText);
+      // AI が「その他」のような箱に入れたら、言葉の辞書と今までのフォルダから選び直す
+      if (isCatchAll(r.category)) r.category = autoFolder([r.title, finalText, r.summary].join("\n"), state.notes, getJSON("mindrawer.folders", []).map((f) => f.name)).folder;
       return {
         text: finalText,
         title: String(r.title || h.title).slice(0, 80),
@@ -793,6 +870,7 @@ ${text || "(see screenshot)"}${url ? "\nSource: " + url : ""}`;
       };
     } catch (e) {
       if (e && e.code === "not_granted") { state.sample = null; renderChrome(); }
+      else setTimeout(() => toast(T().aiFiledBasic + (e && e.message ? ` (${String(e.message).slice(0, 80)})` : "")), 50);
       if (!text) throw e;
       return { ...heuristic(text), text };
     }
@@ -1187,7 +1265,18 @@ ${text}`;
   }
   function renderMerge() {
     const t = T(), s = state.notes.length ? mergeSuggestion() : null, box = $("mergeBox");
-    if (!s) { box.replaceChildren(); return; }
+    if (!s) {
+      // AI が無いときは「その他」に入ったメモを振り分ける提案
+      const moves = state.sample ? [] : resortMoves(), sig = moves.map((m) => m.id + ">" + m.folder).sort().join(",");
+      if (!moves.length || getJSON("mindrawer.resortDismissed", "") === sig) { box.replaceChildren(); return; }
+      const names = [...new Set(moves.map((m) => m.folder))];
+      box.replaceChildren(el("div", { class: "merge" },
+        el("p", {}, t.resortQ(moves.length, names)),
+        el("div", {},
+          el("button", { class: "yes", onclick: async () => { for (const m of moves) await state.store.update(m.id, { category: m.folder }); toast(t.resortDone(moves.length)); } }, t.resortYes),
+          el("button", { onclick: () => { setJSON("mindrawer.resortDismissed", sig); renderMerge(); } }, t.resortNo))));
+      return;
+    }
     box.replaceChildren(el("div", { class: "merge" },
       el("p", {}, t.mergeQ(s.from, s.into)),
       el("div", {},

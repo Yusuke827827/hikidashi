@@ -66,6 +66,9 @@ public struct HikidashiRootView: View {
                         if let s = mergeSuggestion {
                             MergeSuggestionCard(suggestion: s, store: store) { withAnimation { mergeRefresh += 1 } }
                         }
+                        if let moves = resortMoves {
+                            ResortCard(moves: moves, store: store) { withAnimation { mergeRefresh += 1 } }
+                        }
                         if store.notes.isEmpty { emptyState } else { folderBar; listHeader; notesList }
                     }
                     .padding(.horizontal, 16)
@@ -436,6 +439,14 @@ public struct HikidashiRootView: View {
         _ = mergeRefresh
         guard !DemoMode.isOn else { return nil }
         return Heuristics.folderMergeSuggestions(store.notes, folders: store.folders, dismissed: MergeDismissals.all, limit: 1).first
+    }
+
+    /// 「その他」から振り分けられるメモ（AI が無いとき）
+    private var resortMoves: [(id: String, folder: String)]? {
+        _ = mergeRefresh
+        guard !DemoMode.isOn, !librarian.hasAI else { return nil }
+        let moves = Heuristics.resortSuggestions(store.notes, folders: store.folders)
+        return moves.isEmpty || ResortCard.isDismissed(moves) ? nil : moves
     }
 
     private var folderBar: some View {

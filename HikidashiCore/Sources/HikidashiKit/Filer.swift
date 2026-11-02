@@ -163,7 +163,7 @@ public enum Prompts {
         You file notes for a personal "tips drawer" app. The user saves tips they find on X, the web, or in daily life, and wants them handed back at the moment they need them.
         Today: \(today). Write every field in \(language.promptName) (keep proper nouns and code as-is).
         Existing folders: \(folderList)
-        Reuse an existing folder name exactly when it fits; otherwise invent a short, broad folder name (1–3 words) that future notes could share.
+        Reuse an existing folder name exactly when it fits; otherwise invent a short, broad folder name (1–3 words) that future notes could share. Never use a catch-all such as "Other", "Misc", "その他" or "未分類"; always name the actual topic.
         "situations": 2–4 moments when this note would help, phrased the way the user would describe what they're doing (e.g. "Doing laundry", "Before a presentation").
         "remindAt": if the note mentions a date or deadline, give it as YYYY-MM-DD resolved against today; otherwise an empty string.
         \(textRule)

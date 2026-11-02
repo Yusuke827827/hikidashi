@@ -89,7 +89,7 @@ public final class Librarian {
         for item in items {
             var note = Note(text: item.noteText, url: item.url, createdAt: item.createdAt, filed: false, imageFile: item.imageFile,
                             file: item.file, fileTitle: item.fileTitle)
-            Heuristics.file(&note)
+            Heuristics.file(&note, notes: store.notes, folders: store.folders)
             store.add(note)
         }
         return items.count
@@ -113,7 +113,7 @@ public final class Librarian {
         }
         var note = Note(id: id, text: text.trimmingCharacters(in: .whitespacesAndNewlines), url: Note.nonEmpty(url), filed: false, imageFile: imageFile,
                         original: original, file: fileName, fileTitle: file?.name)
-        Heuristics.file(&note)
+        Heuristics.file(&note, notes: store.notes, folders: store.folders)
         store.add(note)
         return note
     }
@@ -148,7 +148,12 @@ public final class Librarian {
         do {
             // メモ風に整えるのは、初めて整理する、ある程度長い文だけ
             let memo = memoMode && !note.filed && note.original == nil && Self.worthMemo(note.text)
-            let r = try await ai.file(note, folders: folders, image: image, today: Self.today, language: .current, memo: memo)
+            var r = try await ai.file(note, folders: folders, image: image, today: Self.today, language: .current, memo: memo)
+            // AI が「その他」のような箱に入れたら、言葉の辞書と今までのフォルダから選び直す
+            if Heuristics.isCatchAll(r.category) {
+                let others = store.notes.filter { $0.id != id }
+                r.category = Heuristics.folder(for: [r.title, r.text.isEmpty ? note.text : r.text, r.summary].joined(separator: "\n"), notes: others, folders: store.folders)
+            }
             store.update(id) { $0.apply(r, replaceText: image != nil || memo) }
             lastError = nil
         } catch {
@@ -251,6 +256,7 @@ public final class Librarian {
             text = TextExtractor.merge(text, extracted: t, marker: TextExtractor.fileMarker)
         }
         let wasEmpty = before.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        let others = store.notes.filter { $0.id != id }, folders = store.folders
         store.update(id) { n in
             n.text = text
             n.enriched = true
@@ -259,7 +265,7 @@ public final class Librarian {
                 n.title = Heuristics.title(for: text.replacingOccurrences(of: TextExtractor.imageMarker, with: "")
                     .replacingOccurrences(of: TextExtractor.fileMarker, with: "")
                     .replacingOccurrences(of: LinkFetcher.marker, with: ""))
-                n.category = Heuristics.folder(for: text)
+                n.category = Heuristics.folder(for: text, notes: others, folders: folders)
             }
         }
     }

@@ -78,7 +78,7 @@ struct OnDeviceFiling {
     var title: String
     @Guide(description: "One sentence that sums up the note")
     var summary: String
-    @Guide(description: "A broad folder name of 1 to 3 words. Reuse an existing folder when it fits")
+    @Guide(description: "A broad folder name of 1 to 3 words naming the topic, never Other or Misc. Reuse an existing folder when it fits")
     var folder: String
     @Guide(description: "Up to 5 keywords")
     var tags: [String]

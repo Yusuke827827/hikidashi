@@ -16,6 +16,54 @@ enum MergeDismissals {
     }
 }
 
+/// 「その他」のメモを振り分ける提案。「今はしない」を押したら、同じ顔ぶれでは出さない
+struct ResortCard: View {
+    let moves: [(id: String, folder: String)]
+    let store: NoteStore
+    var onDone: () -> Void
+
+    @Environment(\.palette) private var p
+    static let key = "resortDismissed"
+
+    static func signature(_ moves: [(id: String, folder: String)]) -> String {
+        moves.map { $0.id + ">" + $0.folder }.sorted().joined(separator: ",")
+    }
+
+    static func isDismissed(_ moves: [(id: String, folder: String)]) -> Bool {
+        UserDefaults.standard.string(forKey: key) == signature(moves)
+    }
+
+    var body: some View {
+        let folders = Array(Set(moves.map(\.folder))).sorted()
+        VStack(alignment: .leading, spacing: 10) {
+            Label(L("「その他」を振り分けられます", "Sort out Other"), systemImage: "tray.and.arrow.down")
+                .font(.caption.weight(.bold))
+                .foregroundStyle(p.accent)
+            Text(L("「その他」の \(moves.count) 件を、\(folders.prefix(3).map { "「\($0)」" }.joined(separator: "・"))\(folders.count > 3 ? " など" : "") に分けますか？",
+                   "Move \(moves.count) notes from Other into \(folders.prefix(3).joined(separator: ", "))\(folders.count > 3 ? " and more" : "")?"))
+                .font(.subheadline)
+                .foregroundStyle(p.text)
+            HStack {
+                Button(L("振り分ける", "Sort them")) {
+                    withAnimation {
+                        for m in moves { store.update(m.id) { $0.category = m.folder } }
+                    }
+                    onDone()
+                }
+                .buttonStyle(PrimaryButtonStyle())
+                Button(L("今はしない", "Not now")) {
+                    UserDefaults.standard.set(Self.signature(moves), forKey: Self.key)
+                    onDone()
+                }
+                .font(.subheadline)
+                .foregroundStyle(p.muted)
+                Spacer()
+            }
+        }
+        .card()
+    }
+}
+
 /// 似ているフォルダをまとめる提案のカード（一覧の上と、フォルダの管理に出す）
 struct MergeSuggestionCard: View {
     let suggestion: FolderMergeSuggestion

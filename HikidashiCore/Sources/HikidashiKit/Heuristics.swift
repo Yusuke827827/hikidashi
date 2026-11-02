@@ -4,34 +4,11 @@
 import Foundation
 
 public enum Heuristics {
-    static let rulesJa: [(String, String)] = [
-        ("料理・食", "料理|レシピ|食|味|調味|野菜|肉|魚|弁当|醤油|炊"),
-        ("健康・体", "健康|睡眠|運動|筋トレ|ストレッチ|病院|薬|肩こり|姿勢"),
-        ("お金・節約", "お金|節約|ポイント|税|ふるさと|保険|投資|NISA|値下げ|安く|見積"),
-        ("PC・ガジェット", "PC|Mac|Windows|iPhone|Android|ショートカット|アプリ|Excel|スクショ|⌘|Ctrl"),
-        ("仕事・勉強", "仕事|会議|メール|資料|プレゼン|勉強|英語|面接"),
-        ("暮らし・家事", "掃除|洗濯|シミ|収納|片付|家事|ゴミ|引っ越"),
-        ("おでかけ・旅行", "旅行|ホテル|新幹線|飛行機|観光|荷造り|空港"),
-    ]
-    static let rulesEn: [(String, String)] = [
-        ("Food & Cooking", "cook|recipe|food|kitchen|meal"),
-        ("Health", "sleep|health|exercise|stretch|posture"),
-        ("Money", "money|save|budget|tax|price|deal|quote"),
-        ("Tech", "mac|windows|iphone|android|shortcut|app|excel|chrome"),
-        ("Work & Study", "work|meeting|email|slides|present|study|interview"),
-        ("Home", "clean|laundry|stain|storage|move|moving"),
-        ("Travel", "travel|trip|hotel|flight|pack"),
-    ]
-
     public static var otherFolder: String { L("その他", "Other") }
 
     /// フォルダ名だけを推測する
-    public static func folder(for text: String, language: AppLanguage = .current) -> String {
-        let rules = language == .ja ? rulesJa : rulesEn
-        for (name, pattern) in rules where text.range(of: pattern, options: [.regularExpression, .caseInsensitive]) != nil {
-            return name
-        }
-        return otherFolder
+    public static func folder(for text: String, notes: [Note] = [], folders: [String] = [], language: AppLanguage = .current) -> String {
+        classify(text, notes: notes, folders: folders, language: language).folder
     }
 
     /// 本文の 1 文目をタイトルにする
@@ -42,9 +19,14 @@ public enum Heuristics {
     }
 
     /// 簡易の整理（AI なし）
-    public static func file(_ note: inout Note) {
+    /// notes・folders を渡すと、今までのフォルダ分けに合わせる
+    public static func file(_ note: inout Note, notes: [Note] = [], folders: [String] = []) {
         if note.title.isEmpty { note.title = title(for: note.text.isEmpty ? (note.url ?? "") : note.text) }
-        if note.category.isEmpty { note.category = folder(for: note.text) }
+        if note.category.isEmpty {
+            let r = classify(note.text, notes: notes, folders: folders)
+            note.category = r.folder
+            if note.tags.isEmpty { note.tags = r.tags }
+        }
     }
 
     static func words(_ q: String) -> [String] {

@@ -168,6 +168,39 @@ final class HeuristicsTests: XCTestCase {
         XCTAssertEqual(Heuristics.folder(for: "Cheap flight trick", language: .en), "Travel")
     }
 
+    func testFolderIsNotAlwaysOther() {
+        // 前は「その他」になっていた身近なメモ
+        XCTAssertEqual(Heuristics.folder(for: "ダイソーの収納ケースが便利", language: .ja), "暮らし・家事")
+        XCTAssertEqual(Heuristics.folder(for: "子どもの宿題は夕飯前に", language: .ja), "家族・子育て")
+        XCTAssertEqual(Heuristics.folder(for: "猫の爪切りは寝ているときに", language: .ja), "ペット")
+        XCTAssertEqual(Heuristics.folder(for: "朝活で集中できる習慣", language: .ja), "習慣・考え方")
+        XCTAssertEqual(Heuristics.folder(for: "I'm happy today", language: .en), Heuristics.otherFolder, "app は語の頭だけで当てる")
+        XCTAssertEqual(Heuristics.classify("鶏むね肉は低温で焼くと柔らかい", language: .ja).tags, ["肉", "焼く"])
+    }
+
+    func testFolderFollowsYourFolders() {
+        let notes = [
+            Note(text: "ポケモンカードの相場はメルカリで確認", title: "ポケカ相場", category: "ポケカ"),
+            Note(text: "ポケモンカードは湿気に弱いのでスリーブに入れる", title: "ポケカ保管", category: "ポケカ"),
+        ]
+        // 今までのメモと言葉が近ければ、そのフォルダへ
+        XCTAssertEqual(Heuristics.folder(for: "ポケモンカードの新弾は予約が早い", notes: notes, language: .ja), "ポケカ")
+        // 本文にフォルダ名が出てくれば、そのフォルダへ
+        XCTAssertEqual(Heuristics.folder(for: "推し活の予算メモ", folders: ["推し活"], language: .ja), "推し活")
+        // 辞書の分類と似た名前のフォルダがあれば、そちらへ
+        XCTAssertEqual(Heuristics.folder(for: "ふるさと納税は年末までに", folders: ["お金"], language: .ja), "お金")
+    }
+
+    func testResortSuggestions() {
+        let notes = [
+            Note(id: "a", text: "冷凍ご飯はラップで平たく", title: "冷凍ご飯", category: Heuristics.otherFolder),
+            Note(id: "b", text: "なんとなくのメモ", title: "なんとなく", category: Heuristics.otherFolder),
+        ]
+        let moves = Heuristics.resortSuggestions(notes, language: .ja)
+        XCTAssertEqual(moves.map(\.id), ["a"])
+        XCTAssertEqual(moves.first?.folder, "料理・食")
+    }
+
     func testTitleIsFirstSentence() {
         XCTAssertEqual(Heuristics.title(for: "最初の文。次の文"), "最初の文")
     }
