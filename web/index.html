@@ -421,6 +421,7 @@ body.locked .wrap { visibility: hidden; }
 <dialog id="compDlg" class="help"></dialog>
 <dialog id="filtDlg" class="help"></dialog>
 <dialog id="onbDlg" class="help"></dialog>
+<dialog id="shareDlg" class="help"></dialog>
 <div id="lock" hidden></div>
 <dialog id="help" class="help"><div class="help-head"><h2 id="helpTitle"></h2><button id="helpClose" type="button" class="help-x" aria-label="Close">×</button></div><div id="helpBody"></div></dialog>
 <div id="wall"></div><div id="wallVeil" hidden></div>
@@ -553,7 +554,7 @@ body.locked .wrap { visibility: hidden; }
       stCloud: "Synced", stLocal: "This device", stAi: "AI on", stBasic: "Basic",
       keyPrompt: "Paste your Anthropic API key (sk-ant-…). It stays in this browser and is sent only to Anthropic. Get one at console.anthropic.com",
       keySaved: "API key saved. Claude will file your notes.", keyRemoveQ: "Remove the saved API key from this browser?", keyRemoved: "API key removed.",
-      keyBad: "The API key didn't work. Tap the status to set it again.", useAI: "Use AI ›", help: "How to use", helpSteps: [["Save", "Type a tip or note in the box and press Save (Ctrl/⌘ + Enter). You can add a source link, or a screenshot when AI is on."], ["AI files it", "AI adds a title, summary, folder, tags and the moments it will help. Dates in the note become reminders."], ["Recall", "Switch to Recall and describe what you're about to do or what's bothering you, e.g. \"About to do laundry\". You get the notes that help, plus short advice."], ["Today's pick", "One stored note resurfaces each day. Notes you mark Helpful come first when you recall."], ["Working with notes", "Pin, mark Helpful, edit or re-file each note. Switch the list between Topic and Date, or narrow it with Filter."], ["Use AI", "Tap the status at the top right and paste your Anthropic API key (console.anthropic.com). It stays in this browser and is sent only to Anthropic. Without a key, Mindrawer files and searches by keyword."], ["Wallpaper", "Pick a wallpaper or your own image from Wallpaper at the top."], ["Condense into a memo", "Turn on Memo in the input box and AI turns long text into a bulleted memo. Edit it in the review screen before saving; the original can be restored."], ["Notifications and today's checklist", "Edit a note → Notify me to pick a date, daily, every N days, weekdays or monthly (silent). Those notes appear in Today's checklist, where you tick them off. Set words to see the note when you type them."], ["Choosing folders", "Each time you save, AI suggests three folder names (e.g. detergent → Detergent, Laundry supplies, Shopping). Pick one or type your own; Mindrawer learns your naming style. In ⚙ Settings → Folders you can let AI decide, sort Other automatically and choose how similar folders are merged."], ["Manage folders", "Use Manage next to Folders to create, rename, merge, delete or ★ favorite folders. Similar folders get a merge suggestion."], ["Files", "Attach a PDF or text file and its text goes into the note."], ["Use it like an app", "Add Mindrawer to your Home Screen (Safari: Share → Add to Home Screen). It opens full screen, works offline, and the browser is less likely to clear your notes."], ["Keeping notes tidy", "Look-alike notes can be merged. Expired deals and notes you haven't seen in a year show under Worth a check. Learn it on a note brings it back after 1, 3, 7 days and so on. In Filters, save the conditions as a smart folder."], ["Import from other apps", "From other apps (next to Import) reads Evernote (.enex), Google Keep (Takeout .json), CSV, text/Markdown and HTML."], ["Your data", "Notes are saved in this browser. Use Export / Import to back them up or move them; the same file works with the iPhone app."]],
+      keyBad: "The API key didn't work. Tap the status to set it again.", useAI: "Use AI ›", help: "How to use", helpSteps: [["Save", "Type a tip or note in the box and press Save (Ctrl/⌘ + Enter). You can add a source link, or a screenshot when AI is on."], ["AI files it", "AI adds a title, summary, folder, tags and the moments it will help. Dates in the note become reminders."], ["Recall", "Switch to Recall and describe what you're about to do or what's bothering you, e.g. \"About to do laundry\". You get the notes that help, plus short advice."], ["Today's pick", "One stored note resurfaces each day. Notes you mark Helpful come first when you recall."], ["Working with notes", "Pin, mark Helpful, edit or re-file each note. Switch the list between Topic and Date, or narrow it with Filter."], ["Use AI", "Tap the status at the top right and paste your Anthropic API key (console.anthropic.com). It stays in this browser and is sent only to Anthropic. Without a key, Mindrawer files and searches by keyword."], ["Wallpaper", "Pick a wallpaper or your own image from Wallpaper at the top."], ["Condense into a memo", "Turn on Memo in the input box and AI turns long text into a bulleted memo. Edit it in the review screen before saving; the original can be restored."], ["Notifications and today's checklist", "Edit a note → Notify me to pick a date, daily, every N days, weekdays or monthly (silent). Those notes appear in Today's checklist, where you tick them off. Set words to see the note when you type them."], ["Choosing folders", "Each time you save, AI suggests three folder names (e.g. detergent → Detergent, Laundry supplies, Shopping). Pick one or type your own; Mindrawer learns your naming style. In ⚙ Settings → Folders you can let AI decide, sort Other automatically and choose how similar folders are merged."], ["Manage folders", "Use Manage next to Folders to create, rename, merge, delete or ★ favorite folders. Similar folders get a merge suggestion."], ["Files", "Attach a PDF or text file and its text goes into the note."], ["Use it like an app", "Add Mindrawer to your Home Screen (Safari: Share → Add to Home Screen). It opens full screen, works offline, and the browser is less likely to clear your notes."], ["Keeping notes tidy", "Look-alike notes can be merged. Expired deals and notes you haven't seen in a year show under Worth a check. Learn it on a note brings it back after 1, 3, 7 days and so on. In Filters, save the conditions as a smart folder."], ["Import from other apps", "From other apps (next to Import) reads Evernote (.enex), Google Keep (Takeout .json), CSV, text/Markdown and HTML."], ["Shared folders", "In Manage next to Folders, tap 👥 Share to share a folder with family or friends and send them the code. They join with 👥＋ Join a shared folder. Changes sync each time you open the page."], ["Your data", "Notes are saved in this browser. Use Export / Import to back them up or move them; the same file works with the iPhone app."]],
       month: (d) => d.toLocaleDateString("en", { year: "numeric", month: "long" }),
       other: "Other",
       edit: "Edit", saveEdit: "Save", saveRefile: "Save & re-file with AI", cancel: "Cancel", editSaved: "Saved.",
@@ -589,7 +590,7 @@ body.locked .wrap { visibility: hidden; }
       stCloud: "アカウントに保存", stLocal: "この端末に保存", stAi: "AI 整理", stBasic: "簡易整理",
       keyPrompt: "Anthropic の API キー（sk-ant-…）を貼り付けてください。キーはこのブラウザにだけ保存され、Anthropic にだけ送られます。取得: console.anthropic.com",
       keySaved: "API キーを保存しました。Claude が整理します。", keyRemoveQ: "このブラウザに保存した API キーを削除しますか？", keyRemoved: "API キーを削除しました。",
-      keyBad: "API キーが使えませんでした。右上の表示を押して入れ直してください。", useAI: "AI を使う ›", help: "使い方", helpSteps: [["しまう", "欄に Tips やメモを書いて「しまう」を押します（Ctrl/⌘ + Enter でも可）。出典の URL や、AI がオンのときはスクショも付けられます。"], ["AI が整理", "しまったメモに、タイトル・要約・フォルダ・タグ・「役立つ場面」を AI が付けます。本文に日付があればリマインドにも入ります。"], ["ひきだす", "「ひきだす」に切り替えて、これからすることや困りごとを書きます。例:「これから洗濯する」。言葉が一致していなくても、役立つメモと短い助言が出ます。"], ["今日のひとつ", "しまったままのメモを毎日 1 件見せます。「役立った」を押したメモは、取り出しで優先されます。"], ["メモの操作", "ピン留め・役立った・編集・再整理ができます。一覧は「分類」と「日付」で切り替え、「絞り込み」で探せます。"], ["AI を使う", "右上の表示を押して、Anthropic の API キー（console.anthropic.com で取得）を貼り付けます。キーはこのブラウザにだけ保存され、Anthropic にだけ送られます。キーが無くても、キーワードで整理と検索ができます。"], ["壁紙", "上の「壁紙」から好きな壁紙や自分の画像を選べます。"], ["メモ風にまとめる", "入力欄の「メモ風」をオンにすると、長い文を AI が箇条書きのメモにまとめます。しまう前に出る画面で直せます。元の文は「原文と関連」から戻せます。"], ["通知と今日の確認リスト", "メモの「編集」→「通知する」で、日時・毎日・何日おき・曜日・毎月を選べます（音なし）。その日のメモは「今日の確認リスト」に並び、☐ でチェックできます。言葉を決めると、その言葉を入力したときにメモを出します。"], ["フォルダの決め方", "しまうたびに AI がフォルダ名を 3 つ出します（例: 洗剤 → 「洗剤」「洗濯用品」「買い物」）。選ぶか自分で入力すると、あなたの名付け方を覚えて次に生かします。⚙ 設定の「フォルダ分け」で、おまかせ・「その他」の自動振り分け・似たフォルダのまとめ方を変えられます。"], ["フォルダの管理", "フォルダの「管理」から、作る・名前を変える・まとめる・消す・★ お気に入りができます。似たフォルダができると「まとめますか？」と出ます。"], ["ファイル", "「ファイル」から PDF やテキストを付けると、中の文字を読み取ってメモに入れます。"], ["アプリのように使う", "ホーム画面に追加すると（Safari: 共有 →「ホーム画面に追加」）、全画面で開き、電波が無くても使えます。ブラウザにメモを消されにくくもなります。"], ["メモの手入れ", "同じようなメモは 1 つにまとめられます。期限が過ぎたキャンペーンや 1 年以上見ていないメモは「見直したいメモ」に出ます。「覚える」にしたメモは 1・3・7 日…と間をあけて「今日の復習」に出ます。絞り込みの条件は「スマートフォルダ」として保存できます。"], ["他のアプリから取り込む", "「読み込む」の横の「他のアプリから」で、Evernote（.enex）・Google Keep（.json）・CSV・テキスト／Markdown・HTML を取り込めます。"], ["データ", "メモはこのブラウザの中に保存されます。「書き出す」「読み込む」でバックアップや移動ができます。iPhone アプリとも同じファイルでやり取りできます。"]],
+      keyBad: "API キーが使えませんでした。右上の表示を押して入れ直してください。", useAI: "AI を使う ›", help: "使い方", helpSteps: [["しまう", "欄に Tips やメモを書いて「しまう」を押します（Ctrl/⌘ + Enter でも可）。出典の URL や、AI がオンのときはスクショも付けられます。"], ["AI が整理", "しまったメモに、タイトル・要約・フォルダ・タグ・「役立つ場面」を AI が付けます。本文に日付があればリマインドにも入ります。"], ["ひきだす", "「ひきだす」に切り替えて、これからすることや困りごとを書きます。例:「これから洗濯する」。言葉が一致していなくても、役立つメモと短い助言が出ます。"], ["今日のひとつ", "しまったままのメモを毎日 1 件見せます。「役立った」を押したメモは、取り出しで優先されます。"], ["メモの操作", "ピン留め・役立った・編集・再整理ができます。一覧は「分類」と「日付」で切り替え、「絞り込み」で探せます。"], ["AI を使う", "右上の表示を押して、Anthropic の API キー（console.anthropic.com で取得）を貼り付けます。キーはこのブラウザにだけ保存され、Anthropic にだけ送られます。キーが無くても、キーワードで整理と検索ができます。"], ["壁紙", "上の「壁紙」から好きな壁紙や自分の画像を選べます。"], ["メモ風にまとめる", "入力欄の「メモ風」をオンにすると、長い文を AI が箇条書きのメモにまとめます。しまう前に出る画面で直せます。元の文は「原文と関連」から戻せます。"], ["通知と今日の確認リスト", "メモの「編集」→「通知する」で、日時・毎日・何日おき・曜日・毎月を選べます（音なし）。その日のメモは「今日の確認リスト」に並び、☐ でチェックできます。言葉を決めると、その言葉を入力したときにメモを出します。"], ["フォルダの決め方", "しまうたびに AI がフォルダ名を 3 つ出します（例: 洗剤 → 「洗剤」「洗濯用品」「買い物」）。選ぶか自分で入力すると、あなたの名付け方を覚えて次に生かします。⚙ 設定の「フォルダ分け」で、おまかせ・「その他」の自動振り分け・似たフォルダのまとめ方を変えられます。"], ["フォルダの管理", "フォルダの「管理」から、作る・名前を変える・まとめる・消す・★ お気に入りができます。似たフォルダができると「まとめますか？」と出ます。"], ["ファイル", "「ファイル」から PDF やテキストを付けると、中の文字を読み取ってメモに入れます。"], ["アプリのように使う", "ホーム画面に追加すると（Safari: 共有 →「ホーム画面に追加」）、全画面で開き、電波が無くても使えます。ブラウザにメモを消されにくくもなります。"], ["メモの手入れ", "同じようなメモは 1 つにまとめられます。期限が過ぎたキャンペーンや 1 年以上見ていないメモは「見直したいメモ」に出ます。「覚える」にしたメモは 1・3・7 日…と間をあけて「今日の復習」に出ます。絞り込みの条件は「スマートフォルダ」として保存できます。"], ["他のアプリから取り込む", "「読み込む」の横の「他のアプリから」で、Evernote（.enex）・Google Keep（.json）・CSV・テキスト／Markdown・HTML を取り込めます。"], ["共有フォルダ", "フォルダの「管理」→「👥 共有」で、家族や友だちとフォルダを一緒に使えます。送った共有コードで、相手は「👥＋ 共有フォルダに参加」から入れます。開くたびに変更がそろいます。"], ["データ", "メモはこのブラウザの中に保存されます。「書き出す」「読み込む」でバックアップや移動ができます。iPhone アプリとも同じファイルでやり取りできます。"]],
       month: (d) => `${d.getFullYear()}年${d.getMonth() + 1}月`,
       other: "その他",
       edit: "編集", saveEdit: "保存", saveRefile: "保存して AI で再整理", cancel: "キャンセル", editSaved: "保存しました。",
@@ -647,6 +648,18 @@ body.locked .wrap { visibility: hidden; }
     staleH: "見直したいメモ", staleOk: "まだ使える", staleEdit: "直す", staleTrash: "ゴミ箱へ", staleExpired: (d) => `期限（${d}）が過ぎています`, staleOld: (y) => `${y} 年以上前のメモです。今も正しい？`,
     learn: "覚える", learnStop: "復習から外す", learning: "🧠 復習中", revH: "今日の復習", revLeft: (n) => `残り ${n} 件`, revShow: "中身を見る", revYes: "覚えてた", revNo: "忘れてた",
     smartH: "スマートフォルダ", smartPh: "名前（例: ★ 今月の料理）", smartSave: "保存", smartNote: "今の絞り込み（文字・フォルダ・ここでの条件）に名前を付けて、フォルダの列から開けるようにします。", smartDel: "スマートフォルダを消す", smartDelQ: (x) => `スマートフォルダ「${x}」を消しますか？メモは消えません。` });
+  Object.assign(I18N.en, { shareBtn: "Share", shareCodeBtn: "Code", shareLeave: "Stop sharing", shareLeaveQ: (x) => `Stop sharing "${x}"? Notes stay on this device.`, joinBtn: "Join a shared folder",
+    shareH: (x) => `Share "${x}"`, shareSend: "Send", shareCopy: "Copy invitation", shareCopied: "Copied.", shareInvite: (f, c, w) => `Join my Mindrawer shared folder "${f}".\n\nWeb: ${w}#join=${c}\niPhone: mindrawer://join?c=${c}\n\nShare code: ${c}`,
+    shareNote: "Anyone with this code can read, add and edit notes in this folder. Photos, files and reviews stay on each device.", shareServerQ: "Paste the sharing server URL (https://….workers.dev). It's shown when the relay server is deployed.",
+    shareFail: "Couldn't share.", shareForbidden: "The share code isn't valid.", shareNotFound: "That shared folder wasn't found.", shareServerErr: (c) => `The sharing server returned an error (${c}).`, shareBadCode: "That share code couldn't be read.",
+    shareLocalOnly: "Sharing works when notes are saved in this browser.", sharedSuffix: " (shared)", joinH: "Join a shared folder", joinP: "Paste the share code or link you received. The folder appears here and stays in sync.", joinPh: "MD1-…", joinGo: "Join", joined: (x) => `Joined the shared folder ${x}.`,
+    secShare: "Shared folders", shareServerL: "Sharing server", shareSetNote: "Share a folder from Manage next to Folders. Joining only needs the code; sharing your own folder needs the relay server's URL." });
+  Object.assign(I18N.ja, { shareBtn: "共有", shareCodeBtn: "コード", shareLeave: "共有をやめる", shareLeaveQ: (x) => `「${x}」の共有をやめますか？この端末のメモは残ります。`, joinBtn: "共有フォルダに参加",
+    shareH: (x) => `「${x}」を共有`, shareSend: "送る", shareCopy: "招待文をコピー", shareCopied: "コピーしました。", shareInvite: (f, c, w) => `Mindrawer の共有フォルダ「${f}」に参加してください。\n\nWeb: ${w}#join=${c}\niPhone: mindrawer://join?c=${c}\n\n共有コード: ${c}`,
+    shareNote: "このコードを知っている人は、このフォルダのメモを見たり、足したり、直したりできます。写真・ファイル・復習はそれぞれの端末だけに残ります。", shareServerQ: "共有に使うサーバーの URL（https://….workers.dev）を貼り付けてください。中継サーバーを公開したときに表示されます。",
+    shareFail: "共有できませんでした。", shareForbidden: "共有コードが正しくありません。", shareNotFound: "共有フォルダが見つかりませんでした。", shareServerErr: (c) => `共有のサーバーでエラーが起きました（${c}）。`, shareBadCode: "共有コードが読み取れませんでした。",
+    shareLocalOnly: "共有は、メモをこのブラウザに保存しているときに使えます。", sharedSuffix: "（共有）", joinH: "共有フォルダに参加", joinP: "送られてきた共有コードかリンクを貼り付けてください。そのフォルダがここにもでき、メモが一緒に使えます。", joinPh: "MD1-…", joinGo: "参加する", joined: (x) => `共有フォルダ「${x}」に参加しました。`,
+    secShare: "共有フォルダ", shareServerL: "共有に使うサーバー", shareSetNote: "フォルダの「管理」から、フォルダを共有できます。参加は共有コードだけでできます。自分のフォルダを共有するには、中継サーバーの URL が必要です。" });
   Object.assign(I18N.en, { aiFiledBasic: "Couldn't reach Claude, so it was filed by keyword.", resortQ: (n, f) => `Move ${n} ${n === 1 ? "note" : "notes"} from Other into ${f.slice(0, 3).join(", ")}${f.length > 3 ? " and more" : ""}?`, resortYes: "Sort them", resortNo: "Not now", resortDone: (n) => `Sorted ${n} notes.` });
   Object.assign(I18N.ja, { aiFiledBasic: "AI に届かなかったので、キーワードで整理しました。", resortQ: (n, f) => `「その他」の ${n} 件を、${f.slice(0, 3).map((x) => `「${x}」`).join("・")}${f.length > 3 ? " など" : ""}に分けますか？`, resortYes: "振り分ける", resortNo: "今はしない", resortDone: (n) => `${n} 件を振り分けました。` });
   Object.assign(I18N.ja, {
@@ -700,8 +713,11 @@ body.locked .wrap { visibility: hidden; }
     return {
       kind: "local",
       subscribe(fn) { cb = fn; fn(read()); },
-      async add(n) { const a = [{ ...n, id: "n" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6) }, ...read()]; write(a); cb(a); },
-      async update(id, p) { const a = read().map((x) => (x.id === id ? { ...x, ...p } : x)); write(a); cb(a); },
+      async add(n) {
+        const cur = read(), id = n.id && !cur.some((x) => x.id === n.id) ? n.id : "n" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+        const a = [{ ...n, id, updatedAt: n.updatedAt || Date.now() }, ...cur]; write(a); cb(a);
+      },
+      async update(id, p) { const a = read().map((x) => (x.id === id ? { ...x, ...p, updatedAt: p.updatedAt || Date.now() } : x)); write(a); cb(a); },
       async remove(id) { const a = read().filter((x) => x.id !== id); write(a); cb(a); },
     };
   }
@@ -1078,7 +1094,7 @@ Return JSON only:
 
 
   // ---------- この端末の設定 ----------
-  const PREF = { memo: "mindrawer.memoMode", memoPreview: "mindrawer.memoPreview", checks: "mindrawer.checks", folders: "mindrawer.folders", dismissed: "mindrawer.mergeDismissed", notified: "mindrawer.notified", trash: "mindrawer.trash", smart: "mindrawer.smartFolders", dupDismissed: "mindrawer.dupDismissed", pin: "mindrawer.pinHash", backups: "mindrawer.backups", onboarded: "mindrawer.onboarded", reviewSeen: "mindrawer.reviewSeen", fprefs: "mindrawer.folderPrefs", choices: "mindrawer.folderChoices" };
+  const PREF = { memo: "mindrawer.memoMode", memoPreview: "mindrawer.memoPreview", checks: "mindrawer.checks", folders: "mindrawer.folders", dismissed: "mindrawer.mergeDismissed", notified: "mindrawer.notified", trash: "mindrawer.trash", shares: "mindrawer.shares", shareServer: "mindrawer.shareServer", smart: "mindrawer.smartFolders", dupDismissed: "mindrawer.dupDismissed", pin: "mindrawer.pinHash", backups: "mindrawer.backups", onboarded: "mindrawer.onboarded", reviewSeen: "mindrawer.reviewSeen", fprefs: "mindrawer.folderPrefs", choices: "mindrawer.folderChoices" };
   const getJSON = (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch { return d; } };
   const setJSON = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
   state.memoMode = getJSON(PREF.memo, false);
@@ -1284,18 +1300,22 @@ ${text}`;
     const t = T(), dlg = $("foldDlg"), counts = folderNames();
     const names = [...counts.keys()].sort((a, b) => (isFavFolder(b) - isFavFolder(a)) || counts.get(b) - counts.get(a) || a.localeCompare(b));
     const input = el("input", { type: "text", placeholder: t.foldNew });
-    dlg.replaceChildren(
+    fill(dlg, 
       el("div", { class: "help-head" }, el("h2", {}, t.foldDlgH), el("button", { type: "button", class: "help-x", "aria-label": t.close, onclick: () => dlg.close() }, "×")),
       ...names.map((name) => {
         const sel = el("select", { "aria-label": t.foldMergeTo }, el("option", { value: "" }, t.foldMergeTo), ...names.filter((x) => x !== name).map((x) => el("option", { value: x }, x)));
         sel.onchange = async () => { if (sel.value) { await moveFolder(name, sel.value); openFolders(); } };
         return el("div", { class: "frow" },
           el("button", { class: "star", "aria-pressed": String(isFavFolder(name)), "aria-label": "★", onclick: () => toggleFavFolder(name) }, isFavFolder(name) ? "★" : "☆"),
-          el("span", {}, name, " ", el("span", { class: "n" }, String(counts.get(name)))),
+          el("span", {}, name, isSharedFolder(name) ? " 👥" : "", " ", el("span", { class: "n" }, String(counts.get(name))),
+            name === t.other || state.store?.kind !== "local" ? null : isSharedFolder(name)
+              ? el("span", {}, " ", el("button", { class: "mini", onclick: () => showShareCode(name) }, t.shareCodeBtn), " ", el("button", { class: "mini", onclick: () => { if (confirm(t.shareLeaveQ(name))) { leaveShare(name); openFolders(); } } }, t.shareLeave))
+              : el("span", {}, " ", el("button", { class: "mini", onclick: () => shareFolder(name) }, "👥 " + t.shareBtn))),
           el("button", { class: "mini", onclick: async () => { const v = prompt(t.foldRenameQ, name); if (v) { await moveFolder(name, v); openFolders(); } } }, t.foldRename),
           name === t.other ? el("span") : el("span", {}, sel, " ",
             el("button", { class: "mini", onclick: async () => { if (confirm(t.foldDelQ)) { await moveFolder(name, t.other); saveFolderMeta(folderMeta().filter((f) => f.name !== name)); openFolders(); } } }, t.foldDel)));
       }),
+      state.store?.kind === "local" ? el("div", { class: "fnew" }, el("button", { class: "mini", onclick: () => openJoin("") }, "👥＋ " + t.joinBtn)) : null,
       el("div", { class: "fnew" }, input, el("button", { class: "mini", onclick: () => {
         const v = input.value.trim().slice(0, 32);
         if (!v || folderNames().has(v)) return;
@@ -1477,6 +1497,10 @@ ${text}`;
           : installEvt ? el("div", { class: "set-row" }, el("span", {}, t.appAdd), el("button", { class: "mini", onclick: async () => { installEvt.prompt(); await installEvt.userChoice.catch(() => {}); installEvt = null; openSettings(); } }, t.appAddBtn))
           : el("p", {}, /iphone|ipad|ipod/i.test(navigator.userAgent) ? t.appIos : t.appOther),
         el("p", { class: "set-note" }, t.appNote)),
+      el("div", { class: "set-sec" }, el("h3", {}, "👥 " + t.secShare),
+        (() => { const i = el("input", { type: "text", placeholder: "https://….workers.dev", value: getJSON(PREF.shareServer, "") }); i.onchange = () => setJSON(PREF.shareServer, i.value.trim().replace(/\/+$/, "")); return el("label", { class: "ef" }, el("span", {}, t.shareServerL), i); })(),
+        el("div", { class: "set-row" }, el("button", { class: "mini", onclick: () => { $("setDlg").close(); openJoin(""); } }, "👥＋ " + t.joinBtn)),
+        el("p", { class: "set-note" }, t.shareSetNote)),
       el("div", { class: "set-sec" }, el("h3", {}, t.secSafe),
         el("div", { class: "set-row" }, el("span", {}, "🔒 " + t.pinOn),
           hasPin() ? el("span", {}, el("button", { class: "mini", onclick: setPin }, t.pinChange), " ", el("button", { class: "mini", onclick: clearPin }, t.pinOff)) : el("button", { class: "mini", onclick: setPin }, t.pinSet)),
@@ -1679,6 +1703,7 @@ Return JSON only: {"answer":"","ids":["ids of the notes you used, max 5"]}`;
 
   // ---------- すぐしまう（#save） ----------
   function handleHash() {
+    if (/^#join=/.test(location.hash) && !isLocked() && state.store) { const c = location.hash.slice(6); history.replaceState(null, "", location.pathname + location.search); openJoin(decodeURIComponent(c)); return; }
     if (!/^#save\b/.test(location.hash)) return;
     if (isLocked()) return;
     state.mode = "save"; renderChrome();
@@ -2000,6 +2025,122 @@ Return JSON only: {"answer":"","ids":["ids of the notes you used, max 5"]}`;
     }
   }
 
+  // ---------- 共有フォルダ（スマホ版の SharedFolders.swift と同じ） ----------
+  const WEB_URL = "https://yusuke827827.github.io/hikidashi/";
+  const sharesList = () => getJSON(PREF.shares, []);
+  const isSharedFolder = (name) => sharesList().some((x) => x.folder === name);
+  const b64u = (str) => btoa(unescape(encodeURIComponent(str))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  const shareCode = (sf) => "MD1-" + b64u(`${sf.server}|${sf.id}|${sf.key}`);
+  function decodeShare(text) {
+    const m = String(text).match(/MD1-[A-Za-z0-9_-]+/); if (!m) return null;
+    try {
+      let b = m[0].slice(4).replace(/-/g, "+").replace(/_/g, "/"); while (b.length % 4) b += "=";
+      const [server, id, key] = decodeURIComponent(escape(atob(b))).split("|");
+      if (!/^https:\/\/|^http:\/\/localhost/.test(server || "") || !id || !key) return null;
+      return { server, id, key };
+    } catch { return null; }
+  }
+  const LOCAL_ONLY = ["imageFile", "file", "place", "review", "plannedDay", "folderChosen", "checkedAt", "linkBroken", "lastSeen"];
+  const outgoing = (n) => { const x = { ...n }; for (const f of LOCAL_ONLY) delete x[f]; x.updatedAt = n.updatedAt || n.createdAt; return x; };
+  async function shareFetch(method, url, key, body) {
+    const res = await fetch(url, { method, headers: { "content-type": "application/json", ...(key ? { "x-share-key": key } : {}) }, body: body ? JSON.stringify(body) : undefined });
+    if (res.status === 403) throw new Error(T().shareForbidden);
+    if (res.status === 404) throw new Error(T().shareNotFound);
+    if (!res.ok) throw new Error(T().shareServerErr(res.status));
+    return res.json();
+  }
+  async function applyRemote(r, sf) {
+    for (const rn of r.notes || []) {
+      const local = state.notes.find((n) => n.id === rn.id);
+      const inc = { ...rn, category: sf.folder };
+      if (!local) await state.store.add(inc);
+      else if ((rn.updatedAt || 0) > (local.updatedAt || local.createdAt || 0)) {
+        for (const f of LOCAL_ONLY) if (local[f] !== undefined) inc[f] = local[f];
+        await state.store.update(rn.id, inc);
+      }
+    }
+    for (const id of r.deleted || []) { const n = state.notes.find((x) => x.id === id && x.category === sf.folder); if (n) await trashNote(n); }
+    sf.lastIDs = state.notes.filter((n) => n.category === sf.folder).map((n) => n.id);
+    sf.syncedAt = Date.now();
+  }
+  let syncing = false;
+  async function syncShares() {
+    if (syncing || state.store?.kind !== "local") return;
+    const all = sharesList(); if (!all.length) return;
+    syncing = true;
+    try {
+      for (const sf of all) {
+        const mine = state.notes.filter((n) => n.category === sf.folder), ids = new Set(mine.map((n) => n.id));
+        const deleted = (sf.lastIDs || []).filter((id) => !ids.has(id));
+        try { await applyRemote(await shareFetch("PUT", `${sf.server}/share/${sf.id}`, sf.key, { notes: mine.map(outgoing), deleted }), sf); } catch {}
+      }
+      const latest = sharesList().map((x) => all.find((y) => y.id === x.id) || x);
+      setJSON(PREF.shares, latest);
+    } finally { syncing = false; }
+  }
+  let shareSig = "", shareT;
+  function scheduleShareSync() {
+    const names = new Set(sharesList().map((x) => x.folder)); if (!names.size) return;
+    const ns = state.notes.filter((n) => names.has(n.category));
+    const sig = names.size + "|" + ns.length + "|" + Math.max(0, ...ns.map((n) => n.updatedAt || n.createdAt));
+    if (sig === shareSig) return;
+    shareSig = sig; clearTimeout(shareT); shareT = setTimeout(syncShares, 2000);
+  }
+  function showShareCode(folder) {
+    const t = T(), sf = sharesList().find((x) => x.folder === folder); if (!sf) return;
+    const code = shareCode(sf), invite = t.shareInvite(folder, code, WEB_URL), dlg = $("shareDlg");
+    fill(dlg,
+      el("div", { class: "help-head" }, el("h2", {}, "👥 " + t.shareH(folder)), el("button", { type: "button", class: "help-x", "aria-label": t.close, onclick: () => dlg.close() }, "×")),
+      el("p", { style: "word-break:break-all;font-family:var(--font-mono);font-size:12.5px;color:var(--ink)" }, code),
+      el("div", { class: "ef-acts" },
+        navigator.share ? el("button", { type: "button", class: "ghost", onclick: () => navigator.share({ text: invite }).catch(() => {}) }, t.shareSend) : null,
+        el("button", { type: "button", onclick: async () => { try { await navigator.clipboard.writeText(invite); toast(t.shareCopied); } catch { prompt(t.shareCopy, invite); } } }, t.shareCopy)),
+      el("p", { class: "set-note", style: "margin-top:10px" }, t.shareNote));
+    if (!dlg.open) dlg.showModal();
+  }
+  async function shareFolder(folder) {
+    const t = T();
+    if (isSharedFolder(folder)) return showShareCode(folder);
+    let server = getJSON(PREF.shareServer, "");
+    if (!server) { server = (prompt(t.shareServerQ) || "").trim().replace(/\/+$/, ""); if (!server) return; setJSON(PREF.shareServer, server); }
+    try {
+      const mine = state.notes.filter((n) => n.category === folder);
+      const r = await shareFetch("POST", `${server}/share`, null, { name: folder, notes: mine.map(outgoing) });
+      setJSON(PREF.shares, [...sharesList(), { folder, server, id: r.id, key: r.key, lastIDs: mine.map((n) => n.id), syncedAt: Date.now() }]);
+      openFolders(); renderRail(); showShareCode(folder);
+    } catch (e) { toast(t.shareFail + " " + (e.message || "")); }
+  }
+  function leaveShare(folder) { setJSON(PREF.shares, sharesList().filter((x) => x.folder !== folder)); renderRail(); }
+  async function joinShare(text) {
+    const t = T(), c = decodeShare(text);
+    if (!c) throw new Error(t.shareBadCode);
+    const have = sharesList().find((x) => x.id === c.id); if (have) return have.folder;
+    const r = await shareFetch("GET", `${c.server}/share/${c.id}`, c.key);
+    let name = r.name;
+    if (state.notes.some((n) => n.category === name)) name += t.sharedSuffix;
+    const sf = { folder: name, server: c.server, id: c.id, key: c.key, lastIDs: [], syncedAt: null };
+    if (!folderNames().has(name)) saveFolderMeta([...folderMeta(), { name, favorite: false }]);
+    await applyRemote(r, sf);
+    setJSON(PREF.shares, [...sharesList(), sf]);
+    return name;
+  }
+  function openJoin(initial) {
+    const t = T(), dlg = $("shareDlg");
+    if (state.store?.kind !== "local") { toast(t.shareLocalOnly); return; }
+    const ta = el("textarea", { class: "memo-ta", style: "min-height:90px", placeholder: t.joinPh }); ta.value = initial || "";
+    const err = el("p", { class: "err", style: "color:var(--alert)" });
+    fill(dlg,
+      el("div", { class: "help-head" }, el("h2", {}, "👥＋ " + t.joinH), el("button", { type: "button", class: "help-x", "aria-label": t.close, onclick: () => dlg.close() }, "×")),
+      el("p", {}, t.joinP), ta, err,
+      el("div", { class: "ef-acts" }, el("button", { type: "button", class: "ghost", onclick: () => dlg.close() }, t.cancel),
+        el("button", { type: "button", onclick: async (e) => {
+          e.currentTarget.disabled = true;
+          try { const name = await joinShare(ta.value); dlg.close(); toast(t.joined(name)); state.folder = name; renderRail(); renderList(); }
+          catch (x) { err.textContent = x.message || String(x); e.currentTarget.disabled = false; }
+        } }, t.joinGo)));
+    if (!dlg.open) dlg.showModal();
+  }
+
   // ---------- render ----------
   function folderOf(n) { return state.view === "cat" ? n.category || T().other : String(monthKey(n.createdAt)); }
   function folderLabel(k) { return state.view === "cat" ? k : monthLabel(Number(k)); }
@@ -2188,7 +2329,7 @@ Return JSON only: {"answer":"","ids":["ids of the notes you used, max 5"]}`;
       b.append(el("span", { class: "x", role: "button", "aria-label": t.smartDel, title: t.smartDel, onclick: (e) => { e.stopPropagation(); if (confirm(t.smartDelQ(sf.name))) { setJSON(PREF.smart, getJSON(PREF.smart, []).filter((x) => x.id !== sf.id)); renderRail(); renderList(); } } }, "×"));
       return b;
     });
-    $("folders").replaceChildren(...(notes.length ? [item("__all", t.all, notes.length), pinnedN ? item("__pin", "★ " + t.pinned, pinnedN) : null, ...smartItems, ...keys.map((k) => item(k, (state.view === "cat" && isFavFolder(k) ? "★ " : "") + folderLabel(k), counts.get(k), state.view === "cat"))].filter(Boolean) : []));
+    $("folders").replaceChildren(...(notes.length ? [item("__all", t.all, notes.length), pinnedN ? item("__pin", "★ " + t.pinned, pinnedN) : null, ...smartItems, ...keys.map((k) => item(k, (state.view === "cat" && isFavFolder(k) ? "★ " : "") + (state.view === "cat" && isSharedFolder(k) ? "👥 " : "") + folderLabel(k), counts.get(k), state.view === "cat"))].filter(Boolean) : []));
     let dl = $("folderNames");
     if (!dl) { dl = el("datalist", { id: "folderNames" }); document.body.append(dl); }
     dl.replaceChildren(...[...new Set(notes.map((n) => n.category))].map((c) => el("option", { value: c })));
@@ -2319,11 +2460,11 @@ Return JSON only: {"answer":"","ids":["ids of the notes you used, max 5"]}`;
   $("chatBtn").onclick = openChat;
   $("filtBtn").onclick = openFilters;
   $("composeBtn").onclick = openCompose;
-  for (const id of ["setDlg", "chatDlg", "compDlg", "filtDlg"]) $(id).addEventListener("click", (e) => { if (e.target === $(id)) $(id).close(); });
+  for (const id of ["setDlg", "chatDlg", "compDlg", "filtDlg", "shareDlg"]) $(id).addEventListener("click", (e) => { if (e.target === $(id)) $(id).close(); });
   window.addEventListener("hashchange", handleHash);
   document.addEventListener("visibilitychange", () => {
     if (document.hidden) hiddenAt = Date.now();
-    else if (hiddenAt && Date.now() - hiddenAt > 60e3 && !isLocked()) lock();
+    else { if (hiddenAt && Date.now() - hiddenAt > 60e3 && !isLocked()) lock(); syncShares(); }
   });
   purgeTrash();
   if (hasPin()) lock();
@@ -2348,7 +2489,8 @@ Return JSON only: {"answer":"","ids":["ids of the notes you used, max 5"]}`;
     state.store = store || localStore();
     state.store.subscribe((arr) => {
       state.notes = arr.slice().sort((a, b) => b.createdAt - a.createdAt); renderAll();
-      if (firstLoad) { firstLoad = false; makeBackup(false); if (!isLocked()) afterUnlock(); setTimeout(() => tidyFolders(), 0); }
+      if (firstLoad) { firstLoad = false; makeBackup(false); if (!isLocked()) afterUnlock(); setTimeout(() => tidyFolders(), 0); setTimeout(syncShares, 0); }
+      scheduleShareSync();
     });
   })();
 })();
