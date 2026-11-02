@@ -351,6 +351,13 @@ details.more[open] summary::before { content: "−"; }
 .choice-in input { flex: 1; min-width: 0; border: 1px solid var(--line); border-radius: 10px; padding: 6px 10px; background: var(--bg); color: var(--ink); font: 15px var(--font-body); }
 .choice-in button { border: 0; border-radius: 10px; background: var(--accent); color: var(--accent-text); font-weight: 600; padding: 6px 14px; }
 .choice p { margin: 0; font-size: 11.5px; color: var(--faint); }
+.merge-acts { display: flex; gap: 8px; flex-wrap: wrap; }
+.merge-acts button { border: 0; border-radius: 8px; padding: 5px 12px; font-size: 13px; background: var(--surface); color: var(--muted); }
+.merge-acts button.yes { background: var(--accent); color: var(--accent-text); font-weight: 600; }
+.stale-row { display: grid; gap: 4px; padding: 6px 0; border-top: 1px solid var(--line); }
+.stale-row b { font-size: 14px; } .stale-row small { color: var(--muted); font-size: 12.5px; }
+#upkeepBox { display: grid; gap: 12px; margin-bottom: 12px; } #upkeepBox:empty { display: none; }
+.fitem .x { margin-left: 6px; color: var(--faint); padding: 0 4px; }
 .icon-btn { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; font-size: 14px; width: 30px; height: 28px; padding: 0; color: var(--muted); display: inline-grid; place-items: center; }
 .icon-btn:hover { color: var(--ink); }
 .set-sec { border-top: 1px solid var(--line); margin-top: 14px; padding-top: 10px; display: grid; gap: 8px; }
@@ -498,6 +505,7 @@ body.locked .wrap { visibility: hidden; }
       <div class="rail-foot">
         <button id="exportBtn"></button>
         <label id="importLabel"><span id="importText"></span><input type="file" id="importInput" accept="application/json,.json" hidden></label>
+        <label id="otherLabel"><span id="otherText"></span><input type="file" id="otherInput" accept=".enex,.json,.csv,.txt,.md,.markdown,.html,.htm,text/*" multiple hidden></label>
       </div>
     </aside>
     <section>
@@ -507,6 +515,7 @@ body.locked .wrap { visibility: hidden; }
         <button class="mini" id="filtBtn" type="button" data-n="0"></button>
       </div>
       <div id="reviewBox"></div>
+      <div id="upkeepBox"></div>
       <div id="mergeBox"></div>
       <div class="slips" id="slips"></div>
     </section>
@@ -544,7 +553,7 @@ body.locked .wrap { visibility: hidden; }
       stCloud: "Synced", stLocal: "This device", stAi: "AI on", stBasic: "Basic",
       keyPrompt: "Paste your Anthropic API key (sk-ant-…). It stays in this browser and is sent only to Anthropic. Get one at console.anthropic.com",
       keySaved: "API key saved. Claude will file your notes.", keyRemoveQ: "Remove the saved API key from this browser?", keyRemoved: "API key removed.",
-      keyBad: "The API key didn't work. Tap the status to set it again.", useAI: "Use AI ›", help: "How to use", helpSteps: [["Save", "Type a tip or note in the box and press Save (Ctrl/⌘ + Enter). You can add a source link, or a screenshot when AI is on."], ["AI files it", "AI adds a title, summary, folder, tags and the moments it will help. Dates in the note become reminders."], ["Recall", "Switch to Recall and describe what you're about to do or what's bothering you, e.g. \"About to do laundry\". You get the notes that help, plus short advice."], ["Today's pick", "One stored note resurfaces each day. Notes you mark Helpful come first when you recall."], ["Working with notes", "Pin, mark Helpful, edit or re-file each note. Switch the list between Topic and Date, or narrow it with Filter."], ["Use AI", "Tap the status at the top right and paste your Anthropic API key (console.anthropic.com). It stays in this browser and is sent only to Anthropic. Without a key, Mindrawer files and searches by keyword."], ["Wallpaper", "Pick a wallpaper or your own image from Wallpaper at the top."], ["Condense into a memo", "Turn on Memo in the input box and AI turns long text into a bulleted memo. Edit it in the review screen before saving; the original can be restored."], ["Notifications and today's checklist", "Edit a note → Notify me to pick a date, daily, every N days, weekdays or monthly (silent). Those notes appear in Today's checklist, where you tick them off. Set words to see the note when you type them."], ["Choosing folders", "Each time you save, AI suggests three folder names (e.g. detergent → Detergent, Laundry supplies, Shopping). Pick one or type your own; Mindrawer learns your naming style. In ⚙ Settings → Folders you can let AI decide, sort Other automatically and choose how similar folders are merged."], ["Manage folders", "Use Manage next to Folders to create, rename, merge, delete or ★ favorite folders. Similar folders get a merge suggestion."], ["Files", "Attach a PDF or text file and its text goes into the note."], ["Use it like an app", "Add Mindrawer to your Home Screen (Safari: Share → Add to Home Screen). It opens full screen, works offline, and the browser is less likely to clear your notes."], ["Your data", "Notes are saved in this browser. Use Export / Import to back them up or move them; the same file works with the iPhone app."]],
+      keyBad: "The API key didn't work. Tap the status to set it again.", useAI: "Use AI ›", help: "How to use", helpSteps: [["Save", "Type a tip or note in the box and press Save (Ctrl/⌘ + Enter). You can add a source link, or a screenshot when AI is on."], ["AI files it", "AI adds a title, summary, folder, tags and the moments it will help. Dates in the note become reminders."], ["Recall", "Switch to Recall and describe what you're about to do or what's bothering you, e.g. \"About to do laundry\". You get the notes that help, plus short advice."], ["Today's pick", "One stored note resurfaces each day. Notes you mark Helpful come first when you recall."], ["Working with notes", "Pin, mark Helpful, edit or re-file each note. Switch the list between Topic and Date, or narrow it with Filter."], ["Use AI", "Tap the status at the top right and paste your Anthropic API key (console.anthropic.com). It stays in this browser and is sent only to Anthropic. Without a key, Mindrawer files and searches by keyword."], ["Wallpaper", "Pick a wallpaper or your own image from Wallpaper at the top."], ["Condense into a memo", "Turn on Memo in the input box and AI turns long text into a bulleted memo. Edit it in the review screen before saving; the original can be restored."], ["Notifications and today's checklist", "Edit a note → Notify me to pick a date, daily, every N days, weekdays or monthly (silent). Those notes appear in Today's checklist, where you tick them off. Set words to see the note when you type them."], ["Choosing folders", "Each time you save, AI suggests three folder names (e.g. detergent → Detergent, Laundry supplies, Shopping). Pick one or type your own; Mindrawer learns your naming style. In ⚙ Settings → Folders you can let AI decide, sort Other automatically and choose how similar folders are merged."], ["Manage folders", "Use Manage next to Folders to create, rename, merge, delete or ★ favorite folders. Similar folders get a merge suggestion."], ["Files", "Attach a PDF or text file and its text goes into the note."], ["Use it like an app", "Add Mindrawer to your Home Screen (Safari: Share → Add to Home Screen). It opens full screen, works offline, and the browser is less likely to clear your notes."], ["Keeping notes tidy", "Look-alike notes can be merged. Expired deals and notes you haven't seen in a year show under Worth a check. Learn it on a note brings it back after 1, 3, 7 days and so on. In Filters, save the conditions as a smart folder."], ["Import from other apps", "From other apps (next to Import) reads Evernote (.enex), Google Keep (Takeout .json), CSV, text/Markdown and HTML."], ["Your data", "Notes are saved in this browser. Use Export / Import to back them up or move them; the same file works with the iPhone app."]],
       month: (d) => d.toLocaleDateString("en", { year: "numeric", month: "long" }),
       other: "Other",
       edit: "Edit", saveEdit: "Save", saveRefile: "Save & re-file with AI", cancel: "Cancel", editSaved: "Saved.",
@@ -580,7 +589,7 @@ body.locked .wrap { visibility: hidden; }
       stCloud: "アカウントに保存", stLocal: "この端末に保存", stAi: "AI 整理", stBasic: "簡易整理",
       keyPrompt: "Anthropic の API キー（sk-ant-…）を貼り付けてください。キーはこのブラウザにだけ保存され、Anthropic にだけ送られます。取得: console.anthropic.com",
       keySaved: "API キーを保存しました。Claude が整理します。", keyRemoveQ: "このブラウザに保存した API キーを削除しますか？", keyRemoved: "API キーを削除しました。",
-      keyBad: "API キーが使えませんでした。右上の表示を押して入れ直してください。", useAI: "AI を使う ›", help: "使い方", helpSteps: [["しまう", "欄に Tips やメモを書いて「しまう」を押します（Ctrl/⌘ + Enter でも可）。出典の URL や、AI がオンのときはスクショも付けられます。"], ["AI が整理", "しまったメモに、タイトル・要約・フォルダ・タグ・「役立つ場面」を AI が付けます。本文に日付があればリマインドにも入ります。"], ["ひきだす", "「ひきだす」に切り替えて、これからすることや困りごとを書きます。例:「これから洗濯する」。言葉が一致していなくても、役立つメモと短い助言が出ます。"], ["今日のひとつ", "しまったままのメモを毎日 1 件見せます。「役立った」を押したメモは、取り出しで優先されます。"], ["メモの操作", "ピン留め・役立った・編集・再整理ができます。一覧は「分類」と「日付」で切り替え、「絞り込み」で探せます。"], ["AI を使う", "右上の表示を押して、Anthropic の API キー（console.anthropic.com で取得）を貼り付けます。キーはこのブラウザにだけ保存され、Anthropic にだけ送られます。キーが無くても、キーワードで整理と検索ができます。"], ["壁紙", "上の「壁紙」から好きな壁紙や自分の画像を選べます。"], ["メモ風にまとめる", "入力欄の「メモ風」をオンにすると、長い文を AI が箇条書きのメモにまとめます。しまう前に出る画面で直せます。元の文は「原文と関連」から戻せます。"], ["通知と今日の確認リスト", "メモの「編集」→「通知する」で、日時・毎日・何日おき・曜日・毎月を選べます（音なし）。その日のメモは「今日の確認リスト」に並び、☐ でチェックできます。言葉を決めると、その言葉を入力したときにメモを出します。"], ["フォルダの決め方", "しまうたびに AI がフォルダ名を 3 つ出します（例: 洗剤 → 「洗剤」「洗濯用品」「買い物」）。選ぶか自分で入力すると、あなたの名付け方を覚えて次に生かします。⚙ 設定の「フォルダ分け」で、おまかせ・「その他」の自動振り分け・似たフォルダのまとめ方を変えられます。"], ["フォルダの管理", "フォルダの「管理」から、作る・名前を変える・まとめる・消す・★ お気に入りができます。似たフォルダができると「まとめますか？」と出ます。"], ["ファイル", "「ファイル」から PDF やテキストを付けると、中の文字を読み取ってメモに入れます。"], ["アプリのように使う", "ホーム画面に追加すると（Safari: 共有 →「ホーム画面に追加」）、全画面で開き、電波が無くても使えます。ブラウザにメモを消されにくくもなります。"], ["データ", "メモはこのブラウザの中に保存されます。「書き出す」「読み込む」でバックアップや移動ができます。iPhone アプリとも同じファイルでやり取りできます。"]],
+      keyBad: "API キーが使えませんでした。右上の表示を押して入れ直してください。", useAI: "AI を使う ›", help: "使い方", helpSteps: [["しまう", "欄に Tips やメモを書いて「しまう」を押します（Ctrl/⌘ + Enter でも可）。出典の URL や、AI がオンのときはスクショも付けられます。"], ["AI が整理", "しまったメモに、タイトル・要約・フォルダ・タグ・「役立つ場面」を AI が付けます。本文に日付があればリマインドにも入ります。"], ["ひきだす", "「ひきだす」に切り替えて、これからすることや困りごとを書きます。例:「これから洗濯する」。言葉が一致していなくても、役立つメモと短い助言が出ます。"], ["今日のひとつ", "しまったままのメモを毎日 1 件見せます。「役立った」を押したメモは、取り出しで優先されます。"], ["メモの操作", "ピン留め・役立った・編集・再整理ができます。一覧は「分類」と「日付」で切り替え、「絞り込み」で探せます。"], ["AI を使う", "右上の表示を押して、Anthropic の API キー（console.anthropic.com で取得）を貼り付けます。キーはこのブラウザにだけ保存され、Anthropic にだけ送られます。キーが無くても、キーワードで整理と検索ができます。"], ["壁紙", "上の「壁紙」から好きな壁紙や自分の画像を選べます。"], ["メモ風にまとめる", "入力欄の「メモ風」をオンにすると、長い文を AI が箇条書きのメモにまとめます。しまう前に出る画面で直せます。元の文は「原文と関連」から戻せます。"], ["通知と今日の確認リスト", "メモの「編集」→「通知する」で、日時・毎日・何日おき・曜日・毎月を選べます（音なし）。その日のメモは「今日の確認リスト」に並び、☐ でチェックできます。言葉を決めると、その言葉を入力したときにメモを出します。"], ["フォルダの決め方", "しまうたびに AI がフォルダ名を 3 つ出します（例: 洗剤 → 「洗剤」「洗濯用品」「買い物」）。選ぶか自分で入力すると、あなたの名付け方を覚えて次に生かします。⚙ 設定の「フォルダ分け」で、おまかせ・「その他」の自動振り分け・似たフォルダのまとめ方を変えられます。"], ["フォルダの管理", "フォルダの「管理」から、作る・名前を変える・まとめる・消す・★ お気に入りができます。似たフォルダができると「まとめますか？」と出ます。"], ["ファイル", "「ファイル」から PDF やテキストを付けると、中の文字を読み取ってメモに入れます。"], ["アプリのように使う", "ホーム画面に追加すると（Safari: 共有 →「ホーム画面に追加」）、全画面で開き、電波が無くても使えます。ブラウザにメモを消されにくくもなります。"], ["メモの手入れ", "同じようなメモは 1 つにまとめられます。期限が過ぎたキャンペーンや 1 年以上見ていないメモは「見直したいメモ」に出ます。「覚える」にしたメモは 1・3・7 日…と間をあけて「今日の復習」に出ます。絞り込みの条件は「スマートフォルダ」として保存できます。"], ["他のアプリから取り込む", "「読み込む」の横の「他のアプリから」で、Evernote（.enex）・Google Keep（.json）・CSV・テキスト／Markdown・HTML を取り込めます。"], ["データ", "メモはこのブラウザの中に保存されます。「書き出す」「読み込む」でバックアップや移動ができます。iPhone アプリとも同じファイルでやり取りできます。"]],
       month: (d) => `${d.getFullYear()}年${d.getMonth() + 1}月`,
       other: "その他",
       edit: "編集", saveEdit: "保存", saveRefile: "保存して AI で再整理", cancel: "キャンセル", editSaved: "保存しました。",
@@ -628,6 +637,16 @@ body.locked .wrap { visibility: hidden; }
   Object.assign(I18N.ja, { secApp: "アプリのように使う", appInstalled: "ホーム画面から、アプリとして開いています。", appAdd: "ホーム画面に Mindrawer を追加", appAddBtn: "追加",
     appIos: "Safari の共有ボタン（□↑）→「ホーム画面に追加」を押してください。全画面で開き、電波が無くても使えます。", appOther: "ブラウザのメニュー →「アプリをインストール」（または「ホーム画面に追加」）を選んでください。全画面で開き、電波が無くても使えます。",
     appNote: "ホーム画面に追加すると、ブラウザにメモを消されにくくなり、電波が無くても開けます。" });
+  Object.assign(I18N.en, { importOther: "From other apps", importedOther: (n) => `Imported ${n} notes.`, importNone: "No notes found in that file.", importFiling: (i, n) => `Filing imported notes… ${i}/${n}`,
+    dupH: "These look the same", dupMerge: "Merge into one", dupKeep: "Keep both", dupMerged: "Merged into one note.", dupSaved: (x) => `(A similar note, “${x}”, already exists.)`,
+    staleH: "Worth a check", staleOk: "Still good", staleEdit: "Edit", staleTrash: "Trash", staleExpired: (d) => `Its date (${d}) has passed`, staleOld: (y) => `Saved over ${y} year(s) ago. Still right?`,
+    learn: "Learn it", learnStop: "Stop reviewing", learning: "🧠 Learning", revH: "Review", revLeft: (n) => `${n} left`, revShow: "Show it", revYes: "Remembered", revNo: "Forgot",
+    smartH: "Smart folder", smartPh: "Name (e.g. ★ Recent recipes)", smartSave: "Save", smartNote: "Saves the current filter (text, folder and these options) as a folder.", smartDel: "Delete smart folder", smartDelQ: (x) => `Delete the smart folder “${x}”? Notes stay.` });
+  Object.assign(I18N.ja, { importOther: "他のアプリから", importedOther: (n) => `${n} 件を取り込みました。`, importNone: "取り込めるメモが見つかりませんでした。", importFiling: (i, n) => `取り込んだメモを整理中… ${i}/${n}`,
+    dupH: "同じようなメモがあります", dupMerge: "1 つにまとめる", dupKeep: "別のままにする", dupMerged: "1 つにまとめました。", dupSaved: (x) => `（似たメモ「${x}」がもうあります）`,
+    staleH: "見直したいメモ", staleOk: "まだ使える", staleEdit: "直す", staleTrash: "ゴミ箱へ", staleExpired: (d) => `期限（${d}）が過ぎています`, staleOld: (y) => `${y} 年以上前のメモです。今も正しい？`,
+    learn: "覚える", learnStop: "復習から外す", learning: "🧠 復習中", revH: "今日の復習", revLeft: (n) => `残り ${n} 件`, revShow: "中身を見る", revYes: "覚えてた", revNo: "忘れてた",
+    smartH: "スマートフォルダ", smartPh: "名前（例: ★ 今月の料理）", smartSave: "保存", smartNote: "今の絞り込み（文字・フォルダ・ここでの条件）に名前を付けて、フォルダの列から開けるようにします。", smartDel: "スマートフォルダを消す", smartDelQ: (x) => `スマートフォルダ「${x}」を消しますか？メモは消えません。` });
   Object.assign(I18N.en, { aiFiledBasic: "Couldn't reach Claude, so it was filed by keyword.", resortQ: (n, f) => `Move ${n} ${n === 1 ? "note" : "notes"} from Other into ${f.slice(0, 3).join(", ")}${f.length > 3 ? " and more" : ""}?`, resortYes: "Sort them", resortNo: "Not now", resortDone: (n) => `Sorted ${n} notes.` });
   Object.assign(I18N.ja, { aiFiledBasic: "AI に届かなかったので、キーワードで整理しました。", resortQ: (n, f) => `「その他」の ${n} 件を、${f.slice(0, 3).map((x) => `「${x}」`).join("・")}${f.length > 3 ? " など" : ""}に分けますか？`, resortYes: "振り分ける", resortNo: "今はしない", resortDone: (n) => `${n} 件を振り分けました。` });
   Object.assign(I18N.ja, {
@@ -977,9 +996,10 @@ Return JSON only:
       const opts = folderOptions(rest.text, rest.title, state.notes, folderMeta().map((f) => f.name), [rest.category, ...aiOpts].filter((x) => x && !isCatchAll(x)));
       if (opts.length) rest.category = opts[0].name;
       const createdAt = Date.now();
+      const dup = similarNote(rest.text, url || null, state.notes);
       await state.store.add({ ...rest, ...extra, url: url || null, createdAt, helpful: 0, pinned: false });
       $("noteText").value = ""; $("noteUrl").value = ""; $("srcRow").hidden = true; clearImage(); clearFile(); renderKw("");
-      toast(T().saved(rest.title, rest.category, rest.remindAt));
+      toast(T().saved(rest.title, rest.category, rest.remindAt) + (dup ? " " + T().dupSaved(dup.title) : ""));
       if (fprefs().mode === "ask" && opts.length) { state.choice = { createdAt, title: rest.title, options: opts }; renderChoice(); }
       else tidyFolders();
     } catch { toast(T().saveFail); } finally { busy(false); }
@@ -1058,7 +1078,7 @@ Return JSON only:
 
 
   // ---------- この端末の設定 ----------
-  const PREF = { memo: "mindrawer.memoMode", memoPreview: "mindrawer.memoPreview", checks: "mindrawer.checks", folders: "mindrawer.folders", dismissed: "mindrawer.mergeDismissed", notified: "mindrawer.notified", trash: "mindrawer.trash", pin: "mindrawer.pinHash", backups: "mindrawer.backups", onboarded: "mindrawer.onboarded", reviewSeen: "mindrawer.reviewSeen", fprefs: "mindrawer.folderPrefs", choices: "mindrawer.folderChoices" };
+  const PREF = { memo: "mindrawer.memoMode", memoPreview: "mindrawer.memoPreview", checks: "mindrawer.checks", folders: "mindrawer.folders", dismissed: "mindrawer.mergeDismissed", notified: "mindrawer.notified", trash: "mindrawer.trash", smart: "mindrawer.smartFolders", dupDismissed: "mindrawer.dupDismissed", pin: "mindrawer.pinHash", backups: "mindrawer.backups", onboarded: "mindrawer.onboarded", reviewSeen: "mindrawer.reviewSeen", fprefs: "mindrawer.folderPrefs", choices: "mindrawer.folderChoices" };
   const getJSON = (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch { return d; } };
   const setJSON = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
   state.memoMode = getJSON(PREF.memo, false);
@@ -1594,8 +1614,7 @@ Return JSON only: {"answer":"","ids":["ids of the notes you used, max 5"]}`;
   // ---------- 詳しい絞り込み ----------
   const PERIOD_DAYS = { all: 0, week: 7, month: 31, quarter: 92, year: 366 };
   const advCount = () => { const a = state.adv; return a.tags.length + (a.period !== "all") + a.fav + a.attach + a.notify + a.unfiled; };
-  function advMatch(n) {
-    const a = state.adv;
+  function advMatch(n, a = state.adv) {
     if (a.tags.length && !(n.tags || []).some((x) => a.tags.includes(x))) return false;
     if (PERIOD_DAYS[a.period] && n.createdAt < Date.now() - PERIOD_DAYS[a.period] * 864e5) return false;
     if (a.fav && !n.pinned) return false;
@@ -1621,6 +1640,19 @@ Return JSON only: {"answer":"","ids":["ids of the notes you used, max 5"]}`;
         a.tags = a.tags.includes(x) ? a.tags.filter((y) => y !== x) : [...a.tags, x];
         e.currentTarget.setAttribute("aria-pressed", String(a.tags.includes(x))); renderList();
       } }, "#" + x)))) : null,
+      (() => {
+        const name = el("input", { type: "text", placeholder: t.smartPh, "aria-label": t.smartPh });
+        return el("div", { class: "set-sec" }, el("h3", {}, "⚡ " + t.smartH),
+          el("div", { class: "choice-in" }, name, el("button", { type: "button", onclick: () => {
+            const v = name.value.trim(); if (!v) return;
+            const folder = state.view === "cat" && !["__all", "__pin"].includes(state.folder) && !state.folder.startsWith("smart:") ? state.folder : null;
+            const sf = { id: "s" + Date.now().toString(36), name: v, query: state.filter, folder, adv: JSON.parse(JSON.stringify(state.adv)) };
+            setJSON(PREF.smart, [...getJSON(PREF.smart, []), sf]);
+            state.adv = { period: "all", fav: false, attach: false, notify: false, unfiled: false, tags: [] }; state.filter = ""; $("filter").value = "";
+            state.folder = "smart:" + sf.id; dlg.close(); renderRail(); renderList();
+          } }, t.smartSave)),
+          el("p", { class: "set-note" }, t.smartNote));
+      })(),
       el("div", { class: "ef-acts" },
         el("button", { type: "button", class: "ghost", onclick: () => { state.adv = { period: "all", fav: false, attach: false, notify: false, unfiled: false, tags: [] }; renderList(); openFilters(); } }, t.fReset),
         el("button", { type: "button", onclick: () => dlg.close() }, t.fDone)));
@@ -1771,6 +1803,203 @@ Return JSON only: {"answer":"","ids":["ids of the notes you used, max 5"]}`;
     return msg;
   }
 
+  // ---------- メモの手入れ（スマホ版の Upkeep.swift と同じ規則） ----------
+  function dupScore(a, b) {
+    if (a.url && a.url === b.url) return 1;
+    const ga = grams((a.title || "") + "\n" + (a.text || "")), gb = grams((b.title || "") + "\n" + (b.text || ""));
+    if (ga.size < 4 || gb.size < 4) return a.text && a.text === b.text ? 1 : 0;
+    return jaccard(ga, gb);
+  }
+  function duplicates() {
+    const dis = new Set(getJSON(PREF.dupDismissed, []));
+    const pool = state.notes.filter((n) => !n.example).slice(0, 300);
+    let best = null;
+    for (let i = 0; i < pool.length; i++) for (let j = i + 1; j < pool.length; j++) {
+      const a = pool[i], b = pool[j], sc = dupScore(a, b);
+      if (sc < 0.6) continue;
+      const keepA = (a.helpful || 0) !== (b.helpful || 0) ? (a.helpful || 0) > (b.helpful || 0) : String(a.text).length >= String(b.text).length;
+      const p = keepA ? { keep: a, drop: b } : { keep: b, drop: a };
+      p.key = [a.id, b.id].sort().join("|");
+      if (!dis.has(p.key) && (!best || sc > best.sc)) best = { ...p, sc };
+    }
+    return best;
+  }
+  function similarNote(text, url, notes) {
+    const probe = { text, url, title: "" };
+    let best = null;
+    for (const n of notes) { if (n.example) continue; const sc = dupScore(probe, n); if (sc >= 0.6 && (!best || sc > best.sc)) best = { n, sc }; }
+    return best?.n || null;
+  }
+  function mergedNote(keep, drop) {
+    const a = String(keep.text || "").trim(), b = String(drop.text || "").trim();
+    let text = a;
+    if (b && !a.includes(b)) text = b.includes(a) ? b : a + "\n\n" + b;
+    const uni = (x, y) => { const seen = new Set(); return [...(x || []), ...(y || [])].filter((v) => !seen.has(v.toLowerCase()) && seen.add(v.toLowerCase())); };
+    return { text, tags: uni(keep.tags, drop.tags), situations: uni(keep.situations, drop.situations), helpful: (keep.helpful || 0) + (drop.helpful || 0),
+      pinned: !!(keep.pinned || drop.pinned), url: keep.url || drop.url || null, summary: keep.summary || drop.summary || "", createdAt: Math.min(keep.createdAt, drop.createdAt) };
+  }
+  const DEADLINE = ["まで", "期限", "締切", "締め切り", "キャンペーン", "セール", "限定", "終了", "until", "deadline", "expire", "sale", "campaign", "ends"];
+  function staleNotes() {
+    const now = Date.now(), today = todayISO(), out = [];
+    for (const n of state.notes) {
+      if (n.example || (n.checkedAt && now - n.checkedAt < 365 * 864e5)) continue;
+      const low = (String(n.text) + " " + n.title).toLowerCase();
+      if (n.linkBroken) out.push({ n, rank: 0, label: "" });
+      else if (n.remindAt && n.remindAt < today && now - new Date(n.remindAt).getTime() > 3 * 864e5 && DEADLINE.some((w) => low.includes(w))) out.push({ n, rank: 1, label: T().staleExpired(n.remindAt) });
+      else { const days = Math.floor((now - Math.max(n.createdAt, n.lastSeen || 0)) / 864e5); if (days >= 365) out.push({ n, rank: 2, label: T().staleOld(Math.floor(days / 365)) }); }
+    }
+    return out.sort((a, b) => a.rank - b.rank || a.n.createdAt - b.n.createdAt).slice(0, 3);
+  }
+  const REV_DAYS = [1, 3, 7, 14, 30, 90, 180];
+  const reviewStart = () => ({ step: 0, due: sod(Date.now()).getTime() + 864e5 });
+  function reviewAnswer(r, ok) {
+    const step = ok ? Math.min((r?.step || 0) + 1, REV_DAYS.length - 1) : 0;
+    return { step, due: sod(Date.now()).getTime() + (ok ? REV_DAYS[step] : 1) * 864e5 };
+  }
+  const dueReviews = () => state.notes.filter((n) => n.review && n.review.due <= Date.now()).sort((a, b) => a.review.due - b.review.due);
+  function smartMatch(sf, n) {
+    const q = String(sf.query || "").trim().toLowerCase();
+    return (!sf.folder || n.category === sf.folder) && (!q || hay(n).includes(q)) && advMatch(n, { period: "all", fav: false, attach: false, notify: false, unfiled: false, tags: [], ...sf.adv });
+  }
+  let revShown = false;
+  function renderUpkeep() {
+    const t = T(), box = $("upkeepBox"), cards = [];
+    const due = dueReviews();
+    if (due.length) {
+      const n = due[0];
+      cards.push(el("div", { class: "review" },
+        el("div", { class: "review-top" }, el("b", {}, "🧠 " + t.revH), el("small", {}, t.revLeft(due.length))),
+        el("b", {}, n.title),
+        revShown ? el("p", { class: "raw", style: "white-space:pre-wrap;color:var(--ink)" }, n.text) : null,
+        el("div", { class: "merge-acts" }, ...(revShown
+          ? [el("button", { class: "yes", onclick: async () => { revShown = false; await state.store.update(n.id, { review: reviewAnswer(n.review, true) }); } }, t.revYes),
+             el("button", { onclick: async () => { revShown = false; await state.store.update(n.id, { review: reviewAnswer(n.review, false) }); } }, t.revNo)]
+          : [el("button", { class: "yes", onclick: () => { revShown = true; renderUpkeep(); } }, t.revShow)]))));
+    }
+    const stale = staleNotes();
+    if (stale.length) cards.push(el("div", { class: "merge" }, el("p", {}, el("b", {}, "🕰 " + t.staleH)),
+      ...stale.map(({ n, label }) => el("div", { class: "stale-row" }, el("b", {}, n.title), el("small", {}, label),
+        el("div", { class: "merge-acts" },
+          el("button", { onclick: () => state.store.update(n.id, { checkedAt: Date.now(), linkBroken: null }) }, t.staleOk),
+          el("button", { onclick: () => { state.editing = n.id; jumpTo(n); } }, t.staleEdit),
+          el("button", { onclick: () => trashNote(n) }, t.staleTrash))))));
+    const d = duplicates();
+    if (d) cards.push(el("div", { class: "merge" }, el("p", {}, el("b", {}, "📑 " + t.dupH)),
+      ...[d.keep, d.drop].map((n) => el("div", { class: "stale-row" }, el("b", {}, n.title), el("small", {}, String(n.text).slice(0, 80)))),
+      el("div", { class: "merge-acts" },
+        el("button", { class: "yes", onclick: async () => { await state.store.update(d.keep.id, mergedNote(d.keep, d.drop)); await trashNote(d.drop); toast(t.dupMerged); } }, t.dupMerge),
+        el("button", { onclick: () => { setJSON(PREF.dupDismissed, [...getJSON(PREF.dupDismissed, []), d.key]); renderUpkeep(); } }, t.dupKeep))));
+    box.replaceChildren(...cards);
+  }
+
+  // ---------- 他のアプリから取り込む（スマホ版の Importer.swift と同じ） ----------
+  const decodeEnt = (x) => String(x).replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'").replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").trim();
+  function stripHTML(h) {
+    let x = String(h);
+    for (const [p, r] of [[/<(script|style|head|title)[\s\S]*?<\/\1>/gi, ""], [/<br\s*\/?>/gi, "\n"], [/<\/(p|div|li|h[1-6]|tr|en-todo)>/gi, "\n"], [/<li[^>]*>/gi, "・"], [/<en-todo checked="true"[^>]*\/?>/gi, "☑ "], [/<en-todo[^>]*\/?>/gi, "☐ "], [/<[^>]+>/g, ""]]) x = x.replace(p, r);
+    return decodeEnt(x).split("\n").map((l) => l.trim()).join("\n").replace(/\n{3,}/g, "\n\n").trim();
+  }
+  const tagBlocks = (x, tag) => [...String(x).matchAll(new RegExp(`<${tag}(?:\\s[^>]*)?>([\\s\\S]*?)</${tag}>`, "g"))].map((m) => m[1]);
+  function plainNote(body, fallbackTitle) {
+    let text = String(body).trim(); if (!text) return null;
+    let title = "";
+    const first = text.split("\n")[0];
+    if (first.startsWith("#")) { title = first.replace(/^[#\s]+/, "").trim(); text = text.split("\n").slice(1).join("\n").trim() || title; }
+    if (!title) title = fallbackTitle && text.split("\n")[0].length > 48 ? fallbackTitle : text.split(/[\n。.!?]/)[0].trim().slice(0, 48);
+    const u = text.match(/https?:\/\/[^\s)\]>"']+/);
+    return { text, title: (title || fallbackTitle || "Note").slice(0, 80), url: u ? u[0] : null, tags: [], createdAt: Date.now() };
+  }
+  function csvRows(text) {
+    const rows = []; let row = [], cell = "", q = false; const s2 = String(text).replace(/\r\n/g, "\n");
+    for (let i = 0; i < s2.length; i++) {
+      const ch = s2[i];
+      if (q) { if (ch === '"') { if (s2[i + 1] === '"') { cell += '"'; i++; } else q = false; } else cell += ch; }
+      else if (ch === '"') q = true; else if (ch === ",") { row.push(cell); cell = ""; } else if (ch === "\n") { row.push(cell); rows.push(row); row = []; cell = ""; } else cell += ch;
+    }
+    if (cell || row.length) { row.push(cell); rows.push(row); }
+    return rows.filter((r) => r.some((c) => c.trim()));
+  }
+  function parseImport(text, filename) {
+    const ext = (filename.split(".").pop() || "").toLowerCase(), base = filename.replace(/\.[^.]+$/, "");
+    let out = [];
+    if (ext === "enex") {
+      out = tagBlocks(text, "note").map((b) => {
+        const title = decodeEnt(tagBlocks(b, "title")[0] || "");
+        const n = plainNote(stripHTML((tagBlocks(b, "content")[0] || "").replace("<![CDATA[", "").replace("]]>", "")), title);
+        if (!n) return null;
+        if (title) n.title = title;
+        n.tags = tagBlocks(b, "tag").map(decodeEnt);
+        const src = tagBlocks(b, "source-url")[0]; if (src) n.url = decodeEnt(src);
+        const c = (tagBlocks(b, "created")[0] || "").match(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z$/);
+        if (c) n.createdAt = Date.UTC(+c[1], c[2] - 1, +c[3], +c[4], +c[5], +c[6]);
+        return n;
+      });
+    } else if (ext === "json") {
+      let j; try { j = JSON.parse(text); } catch { return []; }
+      out = (Array.isArray(j) ? j : [j]).filter((x) => x && (x.textContent != null || x.listContent) && !x.isTrashed).map((x) => {
+        let body = x.textContent || "";
+        if (Array.isArray(x.listContent)) body += x.listContent.map((i) => (i.isChecked ? "☑ " : "☐ ") + (i.text || "")).join("\n");
+        const n = plainNote(body, x.title || ""); if (!n) return null;
+        if (x.title) n.title = x.title;
+        n.tags = (x.labels || []).map((l) => l.name).filter(Boolean);
+        n.url = (x.annotations || []).map((a) => a.url).find(Boolean) || n.url;
+        if (x.createdTimestampUsec) n.createdAt = Math.round(Number(x.createdTimestampUsec) / 1000);
+        if (x.isPinned) n.pinned = true;
+        return n;
+      });
+    } else if (ext === "csv") {
+      const rows = csvRows(text); if (!rows.length) return [];
+      const h = rows[0].map((x) => x.toLowerCase().trim()), col = (names) => { const i = h.findIndex((x) => names.includes(x)); return i < 0 ? null : i; };
+      const ti = col(["title", "タイトル", "件名", "name"]), xi = col(["text", "content", "body", "note", "memo", "本文", "内容", "メモ"]), ui = col(["url", "link", "source", "出典", "リンク"]), gi = col(["tags", "tag", "labels", "タグ"]);
+      const hasH = ti != null || xi != null;
+      out = (hasH ? rows.slice(1) : rows).map((r) => {
+        const cell = (i) => (i != null && i < r.length ? r[i] : "");
+        const body = hasH ? (xi != null ? cell(xi) : r.filter((_, i) => i !== ti && i !== ui && i !== gi).join("\n")) : r.join("\n");
+        const title = cell(ti), n = plainNote(body || title, title); if (!n) return null;
+        if (title) n.title = title;
+        if (cell(ui)) n.url = cell(ui);
+        if (cell(gi)) n.tags = cell(gi).split(/[,、;|#]/).map((x) => x.trim()).filter(Boolean);
+        return n;
+      });
+    } else if (ext === "html" || ext === "htm") {
+      const title = decodeEnt(stripHTML(tagBlocks(text, "title")[0] || "")) || base;
+      out = [plainNote(stripHTML(text), title)];
+    } else {
+      const parts = [[]];
+      for (const l of String(text).replace(/\r\n/g, "\n").split("\n")) { const t2 = l.trim(); if (t2.length >= 3 && /^(-+|=+)$/.test(t2)) parts.push([]); else parts[parts.length - 1].push(l); }
+      const chunks = parts.map((p) => p.join("\n")).filter((c) => c.trim());
+      out = chunks.map((c) => plainNote(c, chunks.length === 1 ? base : ""));
+    }
+    return out.filter((n) => n && n.text.trim());
+  }
+  async function importOther(files) {
+    const t = T(), have = new Set(state.notes.map((n) => n.title + "|" + String(n.text).slice(0, 200)));
+    const folders = folderMeta().map((f) => f.name), added = [];
+    for (const f of files) {
+      for (const n of parseImport(await f.text(), f.name)) {
+        const key = n.title + "|" + n.text.slice(0, 200);
+        if (have.has(key)) continue;
+        have.add(key);
+        const r = autoFolder([n.title, n.text].join("\n"), state.notes, folders);
+        const note = { summary: "", situations: [], remindAt: null, helpful: 0, pinned: false, ...n, category: r.folder, tags: n.tags.length ? n.tags : r.tags };
+        await state.store.add(note); added.push(note);
+      }
+    }
+    $("otherInput").value = "";
+    toast(added.length ? t.importedOther(added.length) : t.importNone);
+    // AI があれば、取り込んだメモを順に整理し直す（多いときは 100 件まで）
+    if (state.sample && added.length) {
+      const list = added.slice(0, 100);
+      for (const [i, x] of list.entries()) {
+        const n = state.notes.find((y) => y.createdAt === x.createdAt && y.title === x.title);
+        if (!n) continue;
+        toast(t.importFiling(i + 1, list.length));
+        try { await refile(n); } catch {}
+      }
+      toast(t.importedOther(added.length));
+    }
+  }
+
   // ---------- render ----------
   function folderOf(n) { return state.view === "cat" ? n.category || T().other : String(monthKey(n.createdAt)); }
   function folderLabel(k) { return state.view === "cat" ? k : monthLabel(Number(k)); }
@@ -1784,6 +2013,7 @@ Return JSON only: {"answer":"","ids":["ids of the notes you used, max 5"]}`;
       el("div", { class: "chips" },
         n.remindAt ? el("span", { class: "chip rem" }, n.remindAt) : null,
         n.alarm && alarmSummary(n.alarm) ? el("span", { class: "chip rem" }, "🔔 " + alarmSummary(n.alarm)) : null,
+        n.review ? el("span", { class: "chip rem" }, t.learning) : null,
         (n.situations || []).map((x) => el("span", { class: "chip sit" }, x)),
         (n.tags || []).map((x) => el("span", { class: "chip" }, "#" + x))),
     );
@@ -1803,6 +2033,7 @@ Return JSON only: {"answer":"","ids":["ids of the notes you used, max 5"]}`;
       el("button", { "aria-pressed": String(!!n.pinned), onclick: () => state.store.update(n.id, { pinned: !n.pinned }) }, (n.pinned ? "★ " : "☆ ") + t.pin),
       el("button", { onclick: () => state.store.update(n.id, { helpful: (n.helpful || 0) + 1 }) }, "↑ " + t.helpful + (n.helpful ? ` · ${n.helpful}` : "")),
       el("button", { onclick: () => { state.editing = n.id; renderList(); renderAnswer(); } }, t.edit),
+      el("button", { "aria-pressed": String(!!n.review), onclick: () => state.store.update(n.id, { review: n.review ? null : reviewStart() }) }, "🧠 " + (n.review ? t.learnStop : t.learn)),
       el("button", { "aria-pressed": String(n.plannedDay === todayISO()), onclick: () => state.store.update(n.id, { plannedDay: n.plannedDay === todayISO() ? null : todayISO() }) }, "☑ " + (n.plannedDay === todayISO() ? t.fromToday : t.toToday)),
       state.sample ? el("button", { onclick: async (e) => { e.currentTarget.disabled = true; await refile(n); } }, t.refile) : null,
       el("button", { class: "del" + (armed ? " armed" : ""), onclick: async () => {
@@ -1906,7 +2137,7 @@ Return JSON only: {"answer":"","ids":["ids of the notes you used, max 5"]}`;
     $("pickH").textContent = t.pickH; $("remH").textContent = t.remH; $("foldH").textContent = t.foldH;
     $("byCat").textContent = t.byCat; $("byDate").textContent = t.byDate;
     $("byCat").setAttribute("aria-pressed", String(state.view === "cat")); $("byDate").setAttribute("aria-pressed", String(state.view === "date"));
-    $("filter").placeholder = t.filterPh; $("exportBtn").textContent = t.exportBtn; $("importText").textContent = t.importText;
+    $("filter").placeholder = t.filterPh; $("exportBtn").textContent = t.exportBtn; $("importText").textContent = t.importText; $("otherText").textContent = t.importOther;
     $("exportBtn").hidden = false;
     const st = $("status");
     st.textContent = state.store ? `${state.store.kind === "db" ? t.stCloud : t.stLocal} · ${state.sample ? t.stAi : t.stBasic}` : "";
@@ -1947,10 +2178,17 @@ Return JSON only: {"answer":"","ids":["ids of the notes you used, max 5"]}`;
     for (const n of notes) { const k = folderOf(n); counts.set(k, (counts.get(k) || 0) + 1); }
     const keys = [...counts.keys()].sort(state.view === "cat" ? (a, b) => (isFavFolder(b) - isFavFolder(a)) || counts.get(b) - counts.get(a) || a.localeCompare(b) : (a, b) => Number(b) - Number(a));
     const pinnedN = notes.filter((n) => n.pinned).length;
-    if (!["__all", "__pin"].includes(state.folder) && !counts.has(state.folder)) state.folder = "__all";
+    const smarts = getJSON(PREF.smart, []);
+    if (!["__all", "__pin"].includes(state.folder) && !state.folder.startsWith("smart:") && !counts.has(state.folder)) state.folder = "__all";
+    if (state.folder.startsWith("smart:") && !smarts.some((x) => "smart:" + x.id === state.folder)) state.folder = "__all";
     if (state.folder === "__pin" && !pinnedN) state.folder = "__all";
     const item = (key, label, n, dot) => el("button", { class: "fitem", "aria-pressed": String(state.folder === key), onclick: () => { state.folder = key; renderRail(); renderList(); } }, dot ? el("i", { class: "dot" }) : null, label, el("span", { class: "n" }, n));
-    $("folders").replaceChildren(...(notes.length ? [item("__all", t.all, notes.length), pinnedN ? item("__pin", "★ " + t.pinned, pinnedN) : null, ...keys.map((k) => item(k, (state.view === "cat" && isFavFolder(k) ? "★ " : "") + folderLabel(k), counts.get(k), state.view === "cat"))].filter(Boolean) : []));
+    const smartItems = smarts.map((sf) => {
+      const b = item("smart:" + sf.id, "⚡ " + sf.name, notes.filter((n) => smartMatch(sf, n)).length);
+      b.append(el("span", { class: "x", role: "button", "aria-label": t.smartDel, title: t.smartDel, onclick: (e) => { e.stopPropagation(); if (confirm(t.smartDelQ(sf.name))) { setJSON(PREF.smart, getJSON(PREF.smart, []).filter((x) => x.id !== sf.id)); renderRail(); renderList(); } } }, "×"));
+      return b;
+    });
+    $("folders").replaceChildren(...(notes.length ? [item("__all", t.all, notes.length), pinnedN ? item("__pin", "★ " + t.pinned, pinnedN) : null, ...smartItems, ...keys.map((k) => item(k, (state.view === "cat" && isFavFolder(k) ? "★ " : "") + folderLabel(k), counts.get(k), state.view === "cat"))].filter(Boolean) : []));
     let dl = $("folderNames");
     if (!dl) { dl = el("datalist", { id: "folderNames" }); document.body.append(dl); }
     dl.replaceChildren(...[...new Set(notes.map((n) => n.category))].map((c) => el("option", { value: c })));
@@ -1967,9 +2205,10 @@ Return JSON only: {"answer":"","ids":["ids of the notes you used, max 5"]}`;
       return;
     }
     const f = state.filter.toLowerCase();
-    renderReview();
+    renderReview(); renderUpkeep();
+    const smart = state.folder.startsWith("smart:") ? getJSON(PREF.smart, []).find((x) => "smart:" + x.id === state.folder) : null;
     const shown = state.notes.filter((n) =>
-      (state.folder === "__all" || (state.folder === "__pin" ? n.pinned : folderOf(n) === state.folder)) && (!f || hay(n).includes(f)) && advMatch(n));
+      (smart ? smartMatch(smart, n) : state.folder === "__all" || (state.folder === "__pin" ? n.pinned : folderOf(n) === state.folder)) && (!f || hay(n).includes(f)) && advMatch(n));
     $("filtBtn").dataset.n = String(advCount());
     $("filtBtn").textContent = T().filters + (advCount() ? ` · ${advCount()}` : "");
     $("listH").textContent = t.listH(shown.length);
@@ -2075,6 +2314,7 @@ Return JSON only: {"answer":"","ids":["ids of the notes you used, max 5"]}`;
   $("helpClose").onclick = () => $("help").close();
   $("help").addEventListener("click", (e) => { if (e.target === $("help")) $("help").close(); });
   $("importInput").onchange = (e) => e.target.files[0] && importNotes(e.target.files[0]);
+  $("otherInput").onchange = (e) => e.target.files.length && importOther([...e.target.files]);
   $("setBtn").onclick = openSettings;
   $("chatBtn").onclick = openChat;
   $("filtBtn").onclick = openFilters;
