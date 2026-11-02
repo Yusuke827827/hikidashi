@@ -5,6 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="description" content="Mindrawer: 見つけた Tips をしまっておき、必要なときに取り出すメモ帳">
 <title>Mindrawer</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png" sizes="192x192">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#f6f5f2">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Mindrawer">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <style>
 /* Layout: Flowa's look (warm paper, vermilion accent, frosted cards over textured backdrops). Capture/recall bar on top, index rail beside a column of note cards. */
 :root {
@@ -536,7 +544,7 @@ body.locked .wrap { visibility: hidden; }
       stCloud: "Synced", stLocal: "This device", stAi: "AI on", stBasic: "Basic",
       keyPrompt: "Paste your Anthropic API key (sk-ant-…). It stays in this browser and is sent only to Anthropic. Get one at console.anthropic.com",
       keySaved: "API key saved. Claude will file your notes.", keyRemoveQ: "Remove the saved API key from this browser?", keyRemoved: "API key removed.",
-      keyBad: "The API key didn't work. Tap the status to set it again.", useAI: "Use AI ›", help: "How to use", helpSteps: [["Save", "Type a tip or note in the box and press Save (Ctrl/⌘ + Enter). You can add a source link, or a screenshot when AI is on."], ["AI files it", "AI adds a title, summary, folder, tags and the moments it will help. Dates in the note become reminders."], ["Recall", "Switch to Recall and describe what you're about to do or what's bothering you, e.g. \"About to do laundry\". You get the notes that help, plus short advice."], ["Today's pick", "One stored note resurfaces each day. Notes you mark Helpful come first when you recall."], ["Working with notes", "Pin, mark Helpful, edit or re-file each note. Switch the list between Topic and Date, or narrow it with Filter."], ["Use AI", "Tap the status at the top right and paste your Anthropic API key (console.anthropic.com). It stays in this browser and is sent only to Anthropic. Without a key, Mindrawer files and searches by keyword."], ["Wallpaper", "Pick a wallpaper or your own image from Wallpaper at the top."], ["Condense into a memo", "Turn on Memo in the input box and AI turns long text into a bulleted memo. Edit it in the review screen before saving; the original can be restored."], ["Notifications and today's checklist", "Edit a note → Notify me to pick a date, daily, every N days, weekdays or monthly (silent). Those notes appear in Today's checklist, where you tick them off. Set words to see the note when you type them."], ["Choosing folders", "Each time you save, AI suggests three folder names (e.g. detergent → Detergent, Laundry supplies, Shopping). Pick one or type your own; Mindrawer learns your naming style. In ⚙ Settings → Folders you can let AI decide, sort Other automatically and choose how similar folders are merged."], ["Manage folders", "Use Manage next to Folders to create, rename, merge, delete or ★ favorite folders. Similar folders get a merge suggestion."], ["Files", "Attach a PDF or text file and its text goes into the note."], ["Your data", "Notes are saved in this browser. Use Export / Import to back them up or move them; the same file works with the iPhone app."]],
+      keyBad: "The API key didn't work. Tap the status to set it again.", useAI: "Use AI ›", help: "How to use", helpSteps: [["Save", "Type a tip or note in the box and press Save (Ctrl/⌘ + Enter). You can add a source link, or a screenshot when AI is on."], ["AI files it", "AI adds a title, summary, folder, tags and the moments it will help. Dates in the note become reminders."], ["Recall", "Switch to Recall and describe what you're about to do or what's bothering you, e.g. \"About to do laundry\". You get the notes that help, plus short advice."], ["Today's pick", "One stored note resurfaces each day. Notes you mark Helpful come first when you recall."], ["Working with notes", "Pin, mark Helpful, edit or re-file each note. Switch the list between Topic and Date, or narrow it with Filter."], ["Use AI", "Tap the status at the top right and paste your Anthropic API key (console.anthropic.com). It stays in this browser and is sent only to Anthropic. Without a key, Mindrawer files and searches by keyword."], ["Wallpaper", "Pick a wallpaper or your own image from Wallpaper at the top."], ["Condense into a memo", "Turn on Memo in the input box and AI turns long text into a bulleted memo. Edit it in the review screen before saving; the original can be restored."], ["Notifications and today's checklist", "Edit a note → Notify me to pick a date, daily, every N days, weekdays or monthly (silent). Those notes appear in Today's checklist, where you tick them off. Set words to see the note when you type them."], ["Choosing folders", "Each time you save, AI suggests three folder names (e.g. detergent → Detergent, Laundry supplies, Shopping). Pick one or type your own; Mindrawer learns your naming style. In ⚙ Settings → Folders you can let AI decide, sort Other automatically and choose how similar folders are merged."], ["Manage folders", "Use Manage next to Folders to create, rename, merge, delete or ★ favorite folders. Similar folders get a merge suggestion."], ["Files", "Attach a PDF or text file and its text goes into the note."], ["Use it like an app", "Add Mindrawer to your Home Screen (Safari: Share → Add to Home Screen). It opens full screen, works offline, and the browser is less likely to clear your notes."], ["Your data", "Notes are saved in this browser. Use Export / Import to back them up or move them; the same file works with the iPhone app."]],
       month: (d) => d.toLocaleDateString("en", { year: "numeric", month: "long" }),
       other: "Other",
       edit: "Edit", saveEdit: "Save", saveRefile: "Save & re-file with AI", cancel: "Cancel", editSaved: "Saved.",
@@ -572,7 +580,7 @@ body.locked .wrap { visibility: hidden; }
       stCloud: "アカウントに保存", stLocal: "この端末に保存", stAi: "AI 整理", stBasic: "簡易整理",
       keyPrompt: "Anthropic の API キー（sk-ant-…）を貼り付けてください。キーはこのブラウザにだけ保存され、Anthropic にだけ送られます。取得: console.anthropic.com",
       keySaved: "API キーを保存しました。Claude が整理します。", keyRemoveQ: "このブラウザに保存した API キーを削除しますか？", keyRemoved: "API キーを削除しました。",
-      keyBad: "API キーが使えませんでした。右上の表示を押して入れ直してください。", useAI: "AI を使う ›", help: "使い方", helpSteps: [["しまう", "欄に Tips やメモを書いて「しまう」を押します（Ctrl/⌘ + Enter でも可）。出典の URL や、AI がオンのときはスクショも付けられます。"], ["AI が整理", "しまったメモに、タイトル・要約・フォルダ・タグ・「役立つ場面」を AI が付けます。本文に日付があればリマインドにも入ります。"], ["ひきだす", "「ひきだす」に切り替えて、これからすることや困りごとを書きます。例:「これから洗濯する」。言葉が一致していなくても、役立つメモと短い助言が出ます。"], ["今日のひとつ", "しまったままのメモを毎日 1 件見せます。「役立った」を押したメモは、取り出しで優先されます。"], ["メモの操作", "ピン留め・役立った・編集・再整理ができます。一覧は「分類」と「日付」で切り替え、「絞り込み」で探せます。"], ["AI を使う", "右上の表示を押して、Anthropic の API キー（console.anthropic.com で取得）を貼り付けます。キーはこのブラウザにだけ保存され、Anthropic にだけ送られます。キーが無くても、キーワードで整理と検索ができます。"], ["壁紙", "上の「壁紙」から好きな壁紙や自分の画像を選べます。"], ["メモ風にまとめる", "入力欄の「メモ風」をオンにすると、長い文を AI が箇条書きのメモにまとめます。しまう前に出る画面で直せます。元の文は「原文と関連」から戻せます。"], ["通知と今日の確認リスト", "メモの「編集」→「通知する」で、日時・毎日・何日おき・曜日・毎月を選べます（音なし）。その日のメモは「今日の確認リスト」に並び、☐ でチェックできます。言葉を決めると、その言葉を入力したときにメモを出します。"], ["フォルダの決め方", "しまうたびに AI がフォルダ名を 3 つ出します（例: 洗剤 → 「洗剤」「洗濯用品」「買い物」）。選ぶか自分で入力すると、あなたの名付け方を覚えて次に生かします。⚙ 設定の「フォルダ分け」で、おまかせ・「その他」の自動振り分け・似たフォルダのまとめ方を変えられます。"], ["フォルダの管理", "フォルダの「管理」から、作る・名前を変える・まとめる・消す・★ お気に入りができます。似たフォルダができると「まとめますか？」と出ます。"], ["ファイル", "「ファイル」から PDF やテキストを付けると、中の文字を読み取ってメモに入れます。"], ["データ", "メモはこのブラウザの中に保存されます。「書き出す」「読み込む」でバックアップや移動ができます。iPhone アプリとも同じファイルでやり取りできます。"]],
+      keyBad: "API キーが使えませんでした。右上の表示を押して入れ直してください。", useAI: "AI を使う ›", help: "使い方", helpSteps: [["しまう", "欄に Tips やメモを書いて「しまう」を押します（Ctrl/⌘ + Enter でも可）。出典の URL や、AI がオンのときはスクショも付けられます。"], ["AI が整理", "しまったメモに、タイトル・要約・フォルダ・タグ・「役立つ場面」を AI が付けます。本文に日付があればリマインドにも入ります。"], ["ひきだす", "「ひきだす」に切り替えて、これからすることや困りごとを書きます。例:「これから洗濯する」。言葉が一致していなくても、役立つメモと短い助言が出ます。"], ["今日のひとつ", "しまったままのメモを毎日 1 件見せます。「役立った」を押したメモは、取り出しで優先されます。"], ["メモの操作", "ピン留め・役立った・編集・再整理ができます。一覧は「分類」と「日付」で切り替え、「絞り込み」で探せます。"], ["AI を使う", "右上の表示を押して、Anthropic の API キー（console.anthropic.com で取得）を貼り付けます。キーはこのブラウザにだけ保存され、Anthropic にだけ送られます。キーが無くても、キーワードで整理と検索ができます。"], ["壁紙", "上の「壁紙」から好きな壁紙や自分の画像を選べます。"], ["メモ風にまとめる", "入力欄の「メモ風」をオンにすると、長い文を AI が箇条書きのメモにまとめます。しまう前に出る画面で直せます。元の文は「原文と関連」から戻せます。"], ["通知と今日の確認リスト", "メモの「編集」→「通知する」で、日時・毎日・何日おき・曜日・毎月を選べます（音なし）。その日のメモは「今日の確認リスト」に並び、☐ でチェックできます。言葉を決めると、その言葉を入力したときにメモを出します。"], ["フォルダの決め方", "しまうたびに AI がフォルダ名を 3 つ出します（例: 洗剤 → 「洗剤」「洗濯用品」「買い物」）。選ぶか自分で入力すると、あなたの名付け方を覚えて次に生かします。⚙ 設定の「フォルダ分け」で、おまかせ・「その他」の自動振り分け・似たフォルダのまとめ方を変えられます。"], ["フォルダの管理", "フォルダの「管理」から、作る・名前を変える・まとめる・消す・★ お気に入りができます。似たフォルダができると「まとめますか？」と出ます。"], ["ファイル", "「ファイル」から PDF やテキストを付けると、中の文字を読み取ってメモに入れます。"], ["アプリのように使う", "ホーム画面に追加すると（Safari: 共有 →「ホーム画面に追加」）、全画面で開き、電波が無くても使えます。ブラウザにメモを消されにくくもなります。"], ["データ", "メモはこのブラウザの中に保存されます。「書き出す」「読み込む」でバックアップや移動ができます。iPhone アプリとも同じファイルでやり取りできます。"]],
       month: (d) => `${d.getFullYear()}年${d.getMonth() + 1}月`,
       other: "その他",
       edit: "編集", saveEdit: "保存", saveRefile: "保存して AI で再整理", cancel: "キャンセル", editSaved: "保存しました。",
@@ -614,6 +622,12 @@ body.locked .wrap { visibility: hidden; }
     secFold: "フォルダ分け", fMode: "フォルダの決め方", fModes: { ask: "3 つの候補から選ぶ", auto: "おまかせ（AI が自動で決める）" }, fPrefer: "なるべく今あるフォルダに入れる", fAutoResort: "「その他」を自動で振り分ける", fMerge: "似たフォルダ", fMerges: { suggest: "まとめるか聞く", auto: "自動でまとめる", off: "何もしない" }, fTidy: "今すぐフォルダを整える", fTidyNone: "整えるものはありませんでした。", fForget: "覚えた名付けの好みを消す", fForgot: "名付けの好みを消しました。",
     fNote: "「3 つの候補から選ぶ」では、しまうたびに AI がフォルダ名を 3 つ出します（例: 洗剤 → 「洗剤」「洗濯用品」「買い物」）。どれも違えば自分で入力できます。選んだ結果から、名前の付け方や今あるフォルダを選びがちかを覚えて、次の候補に生かします。「おまかせ」では 1 番目の候補で自動で入れ、「その他」も自動で振り分けます。",
     tidyResort: (n) => `「その他」の ${n} 件を振り分けました`, tidyMerge: (a, b) => `「${a}」を「${b}」にまとめました` });
+  Object.assign(I18N.en, { secApp: "Use it like an app", appInstalled: "Opened as an app from your Home Screen.", appAdd: "Add Mindrawer to your Home Screen", appAddBtn: "Add",
+    appIos: "In Safari, tap Share (□↑) → Add to Home Screen. It opens full screen and works offline.", appOther: "Use your browser's menu → Install app (or Add to Home screen). It opens full screen and works offline.",
+    appNote: "Added to the Home Screen, your notes are less likely to be cleared by the browser, and it opens without a connection." });
+  Object.assign(I18N.ja, { secApp: "アプリのように使う", appInstalled: "ホーム画面から、アプリとして開いています。", appAdd: "ホーム画面に Mindrawer を追加", appAddBtn: "追加",
+    appIos: "Safari の共有ボタン（□↑）→「ホーム画面に追加」を押してください。全画面で開き、電波が無くても使えます。", appOther: "ブラウザのメニュー →「アプリをインストール」（または「ホーム画面に追加」）を選んでください。全画面で開き、電波が無くても使えます。",
+    appNote: "ホーム画面に追加すると、ブラウザにメモを消されにくくなり、電波が無くても開けます。" });
   Object.assign(I18N.en, { aiFiledBasic: "Couldn't reach Claude, so it was filed by keyword.", resortQ: (n, f) => `Move ${n} ${n === 1 ? "note" : "notes"} from Other into ${f.slice(0, 3).join(", ")}${f.length > 3 ? " and more" : ""}?`, resortYes: "Sort them", resortNo: "Not now", resortDone: (n) => `Sorted ${n} notes.` });
   Object.assign(I18N.ja, { aiFiledBasic: "AI に届かなかったので、キーワードで整理しました。", resortQ: (n, f) => `「その他」の ${n} 件を、${f.slice(0, 3).map((x) => `「${x}」`).join("・")}${f.length > 3 ? " など" : ""}に分けますか？`, resortYes: "振り分ける", resortNo: "今はしない", resortDone: (n) => `${n} 件を振り分けました。` });
   Object.assign(I18N.ja, {
@@ -1319,6 +1333,16 @@ ${text}`;
         el("button", { onclick: () => { setJSON(PREF.dismissed, [...getJSON(PREF.dismissed, []), s.key]); renderMerge(); } }, t.mergeNo))));
   }
 
+  // ---------- アプリのように使う（ホーム画面に追加・オフライン） ----------
+  let installEvt = null;
+  const isStandalone = () => matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+  window.addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); installEvt = e; });
+  if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol) && window.top === window.self) {
+    window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+  }
+  // メモを入れたブラウザの保存領域を、なるべく消されないようにする
+  try { navigator.storage?.persist?.(); } catch {}
+
   // ---------- ゴミ箱（30 日） ----------
   const TRASH_DAYS = 30;
   const trashList = () => getJSON(PREF.trash, []);
@@ -1428,6 +1452,11 @@ ${text}`;
             el("button", { class: "mini", onclick: () => { setJSON(PREF.choices, []); toast(t.fForgot); } }, t.fForget)),
           el("p", { class: "set-note" }, t.fNote));
       })(),
+      el("div", { class: "set-sec" }, el("h3", {}, t.secApp),
+        isStandalone() ? el("p", {}, "✓ " + t.appInstalled)
+          : installEvt ? el("div", { class: "set-row" }, el("span", {}, t.appAdd), el("button", { class: "mini", onclick: async () => { installEvt.prompt(); await installEvt.userChoice.catch(() => {}); installEvt = null; openSettings(); } }, t.appAddBtn))
+          : el("p", {}, /iphone|ipad|ipod/i.test(navigator.userAgent) ? t.appIos : t.appOther),
+        el("p", { class: "set-note" }, t.appNote)),
       el("div", { class: "set-sec" }, el("h3", {}, t.secSafe),
         el("div", { class: "set-row" }, el("span", {}, "🔒 " + t.pinOn),
           hasPin() ? el("span", {}, el("button", { class: "mini", onclick: setPin }, t.pinChange), " ", el("button", { class: "mini", onclick: clearPin }, t.pinOff)) : el("button", { class: "mini", onclick: setPin }, t.pinSet)),
