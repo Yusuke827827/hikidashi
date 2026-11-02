@@ -330,12 +330,26 @@ details.more[open] summary::before { content: "−"; }
 .wp-row input[type="range"] { width: 100%; accent-color: var(--brass); }
 .wp-row output { font: 12px var(--font-mono); min-width: 3ch; text-align: right; }
 .wp-note { font-size: 12px; color: var(--faint); margin: 0; }
+.choice { width: 100%; max-width: 720px; margin-top: 10px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; display: grid; gap: 8px; text-align: left; box-shadow: var(--shadow); }
+.choice-top { display: flex; align-items: center; gap: 8px; }
+.choice-top small { font: 600 11.5px var(--font-mono); color: var(--accent); letter-spacing: .06em; }
+.choice-top button { margin-left: auto; border: 0; background: none; color: var(--muted); font-size: 12.5px; }
+.choice b { font-size: 14.5px; }
+.choice-opts { display: flex; flex-wrap: wrap; gap: 6px; }
+.choice-opts button { border: 1px solid var(--line); background: var(--sunk); color: var(--ink); border-radius: 999px; font-size: 14px; font-weight: 600; padding: 5px 12px; }
+.choice-opts button .new { font-size: 10.5px; color: var(--muted); font-weight: 400; margin-left: 4px; }
+.choice-opts button.typ { background: none; color: var(--muted); font-weight: 400; }
+.choice-in { display: flex; gap: 6px; }
+.choice-in input { flex: 1; min-width: 0; border: 1px solid var(--line); border-radius: 10px; padding: 6px 10px; background: var(--bg); color: var(--ink); font: 15px var(--font-body); }
+.choice-in button { border: 0; border-radius: 10px; background: var(--accent); color: var(--accent-text); font-weight: 600; padding: 6px 14px; }
+.choice p { margin: 0; font-size: 11.5px; color: var(--faint); }
 .icon-btn { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; font-size: 14px; width: 30px; height: 28px; padding: 0; color: var(--muted); display: inline-grid; place-items: center; }
 .icon-btn:hover { color: var(--ink); }
 .set-sec { border-top: 1px solid var(--line); margin-top: 14px; padding-top: 10px; display: grid; gap: 8px; }
 .set-sec h3 { margin: 0 0 2px; }
 .set-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 14px; }
-.set-row > span { flex: 1; min-width: 0; }
+.set-row > span { flex: 1; min-width: 7em; }
+.set-row select { max-width: 60%; border: 1px solid var(--line); background: var(--bg); color: var(--ink); border-radius: 8px; padding: 5px 6px; font: 13.5px var(--font-body); }
 .set-row input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--accent); }
 .set-note { font-size: 12.5px !important; color: var(--faint) !important; }
 .trow2 { display: grid; grid-template-columns: 1fr auto auto; gap: 6px; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
@@ -451,6 +465,7 @@ body.locked .wrap { visibility: hidden; }
       </div>
     </div>
     <div class="kw" id="kwBanner" hidden></div>
+    <div id="choiceBox"></div>
     <div class="suggest" id="suggest" hidden></div>
     <div class="toast" id="toast" role="status"></div>
     <div class="answer" id="answer" hidden>
@@ -521,7 +536,7 @@ body.locked .wrap { visibility: hidden; }
       stCloud: "Synced", stLocal: "This device", stAi: "AI on", stBasic: "Basic",
       keyPrompt: "Paste your Anthropic API key (sk-ant-…). It stays in this browser and is sent only to Anthropic. Get one at console.anthropic.com",
       keySaved: "API key saved. Claude will file your notes.", keyRemoveQ: "Remove the saved API key from this browser?", keyRemoved: "API key removed.",
-      keyBad: "The API key didn't work. Tap the status to set it again.", useAI: "Use AI ›", help: "How to use", helpSteps: [["Save", "Type a tip or note in the box and press Save (Ctrl/⌘ + Enter). You can add a source link, or a screenshot when AI is on."], ["AI files it", "AI adds a title, summary, folder, tags and the moments it will help. Dates in the note become reminders."], ["Recall", "Switch to Recall and describe what you're about to do or what's bothering you, e.g. \"About to do laundry\". You get the notes that help, plus short advice."], ["Today's pick", "One stored note resurfaces each day. Notes you mark Helpful come first when you recall."], ["Working with notes", "Pin, mark Helpful, edit or re-file each note. Switch the list between Topic and Date, or narrow it with Filter."], ["Use AI", "Tap the status at the top right and paste your Anthropic API key (console.anthropic.com). It stays in this browser and is sent only to Anthropic. Without a key, Mindrawer files and searches by keyword."], ["Wallpaper", "Pick a wallpaper or your own image from Wallpaper at the top."], ["Condense into a memo", "Turn on Memo in the input box and AI turns long text into a bulleted memo. Edit it in the review screen before saving; the original can be restored."], ["Notifications and today's checklist", "Edit a note → Notify me to pick a date, daily, every N days, weekdays or monthly (silent). Those notes appear in Today's checklist, where you tick them off. Set words to see the note when you type them."], ["Manage folders", "Use Manage next to Folders to create, rename, merge, delete or ★ favorite folders. Similar folders get a merge suggestion."], ["Files", "Attach a PDF or text file and its text goes into the note."], ["Your data", "Notes are saved in this browser. Use Export / Import to back them up or move them; the same file works with the iPhone app."]],
+      keyBad: "The API key didn't work. Tap the status to set it again.", useAI: "Use AI ›", help: "How to use", helpSteps: [["Save", "Type a tip or note in the box and press Save (Ctrl/⌘ + Enter). You can add a source link, or a screenshot when AI is on."], ["AI files it", "AI adds a title, summary, folder, tags and the moments it will help. Dates in the note become reminders."], ["Recall", "Switch to Recall and describe what you're about to do or what's bothering you, e.g. \"About to do laundry\". You get the notes that help, plus short advice."], ["Today's pick", "One stored note resurfaces each day. Notes you mark Helpful come first when you recall."], ["Working with notes", "Pin, mark Helpful, edit or re-file each note. Switch the list between Topic and Date, or narrow it with Filter."], ["Use AI", "Tap the status at the top right and paste your Anthropic API key (console.anthropic.com). It stays in this browser and is sent only to Anthropic. Without a key, Mindrawer files and searches by keyword."], ["Wallpaper", "Pick a wallpaper or your own image from Wallpaper at the top."], ["Condense into a memo", "Turn on Memo in the input box and AI turns long text into a bulleted memo. Edit it in the review screen before saving; the original can be restored."], ["Notifications and today's checklist", "Edit a note → Notify me to pick a date, daily, every N days, weekdays or monthly (silent). Those notes appear in Today's checklist, where you tick them off. Set words to see the note when you type them."], ["Choosing folders", "Each time you save, AI suggests three folder names (e.g. detergent → Detergent, Laundry supplies, Shopping). Pick one or type your own; Mindrawer learns your naming style. In ⚙ Settings → Folders you can let AI decide, sort Other automatically and choose how similar folders are merged."], ["Manage folders", "Use Manage next to Folders to create, rename, merge, delete or ★ favorite folders. Similar folders get a merge suggestion."], ["Files", "Attach a PDF or text file and its text goes into the note."], ["Your data", "Notes are saved in this browser. Use Export / Import to back them up or move them; the same file works with the iPhone app."]],
       month: (d) => d.toLocaleDateString("en", { year: "numeric", month: "long" }),
       other: "Other",
       edit: "Edit", saveEdit: "Save", saveRefile: "Save & re-file with AI", cancel: "Cancel", editSaved: "Saved.",
@@ -557,7 +572,7 @@ body.locked .wrap { visibility: hidden; }
       stCloud: "アカウントに保存", stLocal: "この端末に保存", stAi: "AI 整理", stBasic: "簡易整理",
       keyPrompt: "Anthropic の API キー（sk-ant-…）を貼り付けてください。キーはこのブラウザにだけ保存され、Anthropic にだけ送られます。取得: console.anthropic.com",
       keySaved: "API キーを保存しました。Claude が整理します。", keyRemoveQ: "このブラウザに保存した API キーを削除しますか？", keyRemoved: "API キーを削除しました。",
-      keyBad: "API キーが使えませんでした。右上の表示を押して入れ直してください。", useAI: "AI を使う ›", help: "使い方", helpSteps: [["しまう", "欄に Tips やメモを書いて「しまう」を押します（Ctrl/⌘ + Enter でも可）。出典の URL や、AI がオンのときはスクショも付けられます。"], ["AI が整理", "しまったメモに、タイトル・要約・フォルダ・タグ・「役立つ場面」を AI が付けます。本文に日付があればリマインドにも入ります。"], ["ひきだす", "「ひきだす」に切り替えて、これからすることや困りごとを書きます。例:「これから洗濯する」。言葉が一致していなくても、役立つメモと短い助言が出ます。"], ["今日のひとつ", "しまったままのメモを毎日 1 件見せます。「役立った」を押したメモは、取り出しで優先されます。"], ["メモの操作", "ピン留め・役立った・編集・再整理ができます。一覧は「分類」と「日付」で切り替え、「絞り込み」で探せます。"], ["AI を使う", "右上の表示を押して、Anthropic の API キー（console.anthropic.com で取得）を貼り付けます。キーはこのブラウザにだけ保存され、Anthropic にだけ送られます。キーが無くても、キーワードで整理と検索ができます。"], ["壁紙", "上の「壁紙」から好きな壁紙や自分の画像を選べます。"], ["メモ風にまとめる", "入力欄の「メモ風」をオンにすると、長い文を AI が箇条書きのメモにまとめます。しまう前に出る画面で直せます。元の文は「原文と関連」から戻せます。"], ["通知と今日の確認リスト", "メモの「編集」→「通知する」で、日時・毎日・何日おき・曜日・毎月を選べます（音なし）。その日のメモは「今日の確認リスト」に並び、☐ でチェックできます。言葉を決めると、その言葉を入力したときにメモを出します。"], ["フォルダの管理", "フォルダの「管理」から、作る・名前を変える・まとめる・消す・★ お気に入りができます。似たフォルダができると「まとめますか？」と出ます。"], ["ファイル", "「ファイル」から PDF やテキストを付けると、中の文字を読み取ってメモに入れます。"], ["データ", "メモはこのブラウザの中に保存されます。「書き出す」「読み込む」でバックアップや移動ができます。iPhone アプリとも同じファイルでやり取りできます。"]],
+      keyBad: "API キーが使えませんでした。右上の表示を押して入れ直してください。", useAI: "AI を使う ›", help: "使い方", helpSteps: [["しまう", "欄に Tips やメモを書いて「しまう」を押します（Ctrl/⌘ + Enter でも可）。出典の URL や、AI がオンのときはスクショも付けられます。"], ["AI が整理", "しまったメモに、タイトル・要約・フォルダ・タグ・「役立つ場面」を AI が付けます。本文に日付があればリマインドにも入ります。"], ["ひきだす", "「ひきだす」に切り替えて、これからすることや困りごとを書きます。例:「これから洗濯する」。言葉が一致していなくても、役立つメモと短い助言が出ます。"], ["今日のひとつ", "しまったままのメモを毎日 1 件見せます。「役立った」を押したメモは、取り出しで優先されます。"], ["メモの操作", "ピン留め・役立った・編集・再整理ができます。一覧は「分類」と「日付」で切り替え、「絞り込み」で探せます。"], ["AI を使う", "右上の表示を押して、Anthropic の API キー（console.anthropic.com で取得）を貼り付けます。キーはこのブラウザにだけ保存され、Anthropic にだけ送られます。キーが無くても、キーワードで整理と検索ができます。"], ["壁紙", "上の「壁紙」から好きな壁紙や自分の画像を選べます。"], ["メモ風にまとめる", "入力欄の「メモ風」をオンにすると、長い文を AI が箇条書きのメモにまとめます。しまう前に出る画面で直せます。元の文は「原文と関連」から戻せます。"], ["通知と今日の確認リスト", "メモの「編集」→「通知する」で、日時・毎日・何日おき・曜日・毎月を選べます（音なし）。その日のメモは「今日の確認リスト」に並び、☐ でチェックできます。言葉を決めると、その言葉を入力したときにメモを出します。"], ["フォルダの決め方", "しまうたびに AI がフォルダ名を 3 つ出します（例: 洗剤 → 「洗剤」「洗濯用品」「買い物」）。選ぶか自分で入力すると、あなたの名付け方を覚えて次に生かします。⚙ 設定の「フォルダ分け」で、おまかせ・「その他」の自動振り分け・似たフォルダのまとめ方を変えられます。"], ["フォルダの管理", "フォルダの「管理」から、作る・名前を変える・まとめる・消す・★ お気に入りができます。似たフォルダができると「まとめますか？」と出ます。"], ["ファイル", "「ファイル」から PDF やテキストを付けると、中の文字を読み取ってメモに入れます。"], ["データ", "メモはこのブラウザの中に保存されます。「書き出す」「読み込む」でバックアップや移動ができます。iPhone アプリとも同じファイルでやり取りできます。"]],
       month: (d) => `${d.getFullYear()}年${d.getMonth() + 1}月`,
       other: "その他",
       edit: "編集", saveEdit: "保存", saveRefile: "保存して AI で再整理", cancel: "キャンセル", editSaved: "保存しました。",
@@ -591,6 +606,14 @@ body.locked .wrap { visibility: hidden; }
     onb: [["🗂", "Save it once", "Paste tips, screenshots, files or notes to self. They land in folders on their own."], ["🔎", "It finds you", "Switch to Recall and say what you're about to do. The notes that help come back, even without matching words."], ["☑", "See it when it's due", "Give a note a date, a repeat or a word. It lines up in Today's checklist."], ["⚙", "Make it yours", "In Settings: PIN lock, weekly copies and the trash. Tap the status to use AI with your own key."]],
     onbNext: "Next", onbStart: "Start", onbExamples: "Start with 3 examples", onbSkip: "Skip",
   });
+  Object.assign(I18N.en, { choiceH: "Which folder?", choiceKeep: "Keep", choiceNew: "new", choiceType: "✎ Type a name", choiceUse: "Use", choicePh: "Folder name", choiceLearn: "Mindrawer learns how you name folders from what you pick.", choiceSimilarQ: (a, b) => `There's a similar folder, "${b}". Put it there instead?\n(Cancel creates "${a}")`, choiceDone: (f) => `Moved to ${f}.`,
+    secFold: "Folders", fMode: "Choosing a folder", fModes: { ask: "Pick from 3 suggestions", auto: "Let AI decide" }, fPrefer: "Prefer existing folders", fAutoResort: "Sort Other automatically", fMerge: "Similar folders", fMerges: { suggest: "Ask first", auto: "Merge automatically", off: "Never" }, fTidy: "Tidy folders now", fTidyNone: "Nothing to tidy.", fForget: "Forget my naming habits", fForgot: "Naming habits cleared.",
+    fNote: "With Pick from 3 suggestions, AI offers three folder names each time you save (e.g. detergent → Detergent, Laundry supplies, Shopping), or you can type your own. Mindrawer learns your naming style. With Let AI decide, the first suggestion is used and notes in Other are sorted automatically.",
+    tidyResort: (n) => `Sorted ${n} notes out of Other`, tidyMerge: (a, b) => `Merged ${a} into ${b}` });
+  Object.assign(I18N.ja, { choiceH: "どのフォルダに入れますか？", choiceKeep: "このままでいい", choiceNew: "新規", choiceType: "✎ 自分で入力", choiceUse: "決める", choicePh: "フォルダ名", choiceLearn: "選んだフォルダから、あなたの分け方を覚えます。", choiceSimilarQ: (a, b) => `似たフォルダ「${b}」があります。そちらに入れますか？\n（キャンセルで新しく「${a}」を作ります）`, choiceDone: (f) => `「${f}」に入れました。`,
+    secFold: "フォルダ分け", fMode: "フォルダの決め方", fModes: { ask: "3 つの候補から選ぶ", auto: "おまかせ（AI が自動で決める）" }, fPrefer: "なるべく今あるフォルダに入れる", fAutoResort: "「その他」を自動で振り分ける", fMerge: "似たフォルダ", fMerges: { suggest: "まとめるか聞く", auto: "自動でまとめる", off: "何もしない" }, fTidy: "今すぐフォルダを整える", fTidyNone: "整えるものはありませんでした。", fForget: "覚えた名付けの好みを消す", fForgot: "名付けの好みを消しました。",
+    fNote: "「3 つの候補から選ぶ」では、しまうたびに AI がフォルダ名を 3 つ出します（例: 洗剤 → 「洗剤」「洗濯用品」「買い物」）。どれも違えば自分で入力できます。選んだ結果から、名前の付け方や今あるフォルダを選びがちかを覚えて、次の候補に生かします。「おまかせ」では 1 番目の候補で自動で入れ、「その他」も自動で振り分けます。",
+    tidyResort: (n) => `「その他」の ${n} 件を振り分けました`, tidyMerge: (a, b) => `「${a}」を「${b}」にまとめました` });
   Object.assign(I18N.en, { aiFiledBasic: "Couldn't reach Claude, so it was filed by keyword.", resortQ: (n, f) => `Move ${n} ${n === 1 ? "note" : "notes"} from Other into ${f.slice(0, 3).join(", ")}${f.length > 3 ? " and more" : ""}?`, resortYes: "Sort them", resortNo: "Not now", resortDone: (n) => `Sorted ${n} notes.` });
   Object.assign(I18N.ja, { aiFiledBasic: "AI に届かなかったので、キーワードで整理しました。", resortQ: (n, f) => `「その他」の ${n} 件を、${f.slice(0, 3).map((x) => `「${x}」`).join("・")}${f.length > 3 ? " など" : ""}に分けますか？`, resortYes: "振り分ける", resortNo: "今はしない", resortDone: (n) => `${n} 件を振り分けました。` });
   Object.assign(I18N.ja, {
@@ -848,8 +871,10 @@ Reuse an existing folder name exactly when it fits; otherwise invent a short, br
 "situations": 2–4 moments when this note would help, phrased the way the user would describe what they're doing (e.g. "Doing laundry", "Before a presentation").
 "remindAt": if the note mentions a date or deadline, give it as YYYY-MM-DD resolved against today; else null.
 ${image ? '"text": transcribe the useful content of the attached screenshot (e.g. a post on X) as clean plain text, merged with any typed note. Drop UI chrome, usernames and counts unless they matter.' : '"text": return the note text unchanged.'}
+"folderOptions": exactly 3 different folder names for this note, best first, and "category" must equal the first. Mix how specific they are and the angle: e.g. for a note about a laundry detergent, "洗剤" (specific), "洗濯用品" (broader), "買い物" (another angle). Use an existing folder name exactly when one fits, and put it first.
+${namingHint(choiceLog())}
 Return JSON only:
-{"text":"","title":"under 60 chars","summary":"one sentence","category":"","tags":["up to 5"],"situations":[""],"remindAt":null}
+{"text":"","title":"under 60 chars","summary":"one sentence","category":"","folderOptions":["","",""],"tags":["up to 5"],"situations":[""],"remindAt":null}
 
 Note:
 ${text || "(see screenshot)"}${url ? "\nSource: " + url : ""}`;
@@ -867,6 +892,7 @@ ${text || "(see screenshot)"}${url ? "\nSource: " + url : ""}`;
         tags: Array.isArray(r.tags) ? r.tags.map(String).slice(0, 6) : [],
         situations: Array.isArray(r.situations) ? r.situations.map(String).slice(0, 5) : [],
         remindAt: /^\d{4}-\d{2}-\d{2}$/.test(r.remindAt || "") ? r.remindAt : null,
+        folderOptions: Array.isArray(r.folderOptions) ? r.folderOptions.map(String).slice(0, 4) : [],
       };
     } catch (e) {
       if (e && e.code === "not_granted") { state.sample = null; renderChrome(); }
@@ -932,9 +958,16 @@ Return JSON only:
       const extra = {};
       if (original && original !== meta.text) extra.original = original;
       if (file) extra.fileTitle = file.name;
-      await state.store.add({ ...meta, ...extra, url: url || null, createdAt: Date.now(), helpful: 0, pinned: false });
+      // フォルダの候補を 3 つ（AI の候補 → 辞書と今までのメモ）。1 番目で入れておき、「3 つから選ぶ」なら聞く
+      const { folderOptions: aiOpts = [], ...rest } = meta;
+      const opts = folderOptions(rest.text, rest.title, state.notes, folderMeta().map((f) => f.name), [rest.category, ...aiOpts].filter((x) => x && !isCatchAll(x)));
+      if (opts.length) rest.category = opts[0].name;
+      const createdAt = Date.now();
+      await state.store.add({ ...rest, ...extra, url: url || null, createdAt, helpful: 0, pinned: false });
       $("noteText").value = ""; $("noteUrl").value = ""; $("srcRow").hidden = true; clearImage(); clearFile(); renderKw("");
-      toast(T().saved(meta.title, meta.category, meta.remindAt));
+      toast(T().saved(rest.title, rest.category, rest.remindAt));
+      if (fprefs().mode === "ask" && opts.length) { state.choice = { createdAt, title: rest.title, options: opts }; renderChoice(); }
+      else tidyFolders();
     } catch { toast(T().saveFail); } finally { busy(false); }
   }
   async function ask(override) {
@@ -1003,13 +1036,15 @@ Return JSON only:
   }
   async function refile(n) {
     const meta = await classify(n.text, n.url, null);
-    const { text, ...rest } = meta;
+    const { text, folderOptions: _o, ...rest } = meta;
+    // 自分で選んだフォルダは、再整理でも変えない
+    if (n.folderChosen) rest.category = n.category;
     await state.store.update(n.id, rest);
   }
 
 
   // ---------- この端末の設定 ----------
-  const PREF = { memo: "mindrawer.memoMode", memoPreview: "mindrawer.memoPreview", checks: "mindrawer.checks", folders: "mindrawer.folders", dismissed: "mindrawer.mergeDismissed", notified: "mindrawer.notified", trash: "mindrawer.trash", pin: "mindrawer.pinHash", backups: "mindrawer.backups", onboarded: "mindrawer.onboarded", reviewSeen: "mindrawer.reviewSeen" };
+  const PREF = { memo: "mindrawer.memoMode", memoPreview: "mindrawer.memoPreview", checks: "mindrawer.checks", folders: "mindrawer.folders", dismissed: "mindrawer.mergeDismissed", notified: "mindrawer.notified", trash: "mindrawer.trash", pin: "mindrawer.pinHash", backups: "mindrawer.backups", onboarded: "mindrawer.onboarded", reviewSeen: "mindrawer.reviewSeen", fprefs: "mindrawer.folderPrefs", choices: "mindrawer.folderChoices" };
   const getJSON = (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch { return d; } };
   const setJSON = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
   state.memoMode = getJSON(PREF.memo, false);
@@ -1264,10 +1299,10 @@ ${text}`;
     return best;
   }
   function renderMerge() {
-    const t = T(), s = state.notes.length ? mergeSuggestion() : null, box = $("mergeBox");
+    const t = T(), fp = fprefs(), s = state.notes.length && fp.merge === "suggest" ? mergeSuggestion() : null, box = $("mergeBox");
     if (!s) {
-      // AI が無いときは「その他」に入ったメモを振り分ける提案
-      const moves = state.sample ? [] : resortMoves(), sig = moves.map((m) => m.id + ">" + m.folder).sort().join(",");
+      // 自動で振り分けないときは「その他」に入ったメモを振り分ける提案
+      const moves = fp.autoResort || fp.mode === "auto" ? [] : resortMoves(), sig = moves.map((m) => m.id + ">" + m.folder).sort().join(",");
       if (!moves.length || getJSON("mindrawer.resortDismissed", "") === sig) { box.replaceChildren(); return; }
       const names = [...new Set(moves.map((m) => m.folder))];
       box.replaceChildren(el("div", { class: "merge" },
@@ -1380,6 +1415,19 @@ ${text}`;
       el("div", { class: "set-sec" }, el("h3", {}, t.secMemo),
         check(state.memoMode, t.memoMode, (v) => setMemoMode(v)),
         check(state.memoPreview, t.memoPreviewL, (v) => { state.memoPreview = v; setJSON(PREF.memoPreview, v); })),
+      (() => {
+        const fp = fprefs();
+        const sel = (opts, cur, fn) => { const x = el("select", {}, ...Object.entries(opts).map(([k, v]) => el("option", { value: k }, v))); x.value = cur; x.onchange = () => fn(x.value); return x; };
+        return el("div", { class: "set-sec" }, el("h3", {}, t.secFold),
+          el("label", { class: "set-row" }, el("span", {}, t.fMode), sel(t.fModes, fp.mode, (v) => { setFpref("mode", v); openSettings(); })),
+          check(fp.preferExisting, t.fPrefer, (v) => setFpref("preferExisting", v)),
+          fp.mode === "ask" ? check(fp.autoResort, t.fAutoResort, (v) => setFpref("autoResort", v)) : null,
+          el("label", { class: "set-row" }, el("span", {}, t.fMerge), sel(t.fMerges, fp.merge, (v) => setFpref("merge", v))),
+          el("div", { class: "set-row" },
+            el("button", { class: "mini", onclick: async () => { toast((await tidyFolders(true)) || t.fTidyNone); } }, t.fTidy),
+            el("button", { class: "mini", onclick: () => { setJSON(PREF.choices, []); toast(t.fForgot); } }, t.fForget)),
+          el("p", { class: "set-note" }, t.fNote));
+      })(),
       el("div", { class: "set-sec" }, el("h3", {}, t.secSafe),
         el("div", { class: "set-row" }, el("span", {}, "🔒 " + t.pinOn),
           hasPin() ? el("span", {}, el("button", { class: "mini", onclick: setPin }, t.pinChange), " ", el("button", { class: "mini", onclick: clearPin }, t.pinOff)) : el("button", { class: "mini", onclick: setPin }, t.pinSet)),
@@ -1579,6 +1627,119 @@ Return JSON only: {"answer":"","ids":["ids of the notes you used, max 5"]}`;
   function afterUnlock() {
     handleHash();
     if (!getJSON(PREF.onboarded, false) && state.store && !state.notes.length) openOnboarding();
+  }
+
+  // ---------- フォルダの決め方・名付けの好み（スマホ版の FolderChoice.swift と同じ） ----------
+  const fprefs = () => ({ mode: "ask", preferExisting: true, autoResort: false, merge: "suggest", ...getJSON(PREF.fprefs, {}) });
+  const setFpref = (k, v) => { setJSON(PREF.fprefs, { ...fprefs(), [k]: v }); renderMerge(); };
+  const choiceLog = () => getJSON(PREF.choices, []);
+  function renames(log) {
+    const c = {};
+    for (const r of log) { const f = r.offered?.[0]; if (!f || f === r.chosen) continue; c[f] = c[f] || {}; c[f][r.chosen] = (c[f][r.chosen] || 0) + 1; }
+    const out = {};
+    for (const [f, tos] of Object.entries(c)) { const [best, n] = Object.entries(tos).sort((a, b) => b[1] - a[1])[0]; if (n >= 2) out[f] = best; }
+    return out;
+  }
+  const prefersExisting = (log) => (log.length >= 4 ? log.filter((r) => r.existing).length / log.length >= 0.6 : null);
+  function namingHint(log) {
+    if (!log.length) return "";
+    const lines = ["The user's recent folder choices (learn their naming style and how specific or broad they like folders):",
+      ...log.slice(-12).map((r) => `- "${String(r.title).slice(0, 40)}" → chose "${r.chosen}"${r.custom ? " (typed it themselves)" : ""} (offered: ${(r.offered || []).join(" / ")})`)];
+    const custom = log.filter((r) => r.custom).map((r) => r.chosen);
+    if (custom.length) lines.push(`Names they typed themselves: ${[...new Set(custom)].slice(0, 10).join(", ")} (about ${Math.round(custom.reduce((a, x) => a + [...x].length, 0) / custom.length)} characters long).`);
+    const p = prefersExisting(log);
+    if (p !== null) lines.push(p ? "They usually put notes into an existing folder." : "They often prefer a new, more specific folder.");
+    for (const [a, b] of Object.entries(renames(log))) lines.push(`When "${a}" fits, they call it "${b}".`);
+    return lines.join("\n");
+  }
+  function keyPhrase(str) {
+    let run = "";
+    for (const ch of String(str)) { if (isKK(ch)) run += ch; else { if ([...run].length >= 2 && [...run].length <= 6) return run; run = ""; } }
+    return [...run].length >= 2 && [...run].length <= 6 ? run : null;
+  }
+  function folderOptions(text, title, notes, folders, ai = []) {
+    const other = T().other, log = choiceLog();
+    const existing = [...new Set([...folders, ...notes.map((n) => n.category)])].filter((x) => x && x !== other && !isCatchAll(x));
+    const all = [title, text].join("\n");
+    let names = [...ai, autoFolder(all, notes, folders).folder];
+    const l = learnedFolder(all, folderProfiles(notes));
+    if (l && l.score >= 1) names.push(l.name);
+    const hits = topicHits(all);
+    names.push(...hits.map((h) => h[0]));
+    const word = hits.flatMap((h) => h[1]).find((w) => [...w].length >= 2);
+    if (word) names.splice(Math.min(names.length, Math.max(1, ai.length)), 0, word);
+    const kp = keyPhrase(title || text); if (kp) names.push(kp);
+    const rn = renames(log);
+    names = names.map((n) => rn[n] || n);
+    const seen = new Set(), out = []; let fromAI = 0;
+    names.forEach((raw, i) => {
+      const n = String(raw || "").trim().slice(0, 32);
+      if (!n || isCatchAll(n) || n === other || seen.has(n.toLowerCase())) return;
+      seen.add(n.toLowerCase());
+      const exists = existing.includes(n);
+      const similar = exists ? null : existing.map((x) => [x, nameSim(x, n)]).filter((x) => x[1] >= 0.5).sort((a, b) => b[1] - a[1])[0]?.[0] || null;
+      out.push({ name: n, exists, similar });
+      if (i < ai.length) fromAI = out.length;
+    });
+    const likes = prefersExisting(log) ?? fprefs().preferExisting;
+    const i = out.slice(0, fromAI).findIndex((o) => o.exists);
+    if (likes && i > 0) out.unshift(...out.splice(i, 1));
+    return out.slice(0, 3);
+  }
+  async function chooseFolder(name, custom) {
+    const c = state.choice; if (!c) return;
+    const n = String(name).trim().slice(0, 32); if (!n) return;
+    const note = state.notes.find((x) => x.createdAt === c.createdAt);
+    const existed = folderNames().has(n);
+    if (!existed) saveFolderMeta([...folderMeta(), { name: n, favorite: false }]);
+    setJSON(PREF.choices, [...choiceLog(), { title: c.title, offered: c.options.map((o) => o.name), chosen: n, custom: !!custom, existing: existed, at: Date.now() }].slice(-60));
+    state.choice = null; renderChoice();
+    if (note) await state.store.update(note.id, { category: n, folderChosen: true });
+    toast(T().choiceDone(n));
+    tidyFolders();
+  }
+  function pickFolder(name, similar, custom) {
+    if (similar && confirm(T().choiceSimilarQ(name, similar))) return chooseFolder(similar, false);
+    chooseFolder(name, custom);
+  }
+  function renderChoice() {
+    const t = T(), c = state.choice, box = $("choiceBox");
+    if (!c) { box.replaceChildren(); return; }
+    const input = el("input", { type: "text", placeholder: t.choicePh, "aria-label": t.choicePh });
+    const submit = () => {
+      const v = input.value.trim(); if (!v) return;
+      const ex = [...folderNames().keys()];
+      pickFolder(v, ex.includes(v) ? null : ex.find((x) => x !== T().other && nameSim(x, v) >= 0.5) || null, true);
+    };
+    input.addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.isComposing) submit(); });
+    const row = el("div", { class: "choice-in", hidden: "" }, input, el("button", { type: "button", onclick: submit }, t.choiceUse));
+    box.replaceChildren(el("div", { class: "choice" },
+      el("div", { class: "choice-top" }, el("small", {}, "📁 " + t.choiceH), el("button", { type: "button", onclick: () => { state.choice = null; renderChoice(); tidyFolders(); } }, t.choiceKeep)),
+      el("b", {}, c.title),
+      el("div", { class: "choice-opts" },
+        ...c.options.map((o) => el("button", { type: "button", onclick: () => pickFolder(o.name, o.similar, false) }, (o.exists ? "📁 " : "＋ ") + o.name, o.exists ? null : el("span", { class: "new" }, t.choiceNew))),
+        el("button", { type: "button", class: "typ", onclick: () => { row.hidden = false; input.focus(); } }, t.choiceType)),
+      row,
+      el("p", {}, t.choiceLearn)));
+  }
+  // 設定に合わせてフォルダを整える（force: 今すぐ整える）
+  async function tidyFolders(force) {
+    const fp = fprefs(), parts = [], t = T();
+    if (force || fp.autoResort || fp.mode === "auto") {
+      const moves = resortMoves();
+      for (const m of moves) await state.store.update(m.id, { category: m.folder });
+      if (moves.length) parts.push(t.tidyResort(moves.length));
+    }
+    if (fp.merge === "auto" || (force && fp.merge !== "off")) {
+      for (let k = 0; k < 3; k++) {
+        const s = mergeSuggestion(); if (!s) break;
+        await moveFolder(s.from, s.into); parts.push(t.tidyMerge(s.from, s.into));
+      }
+    }
+    const msg = parts.join(state.lang === "ja" ? "。" : ". ");
+    if (msg && !force) toast(msg);
+    renderMerge();
+    return msg;
   }
 
   // ---------- render ----------
@@ -1918,7 +2079,7 @@ Return JSON only: {"answer":"","ids":["ids of the notes you used, max 5"]}`;
     state.store = store || localStore();
     state.store.subscribe((arr) => {
       state.notes = arr.slice().sort((a, b) => b.createdAt - a.createdAt); renderAll();
-      if (firstLoad) { firstLoad = false; makeBackup(false); if (!isLocked()) afterUnlock(); }
+      if (firstLoad) { firstLoad = false; makeBackup(false); if (!isLocked()) afterUnlock(); setTimeout(() => tidyFolders(), 0); }
     });
   })();
 })();

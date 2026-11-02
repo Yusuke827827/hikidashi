@@ -83,6 +83,47 @@ struct SettingsView: View {
                 }
 
                 Section {
+                    Picker(selection: Binding(get: { librarian.folderMode }, set: { librarian.folderMode = $0 })) {
+                        Text(L("3 つの候補から選ぶ", "Pick from 3 suggestions")).tag(FolderMode.ask)
+                        Text(L("おまかせ（AI が自動で決める）", "Let AI decide")).tag(FolderMode.auto)
+                    } label: {
+                        Label(L("フォルダの決め方", "Choosing a folder"), systemImage: "folder.badge.gearshape")
+                    }
+                    Toggle(isOn: Binding(get: { librarian.preferExisting }, set: { librarian.preferExisting = $0 })) {
+                        Label(L("なるべく今あるフォルダに入れる", "Prefer existing folders"), systemImage: "folder")
+                    }
+                    if librarian.folderMode == .ask {
+                        Toggle(isOn: Binding(get: { librarian.autoResort }, set: { librarian.autoResort = $0 })) {
+                            Label(L("「その他」を自動で振り分ける", "Sort Other automatically"), systemImage: "tray.and.arrow.down")
+                        }
+                    }
+                    Picker(selection: Binding(get: { librarian.mergeMode }, set: { librarian.mergeMode = $0 })) {
+                        Text(L("まとめるか聞く", "Ask first")).tag(MergeMode.suggest)
+                        Text(L("自動でまとめる", "Merge automatically")).tag(MergeMode.auto)
+                        Text(L("何もしない", "Never")).tag(MergeMode.off)
+                    } label: {
+                        Label(L("似たフォルダ", "Similar folders"), systemImage: "arrow.triangle.merge")
+                    }
+                    Button(L("今すぐフォルダを整える", "Tidy folders now")) {
+                        let before = (librarian.autoResort, librarian.mergeMode)
+                        librarian.autoResort = true
+                        if librarian.mergeMode == .off { librarian.mergeMode = .suggest }
+                        message = librarian.tidyFolders() ?? L("整えるものはありませんでした。", "Nothing to tidy.")
+                        librarian.autoResort = before.0
+                        librarian.mergeMode = before.1
+                    }
+                    Button(L("覚えた名付けの好みを消す", "Forget my naming habits"), role: .destructive) {
+                        librarian.resetNamingHabits()
+                        message = L("名付けの好みを消しました。", "Naming habits cleared.")
+                    }
+                } header: {
+                    Text(L("フォルダ分け", "Folders"))
+                } footer: {
+                    Text(L("「3 つの候補から選ぶ」では、しまうたびに AI がフォルダ名を 3 つ出します（例: 洗剤 → 「洗剤」「洗濯用品」「買い物」）。どれも違えば自分で入力できます。選んだ結果から、名前の付け方や、今あるフォルダを選びがちかなどを覚えて、次の候補に生かします。「おまかせ」では 1 番目の候補で自動で入れ、「その他」のメモも自動で振り分けます。",
+                           "With Pick from 3 suggestions, AI offers three folder names each time you save (e.g. detergent → Detergent, Laundry supplies, Shopping), or you can type your own. Mindrawer learns your naming style and whether you prefer existing folders. With Let AI decide, the first suggestion is used and notes in Other are sorted automatically."))
+                }
+
+                Section {
                     Toggle(isOn: Binding(get: { calendarOn }, set: { on in
                         Task {
                             if on {

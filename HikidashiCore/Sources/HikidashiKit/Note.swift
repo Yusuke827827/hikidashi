@@ -59,6 +59,8 @@ public struct Note: Codable, Identifiable, Hashable, Sendable {
     public var plannedDay: String?
     /// まとめノートの元になったメモの id
     public var sources: [String]?
+    /// フォルダを自分で選んだか（再整理でフォルダを変えない）
+    public var folderChosen: Bool?
     /// 最後に変えた日時（iCloud の同期で新しい方を残すため）
     public var updatedAt: Date?
 
@@ -118,7 +120,7 @@ public struct Note: Codable, Identifiable, Hashable, Sendable {
     }
 
     enum CodingKeys: String, CodingKey {
-        case id, text, url, title, summary, category, tags, situations, remindAt, createdAt, pinned, helpful, lastSeen, example, filed, imageFile, original, file, fileTitle, enriched, place, alarm, plannedDay, sources, updatedAt
+        case id, text, url, title, summary, category, tags, situations, remindAt, createdAt, pinned, helpful, lastSeen, example, filed, imageFile, original, file, fileTitle, enriched, place, alarm, plannedDay, sources, folderChosen, updatedAt
     }
 
     public init(from decoder: Decoder) throws {
@@ -156,6 +158,7 @@ public struct Note: Codable, Identifiable, Hashable, Sendable {
         alarm = try? c.decodeIfPresent(Alarm.self, forKey: .alarm)
         plannedDay = Self.validDay(try? c.decodeIfPresent(String.self, forKey: .plannedDay))
         sources = try? c.decodeIfPresent([String].self, forKey: .sources)
+        folderChosen = try? c.decodeIfPresent(Bool.self, forKey: .folderChosen)
         updatedAt = Self.decodeDate(c, .updatedAt)
     }
 
@@ -185,6 +188,7 @@ public struct Note: Codable, Identifiable, Hashable, Sendable {
         try c.encodeIfPresent(alarm, forKey: .alarm)
         try c.encodeIfPresent(plannedDay, forKey: .plannedDay)
         try c.encodeIfPresent(sources, forKey: .sources)
+        try c.encodeIfPresent(folderChosen, forKey: .folderChosen)
         try c.encodeIfPresent(updatedAt.map(Self.millis), forKey: .updatedAt)
     }
 

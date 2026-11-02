@@ -54,6 +54,9 @@ public struct HikidashiRootView: View {
                     LazyVStack(alignment: .leading, spacing: 18) {
                         header
                         CaptureCard(librarian: librarian, onRecall: { recall = $0 }, onToast: show, onOpen: jump, focusTrigger: focusSave)
+                        if let req = librarian.folderChoice {
+                            FolderChoiceCard(request: req, librarian: librarian).id(req.noteID)
+                        }
                         if let toast {
                             Text(toast).font(.footnote).foregroundStyle(palette.accent).transition(.opacity)
                         }
@@ -115,6 +118,10 @@ public struct HikidashiRootView: View {
         // 購読が始まったら、たまっている未整理のメモを整理する
         .onChange(of: Subscription.shared.isActive) { _, active in
             if active { Task { await librarian.fileAll() } }
+        }
+        // 「その他」を振り分けた・似たフォルダをまとめた、などを知らせる
+        .onChange(of: librarian.tidyMessage) { _, m in
+            if let m { show(m); librarian.tidyMessage = nil; mergeRefresh += 1 }
         }
         // リマインド日・タイトルが変わったときだけ、通知を予約し直す
         .task(id: Reminders.signature(store.notes)) {
@@ -437,14 +444,14 @@ public struct HikidashiRootView: View {
     /// 似ているフォルダをまとめる提案（1 件だけ）
     private var mergeSuggestion: FolderMergeSuggestion? {
         _ = mergeRefresh
-        guard !DemoMode.isOn else { return nil }
+        guard !DemoMode.isOn, librarian.mergeMode == .suggest else { return nil }
         return Heuristics.folderMergeSuggestions(store.notes, folders: store.folders, dismissed: MergeDismissals.all, limit: 1).first
     }
 
-    /// 「その他」から振り分けられるメモ（AI が無いとき）
+    /// 「その他」から振り分けられるメモ（自動で振り分けないとき）
     private var resortMoves: [(id: String, folder: String)]? {
         _ = mergeRefresh
-        guard !DemoMode.isOn, !librarian.hasAI else { return nil }
+        guard !DemoMode.isOn, !librarian.autoResort, librarian.folderMode == .ask else { return nil }
         let moves = Heuristics.resortSuggestions(store.notes, folders: store.folders)
         return moves.isEmpty || ResortCard.isDismissed(moves) ? nil : moves
     }

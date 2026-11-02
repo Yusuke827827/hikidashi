@@ -13,6 +13,8 @@ public struct FilingResult: Codable, Sendable, Equatable {
     public var situations: [String]
     /// YYYY-MM-DD。無ければ空文字
     public var remindAt: String
+    /// フォルダ名の候補（よい順に 3 つ。1 番目は category と同じ）
+    public var folderOptions: [String]? = nil
 }
 
 /// まとめノート
@@ -65,8 +67,9 @@ public enum Prompts {
             "tags": stringArray,
             "situations": stringArray,
             "remindAt": ["type": "string"],
+            "folderOptions": stringArray,
         ],
-        "required": ["text", "title", "summary", "category", "tags", "situations", "remindAt"],
+        "required": ["text", "title", "summary", "category", "tags", "situations", "remindAt", "folderOptions"],
         "additionalProperties": false,
     ]
 
@@ -144,7 +147,10 @@ public enum Prompts {
     /// メモ風に整えるときの書き方
     static let memoRule = "Rewrite it as a concise memo the user can scan in seconds: short lines that each start with \"・\", keeping every key fact, number, step, name, date and URL, and dropping filler, greetings and repetition. Keep the original language. If the note is already a short memo (about 3 lines or fewer), return it unchanged."
 
-    public static func filing(text: String, url: String?, hasImage: Bool, folders: [String], today: String, language: AppLanguage, memo: Bool = false) -> String {
+    /// フォルダ名の候補の出し方
+    static let folderOptionsRule = "\"folderOptions\": exactly 3 different folder names for this note, best first, and \"category\" must equal the first. Mix how specific they are and the angle: e.g. for a note about a laundry detergent, \"洗剤\" (specific), \"洗濯用品\" (broader), \"買い物\" (another angle). Use an existing folder name exactly when one fits, and put it first."
+
+    public static func filing(text: String, url: String?, hasImage: Bool, folders: [String], today: String, language: AppLanguage, memo: Bool = false, habits: String = "") -> String {
         let textRule: String
         switch (hasImage, memo) {
         case (true, false):
@@ -168,6 +174,8 @@ public enum Prompts {
         "remindAt": if the note mentions a date or deadline, give it as YYYY-MM-DD resolved against today; otherwise an empty string.
         \(textRule)
         "title": under 60 characters. "summary": one sentence. "tags": up to 5 keywords.
+        \(folderOptionsRule)
+        \(habits)
 
         Note:
         \(body)\(source)
@@ -206,8 +214,8 @@ public struct Filer: Sendable {
         self.client = client
     }
 
-    public func file(_ note: Note, folders: [String], image: ClaudeClient.Image?, today: String, language: AppLanguage = .current, memo: Bool = false) async throws -> FilingResult {
-        let prompt = Prompts.filing(text: note.text, url: note.url, hasImage: image != nil, folders: folders, today: today, language: language, memo: memo)
+    public func file(_ note: Note, folders: [String], image: ClaudeClient.Image?, today: String, language: AppLanguage = .current, memo: Bool = false, habits: String = "") async throws -> FilingResult {
+        let prompt = Prompts.filing(text: note.text, url: note.url, hasImage: image != nil, folders: folders, today: today, language: language, memo: memo, habits: habits)
         return try await client.json(FilingResult.self, prompt: prompt, schema: Prompts.filingSchema, images: image.map { [$0] } ?? [], effort: .low)
     }
 

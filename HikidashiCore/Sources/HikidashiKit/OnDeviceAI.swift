@@ -11,7 +11,7 @@ public protocol NoteAI: Sendable {
     /// スクショの文字を読み取れるか
     var readsImages: Bool { get }
     /// memo: 本文をメモ風に整える（FilingResult.text に入れて返す。整えないときは空）
-    func file(_ note: Note, folders: [String], image: ClaudeClient.Image?, today: String, language: AppLanguage, memo: Bool) async throws -> FilingResult
+    func file(_ note: Note, folders: [String], image: ClaudeClient.Image?, today: String, language: AppLanguage, memo: Bool, habits: String) async throws -> FilingResult
     func recall(_ query: String, notes: [Note], today: String, language: AppLanguage) async throws -> RecallResult
     /// 長い文をメモ風に整えて返す（保存する前に確かめるとき）
     func condense(_ text: String, language: AppLanguage) async throws -> String
@@ -80,6 +80,8 @@ struct OnDeviceFiling {
     var summary: String
     @Guide(description: "A broad folder name of 1 to 3 words naming the topic, never Other or Misc. Reuse an existing folder when it fits")
     var folder: String
+    @Guide(description: "3 different folder name candidates, best first: one specific, one broader, one from another angle (e.g. 洗剤 / 洗濯用品 / 買い物). Never Other or Misc")
+    var folderOptions: [String]
     @Guide(description: "Up to 5 keywords")
     var tags: [String]
     @Guide(description: "2 to 4 moments when this note would help, phrased as what the user is doing, e.g. Doing laundry")
@@ -117,7 +119,7 @@ struct OnDeviceRecall {
 struct OnDeviceFiler: NoteAI {
     var readsImages: Bool { false }
 
-    func file(_ note: Note, folders: [String], image: ClaudeClient.Image?, today: String, language: AppLanguage, memo: Bool) async throws -> FilingResult {
+    func file(_ note: Note, folders: [String], image: ClaudeClient.Image?, today: String, language: AppLanguage, memo: Bool, habits: String) async throws -> FilingResult {
         let session = LanguageModelSession(instructions: """
             You file notes for a personal "tips drawer" app. The user saves tips they find on X, the web, or in daily life, \
             and wants them handed back at the moment they need them. Write every field in \(language.promptName).
@@ -126,6 +128,7 @@ struct OnDeviceFiler: NoteAI {
         let prompt = """
             Today: \(today)
             Existing folders: \(folderList)
+            \(habits.prefix(1500))
 
             Note:
             \(note.text.prefix(1500))\(note.url.map { "\nSource: " + $0 } ?? "")
@@ -133,7 +136,7 @@ struct OnDeviceFiler: NoteAI {
         let r = try await session.respond(to: prompt, generating: OnDeviceFiling.self).content
         let memoText = memo ? ((try? await condense(note.text, language: language)) ?? "") : ""
         return FilingResult(text: memoText, title: r.title, summary: r.summary, category: r.folder,
-                            tags: r.tags, situations: r.situations, remindAt: r.remindAt)
+                            tags: r.tags, situations: r.situations, remindAt: r.remindAt, folderOptions: r.folderOptions)
     }
 
     func compose(topic: String, notes: [Note], language: AppLanguage) async throws -> ComposeResult {

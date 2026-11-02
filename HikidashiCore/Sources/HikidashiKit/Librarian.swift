@@ -37,6 +37,29 @@ public final class Librarian {
         didSet { UserDefaults.standard.set(memoMode, forKey: Self.memoModeKey) }
     }
 
+    // MARK: フォルダの決め方（設定の「フォルダ分け」）
+
+    /// しまうたびに 3 つから選ぶか、おまかせか
+    public var folderMode: FolderMode = FolderMode(rawValue: UserDefaults.standard.string(forKey: "folder.mode") ?? "") ?? .ask {
+        didSet { UserDefaults.standard.set(folderMode.rawValue, forKey: "folder.mode") }
+    }
+    /// 「その他」のメモを自動で振り分ける
+    public var autoResort: Bool = UserDefaults.standard.object(forKey: "folder.autoResort") as? Bool ?? false {
+        didSet { UserDefaults.standard.set(autoResort, forKey: "folder.autoResort") }
+    }
+    /// 似たフォルダのまとめ方
+    public var mergeMode: MergeMode = MergeMode(rawValue: UserDefaults.standard.string(forKey: "folder.merge") ?? "") ?? .suggest {
+        didSet { UserDefaults.standard.set(mergeMode.rawValue, forKey: "folder.merge") }
+    }
+    /// なるべく今あるフォルダに入れる
+    public var preferExisting: Bool = UserDefaults.standard.object(forKey: "folder.preferExisting") as? Bool ?? true {
+        didSet { UserDefaults.standard.set(preferExisting, forKey: "folder.preferExisting") }
+    }
+    /// しまった直後の「どのフォルダに入れますか？」
+    public private(set) var folderChoice: FolderChoiceRequest?
+    /// 自動で整えたときの知らせ（画面で一度出したら消す）
+    public var tidyMessage: String?
+
     /// AI を使えるか（Claude か iPhone の中の AI）
     public var hasAI: Bool { aiKind != .none }
 
@@ -114,6 +137,15 @@ public final class Librarian {
         var note = Note(id: id, text: text.trimmingCharacters(in: .whitespacesAndNewlines), url: Note.nonEmpty(url), filed: false, imageFile: imageFile,
                         original: original, file: fileName, fileTitle: file?.name)
         Heuristics.file(&note, notes: store.notes, folders: store.folders)
+        // AI が無いときは、ここで候補を出す（AI があれば整理のあとに出す）
+        if !hasAI, note.category == Heuristics.otherFolder || folderMode == .ask {
+            let options = Heuristics.folderOptions(text: note.text, title: note.title, notes: store.notes, folders: store.folders,
+                                                   log: NamingHabits.load(), preferExisting: preferExisting)
+            if let first = options.first { note.category = first.name }
+            if folderMode == .ask, !options.isEmpty {
+                folderChoice = FolderChoiceRequest(noteID: note.id, title: note.title, options: options)
+            }
+        }
         store.add(note)
         return note
     }
@@ -126,6 +158,7 @@ public final class Librarian {
         for id in pending {
             await file(id)
         }
+        tidyFolders()
     }
 
     /// 1 件を AI で整理する（再整理にも使う）
@@ -148,18 +181,65 @@ public final class Librarian {
         do {
             // メモ風に整えるのは、初めて整理する、ある程度長い文だけ
             let memo = memoMode && !note.filed && note.original == nil && Self.worthMemo(note.text)
-            var r = try await ai.file(note, folders: folders, image: image, today: Self.today, language: .current, memo: memo)
-            // AI が「その他」のような箱に入れたら、言葉の辞書と今までのフォルダから選び直す
-            if Heuristics.isCatchAll(r.category) {
-                let others = store.notes.filter { $0.id != id }
-                r.category = Heuristics.folder(for: [r.title, r.text.isEmpty ? note.text : r.text, r.summary].joined(separator: "\n"), notes: others, folders: store.folders)
-            }
+            let log = NamingHabits.load()
+            var r = try await ai.file(note, folders: folders, image: image, today: Self.today, language: .current, memo: memo,
+                                      habits: NamingHabits.promptHint(log))
+            // 候補を 3 つにそろえる（AI の候補 → 辞書と今までのメモ）。「その他」のような箱は使わない
+            let others = store.notes.filter { $0.id != id }
+            let options = Heuristics.folderOptions(text: r.text.isEmpty ? note.text : r.text, title: r.title, notes: others, folders: store.folders,
+                                                   ai: [r.category] + (r.folderOptions ?? []), log: log, preferExisting: preferExisting)
+            let firstTime = !note.filed
+            // 自分で選んだフォルダは、再整理でも変えない
+            let keep = note.filed && note.folderChosen == true
+            if let first = options.first { r.category = first.name }
+            if keep { r.category = note.category }
             store.update(id) { $0.apply(r, replaceText: image != nil || memo) }
+            if firstTime, folderMode == .ask, !options.isEmpty {
+                folderChoice = FolderChoiceRequest(noteID: id, title: r.title.isEmpty ? note.title : r.title, options: options)
+            }
             lastError = nil
         } catch {
             // iPhone の中の AI が失敗したときは、簡易の整理のまま黙って続ける
             if aiKind == .claude { lastError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription }
         }
+    }
+
+    /// 「どのフォルダに入れますか？」で選んだ（custom: 自分で入力した）
+    public func chooseFolder(_ name: String, custom: Bool = false) {
+        guard let req = folderChoice else { return }
+        let n = String(name.trimmingCharacters(in: .whitespacesAndNewlines).prefix(32))
+        guard !n.isEmpty else { return }
+        let existed = store.folders.contains(n)
+        if !existed { _ = store.createFolder(n) }
+        store.update(req.noteID) { $0.category = n; $0.folderChosen = true }
+        NamingHabits.record(FolderChoiceRecord(title: req.title, offered: req.options.map(\.name), chosen: n, custom: custom, existing: existed))
+        folderChoice = nil
+    }
+
+    /// 選ばずに閉じた（1 番目の候補のまま）
+    public func dismissFolderChoice() { folderChoice = nil }
+
+    /// 覚えた名付けの好みを消す
+    public func resetNamingHabits() { NamingHabits.reset() }
+
+    /// 設定に合わせてフォルダを整える: 「その他」の振り分けと、似たフォルダのまとめ（自動にしたものだけ）
+    @discardableResult
+    public func tidyFolders() -> String? {
+        var parts: [String] = []
+        if autoResort || folderMode == .auto {
+            let moves = Heuristics.resortSuggestions(store.notes, folders: store.folders)
+            for m in moves { store.update(m.id) { $0.category = m.folder } }
+            if !moves.isEmpty { parts.append(L("「その他」の \(moves.count) 件を振り分けました", "Sorted \(moves.count) notes out of Other")) }
+        }
+        if mergeMode == .auto {
+            for s in Heuristics.folderMergeSuggestions(store.notes, folders: store.folders, limit: 3) where store.folders.contains(s.from) {
+                store.mergeFolders([s.from], into: s.into)
+                parts.append(L("「\(s.from)」を「\(s.into)」にまとめました", "Merged \(s.from) into \(s.into)"))
+            }
+        }
+        let msg = parts.isEmpty ? nil : parts.joined(separator: L("。", ". "))
+        if msg != nil { tidyMessage = msg }
+        return msg
     }
 
     /// メモ風に整える価値がある長さか（短いメモはそのまま）

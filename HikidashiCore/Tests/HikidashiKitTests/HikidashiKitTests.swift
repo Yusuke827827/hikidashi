@@ -98,9 +98,10 @@ final class StoreTests: XCTestCase {
 /// iPhone の中の AI の代わり
 struct FakeAI: NoteAI {
     var readsImages: Bool { false }
-    func file(_ note: Note, folders: [String], image: ClaudeClient.Image?, today: String, language: AppLanguage, memo: Bool) async throws -> FilingResult {
+    func file(_ note: Note, folders: [String], image: ClaudeClient.Image?, today: String, language: AppLanguage, memo: Bool, habits: String) async throws -> FilingResult {
         XCTAssertNil(image, "文字を読めない AI には画像を渡さない")
-        return FilingResult(text: memo ? "・要点1\n・要点2" : "", title: "AI title", summary: "AI summary", category: "AI folder", tags: ["t"], situations: ["s"], remindAt: "")
+        return FilingResult(text: memo ? "・要点1\n・要点2" : "", title: "AI title", summary: "AI summary", category: "AI folder", tags: ["t"], situations: ["s"], remindAt: "",
+                            folderOptions: ["AI folder", "AI broad", "AI angle"])
     }
     func recall(_ query: String, notes: [Note], today: String, language: AppLanguage) async throws -> RecallResult {
         RecallResult(answer: "advice", ids: [notes[0].id])
@@ -136,6 +137,29 @@ final class OnDeviceTests: XCTestCase {
         let r = await lib.recall("なにか")
         XCTAssertFalse(r.keywordOnly)
         XCTAssertEqual(r.answer, "advice")
+    }
+
+    func testFolderChoiceAsksAndLearns() async throws {
+        NamingHabits.reset()
+        defer { NamingHabits.reset() }
+        let store = try makeStore()
+        let lib = Librarian(store: store, credentialProvider: { nil }, onDevice: FakeAI())
+        lib.folderMode = .ask
+        defer { UserDefaults.standard.removeObject(forKey: "folder.mode") }
+        let note = lib.save(text: "洗剤の詰め替え", url: nil, image: nil)
+        await lib.file(note.id)
+        let req = try XCTUnwrap(lib.folderChoice, "しまったあとに、どのフォルダに入れるか聞く")
+        XCTAssertEqual(req.options.map(\.name).prefix(3), ["AI folder", "AI broad", "AI angle"])
+        lib.chooseFolder("洗濯用品", custom: true)
+        XCTAssertNil(lib.folderChoice)
+        XCTAssertEqual(store.note(note.id)?.category, "洗濯用品")
+        XCTAssertEqual(store.note(note.id)?.folderChosen, true)
+        let log = NamingHabits.load()
+        XCTAssertEqual(log.last?.chosen, "洗濯用品")
+        XCTAssertTrue(NamingHabits.promptHint(log).contains("洗濯用品"))
+        // 再整理しても、自分で選んだフォルダは変えない
+        await lib.file(note.id)
+        XCTAssertEqual(store.note(note.id)?.category, "洗濯用品")
     }
 
     func testSkipsScreenshotOnlyNotes() async throws {
@@ -189,6 +213,25 @@ final class HeuristicsTests: XCTestCase {
         XCTAssertEqual(Heuristics.folder(for: "推し活の予算メモ", folders: ["推し活"], language: .ja), "推し活")
         // 辞書の分類と似た名前のフォルダがあれば、そちらへ
         XCTAssertEqual(Heuristics.folder(for: "ふるさと納税は年末までに", folders: ["お金"], language: .ja), "お金")
+    }
+
+    func testFolderOptionsWithoutAI() {
+        let opts = Heuristics.folderOptions(text: "洗剤の詰め替えは安い日に", title: "洗剤の詰め替え", notes: [], folders: [], language: .ja)
+        XCTAssertEqual(opts.first?.name, "暮らし・家事")
+        XCTAssertTrue(opts.map(\.name).contains("洗剤"), "具体的な言葉も候補に")
+        XCTAssertFalse(opts.contains { Heuristics.isCatchAll($0.name) })
+        XCTAssertLessThanOrEqual(opts.count, 3)
+        // 新しい名前に似たフォルダが今あれば知らせる
+        let o2 = Heuristics.folderOptions(text: "x", notes: [], folders: ["洗濯"], ai: ["洗濯用品"], language: .ja)
+        XCTAssertEqual(o2.first?.similar, "洗濯")
+    }
+
+    func testNamingHabitsRenames() {
+        let r = { FolderChoiceRecord(title: "t", offered: ["暮らし・家事", "洗剤"], chosen: "家のこと", custom: true, existing: false) }
+        XCTAssertTrue(NamingHabits.renames([r()]).isEmpty, "1 回だけでは覚えない")
+        XCTAssertEqual(NamingHabits.renames([r(), r()])["暮らし・家事"], "家のこと")
+        let opts = Heuristics.folderOptions(text: "洗剤の詰め替え", notes: [], folders: [], log: [r(), r()], language: .ja)
+        XCTAssertEqual(opts.first?.name, "家のこと", "いつも言い換える名前は、言い換えた方で出す")
     }
 
     func testResortSuggestions() {
