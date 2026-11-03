@@ -505,6 +505,30 @@ body.locked .wrap { visibility: hidden; }
 .frow .star { color: var(--faint); }
 .frow .star[aria-pressed="true"] { color: var(--accent); }
 .frow .star[aria-pressed="true"] svg { fill: currentColor; }
+/* カレンダー */
+.cal { display: none; }
+body[data-tab="cal"] .cal { display: grid; gap: 10px; max-width: 760px; width: 100%; margin: 0 auto; }
+body[data-tab="cal"] .hero, body[data-tab="cal"] .main { display: none !important; }
+.cal-head { display: flex; align-items: center; gap: 4px; }
+.cal-head h2 { margin: 0 auto 0 2px; font-size: 20px; font-weight: 700; }
+.cal-head .icon-btn { font-size: 24px; line-height: 1; }
+.cgrid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+.cdow { text-align: center; font-size: 11.5px; color: var(--muted); padding: 4px 0; }
+.cday { border: 0; background: linear-gradient(var(--surface), var(--surface)), var(--bg); border-radius: 12px; min-height: 54px; display: grid; grid-template-rows: auto 1fr; justify-items: center; padding: 5px 0 4px; color: var(--ink); }
+.cday.empty { background: none; }
+.cday .dn { font-size: 14px; font-variant-numeric: tabular-nums; width: 26px; height: 26px; display: grid; place-items: center; border-radius: 50%; }
+.cday.today .dn { background: var(--accent); color: var(--accent-text); font-weight: 700; }
+.cday.on { outline: 2px solid var(--ink); outline-offset: -2px; }
+.cday .dots { display: flex; gap: 3px; align-items: center; }
+.cday .dots i { width: 6px; height: 6px; border-radius: 50%; display: block; }
+.cday .dots i.plan { background: none; border: 1.5px solid var(--accent); width: 7px; height: 7px; }
+.cal-legend { margin: 0; font-size: 12px; color: var(--muted); display: flex; gap: 6px; align-items: center; }
+.cal-legend .lg { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-left: 8px; }
+.cal-legend .lg.saved { background: var(--muted); }
+.cal-legend .lg.plan { border: 1.5px solid var(--accent); }
+.desk-only { display: none; }
+@media (min-width: 761px) { .desk-only { display: inline-grid; } }
+.prop-img { max-width: 100%; max-height: 220px; border-radius: 12px; display: block; margin: 8px auto; object-fit: contain; }
 /* 設定などの画面は、壁紙があっても透けないように（半透明の色の下に不透明な地の色を敷く） */
 .help, .wp-panel, :root[data-wall] .wp-panel, .choice, .menu-sheet {
   background: linear-gradient(var(--surface), var(--surface)), var(--bg);
@@ -539,6 +563,7 @@ body.locked .wrap { visibility: hidden; }
     <div class="mark"><b>Mindrawer</b></div>
     <button class="status" id="status" type="button"></button>
     <div class="top-right">
+      <button class="icon-btn desk-only" id="calBtn" type="button"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg></button>
       <button class="icon-btn" id="chatBtn" type="button"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button>
       <button class="icon-btn" id="helpBtn" type="button"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M9.2 9a3 3 0 0 1 5.7 1c0 2-2.9 2.8-2.9 2.8"/><path d="M12 17h.01"/></svg><span class="sr" id="helpLabel"></span></button>
       <div class="wp">
@@ -581,7 +606,7 @@ body.locked .wrap { visibility: hidden; }
       <div class="omni-foot">
         <span id="saveTools">
           <button class="tool" id="addSrc"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg><span id="addSrcLabel"></span></button>
-          <label class="tool" id="imgTool" hidden><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg><span id="imgLabel"></span><input type="file" id="imgInput" accept="image/*" hidden></label>
+          <label class="tool" id="imgTool"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg><span id="imgLabel"></span><input type="file" id="imgInput" accept="image/*" hidden></label>
           <label class="tool" id="fileTool"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m21 12-9 9a6 6 0 0 1-8.5-8.5l9-9a4 4 0 0 1 5.7 5.7l-9 9a2 2 0 0 1-2.8-2.8l8.5-8.5"/></svg><span id="fileLabel"></span><input type="file" id="fileInput" accept=".pdf,.txt,.md,.csv,.json,text/*,application/pdf" hidden></label>
           <button class="tool" id="memoTool" aria-pressed="false" type="button"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h7M4.5 6h.01M4.5 12h.01M4.5 18h.01"/></svg><span id="memoLabel"></span></button>
           <button class="tool" id="micTool" type="button" hidden><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2.5" width="6" height="12" rx="3"/><path d="M19 10.5a7 7 0 0 1-14 0M12 17.5V21"/></svg><span id="micLabel"></span></button>
@@ -603,6 +628,7 @@ body.locked .wrap { visibility: hidden; }
     </div>
   </section>
 
+  <section class="cal" id="calBox"></section>
   <div class="main">
     <aside class="rail">
       <div id="todayBox" hidden><h2><span id="todayH"></span><span class="today-n" id="todayN"></span></h2><div class="today" id="todayList"></div><button class="mini" id="notifBtn" hidden></button></div>
@@ -637,7 +663,7 @@ body.locked .wrap { visibility: hidden; }
 <nav class="tabbar" id="tabbar" aria-label="Tabs">
   <button type="button" data-tab="today"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg><span id="tabTodayL"></span></button>
   <button type="button" data-tab="notes"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2.5"/><path d="M8 8h8M8 12h8M8 16h5"/></svg><span id="tabNotesL"></span></button>
-  <button type="button" data-tab="ask"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span id="tabAskL"></span></button>
+  <button type="button" data-tab="cal"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg><span id="tabCalL"></span></button>
   <button type="button" data-tab="chat"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span id="tabChatL"></span></button>
 </nav>
 
@@ -788,6 +814,10 @@ body.locked .wrap { visibility: hidden; }
     secMore: "もっと便利に", translateL: "外国語のメモを日本語に訳す", statsBtn: "使われ方のまとめ", moreNote: "翻訳と手書きの読み取りには AI を使います。カレンダー用のファイル（.ics）は Google カレンダー・Outlook・iPhone のカレンダーで開けます。",
     statsH: "使われ方のまとめ", statsTotal: "しまった数", statsMonth: "今月", statsFav: "お気に入り", statsPerMonth: "月ごとにしまった数", statsFolders: "フォルダごと", statsHelpful: "よく役立ったメモ", statsLearning: "復習中", statsLearned: "覚えた",
     secInbox: "メール・LINE で送る", inboxOn: "メール・LINE で送れるようにする", inboxOff: "受け取りをやめる", inboxEmail: "送り先のメール", inboxLine: "LINE で送る言葉", inboxNone: "中継サーバーで、メールか LINE の設定がまだです。", inboxNote: "自分だけの送り先にメールを転送したり、LINE で送ったりすると、次にこのページを開いたときにメモとして入ります。送り先は人に教えないでください。", inboxGot: (n) => `メール・LINE から ${n} 件届きました。` });
+  Object.assign(I18N.en, { tabCal: "Calendar", calPrev: "Previous month", calNext: "Next month", calToday: "Today", calSaved: "Saved", calPlan: "Planned", calNone: "Nothing on this day.", calAddPh: "Add a note for this day", calAdd: "Add", calAdded: (d) => `Added to ${d}.`,
+    propH: "Note from the image", propReading: "Reading the text…", propNote: "Here's a suggested note. Edit it, then save.", propFail: "Couldn't read any text. Type it, or attach the image as is.", propSave: "Save this note", propAttach: "Attach the image instead" });
+  Object.assign(I18N.ja, { tabCal: "カレンダー", calPrev: "前の月", calNext: "次の月", calToday: "今日", calSaved: "しまったメモ", calPlan: "予定", calNone: "この日のメモはありません。", calAddPh: "この日のメモを書く", calAdd: "追加", calAdded: (d) => `${d}に追加しました。`,
+    propH: "画像からメモを作る", propReading: "文字を読み取っています…", propNote: "読み取った内容からメモを作りました。直してからしまえます。", propFail: "文字を読み取れませんでした。自分で書くか、画像のまま添付してください。", propSave: "このメモでしまう", propAttach: "画像のまま添付する" });
   Object.assign(I18N.en, { secAI: "AI", aiKeyChange: "Remove API key", langL: "Language", secData: "Data" });
   Object.assign(I18N.ja, { secAI: "AI", aiKeyChange: "API キーを外す", langL: "言葉", secData: "データ" });
   Object.assign(I18N.en, { tabToday: "Today", tabNotes: "Notes", tabChat: "Ask", sharedMark: "Shared", delQ: (x) => `Move “${x}” to the trash?`, tagFiltered: (x) => `Showing #${x}. Clear it in Filters.`,
@@ -1034,12 +1064,12 @@ body.locked .wrap { visibility: hidden; }
     if (cur && !confirm(t.keyRemoveQ)) return;
     if (cur) {
       try { localStorage.removeItem(KEY_KEY); } catch {}
-      state.sample = null; $("imgTool").hidden = true; renderChrome(); toast(t.keyRemoved); return;
+      state.sample = null; renderChrome(); toast(t.keyRemoved); return;
     }
     const k = (prompt(t.keyPrompt) || "").trim();
     if (!k) return;
     try { localStorage.setItem(KEY_KEY, k); } catch {}
-    state.sample = keySample(k); $("imgTool").hidden = false; renderChrome(); toast(t.keySaved);
+    state.sample = keySample(k); renderChrome(); toast(t.keySaved);
   }
 
   // ---------- AI ----------
@@ -2633,6 +2663,131 @@ Return JSON only: {"answer":"","ids":["ids of the notes you used, max 5"]}`;
     try { sessionStorage.setItem("mindrawer.tab", tab); } catch {}
   }
 
+  // ---------- カレンダー（日付でメモを見る・その日のメモを足す） ----------
+  state.calMonth = (() => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1); })();
+  state.calDay = todayISO();
+  const isoOf = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  /** その月の日ごとの出来事: しまった日・予定（リマインド・今日のリスト・通知・期限） */
+  function calEvents(monthStart) {
+    const endD = new Date(monthStart.getFullYear(), monthStart.getMonth() + 1, 1), end = endD.getTime(), start = monthStart.getTime();
+    const ev = new Map(), add = (iso, n, kind) => { if (!ev.has(iso)) ev.set(iso, []); const l = ev.get(iso); if (!l.some((x) => x.n.id === n.id && x.kind === kind)) l.push({ n, kind }); };
+    for (const n of state.notes) {
+      if (n.example) continue;
+      if (n.createdAt >= start && n.createdAt < end) add(isoOf(new Date(n.createdAt)), n, "saved");
+      for (const d of [n.remindAt, n.plannedDay]) if (d && d >= isoOf(monthStart) && d < isoOf(endD)) add(d, n, "plan");
+      if (n.expiresAt && n.expiresAt >= start && n.expiresAt < end) add(isoOf(new Date(n.expiresAt)), n, "plan");
+      if (hasSchedule(n.alarm)) for (const t of occurrences(n.alarm, start - 1, 40)) { if (t >= end) break; add(isoOf(new Date(t)), n, "plan"); }
+    }
+    return ev;
+  }
+  function renderCal() {
+    const t = T(), box = $("calBox"), m = state.calMonth, ev = calEvents(m);
+    const startDow = new Date(m.getFullYear(), m.getMonth(), 1).getDay(), days = new Date(m.getFullYear(), m.getMonth() + 1, 0).getDate();
+    const cells = [];
+    for (let i = 0; i < startDow; i++) cells.push(el("span", { class: "cday empty" }));
+    for (let d = 1; d <= days; d++) {
+      const iso = isoOf(new Date(m.getFullYear(), m.getMonth(), d)), list = ev.get(iso) || [];
+      const plans = list.filter((x) => x.kind !== "saved"), saved = list.filter((x) => x.kind === "saved");
+      cells.push(el("button", { type: "button", class: "cday" + (iso === todayISO() ? " today" : "") + (iso === state.calDay ? " on" : ""), "aria-label": `${d}: ${list.length}`, onclick: () => { state.calDay = iso; renderCal(); } },
+        el("span", { class: "dn" }, String(d)),
+        el("span", { class: "dots" }, ...saved.slice(0, 3).map((x) => { const i = el("i"); i.style.background = folderLook(x.n.category || t.other).color; return i; }),
+          plans.length ? el("i", { class: "plan" }) : null)));
+    }
+    const sel = ev.get(state.calDay) || [];
+    const plans = sel.filter((x) => x.kind !== "saved"), saved = sel.filter((x) => x.kind === "saved");
+    const loc = state.lang === "ja" ? "ja-JP" : "en";
+    const dayLabel = new Date(state.calDay + "T00:00:00").toLocaleDateString(loc, { month: "long", day: "numeric", weekday: "short" });
+    const input = el("input", { type: "text", placeholder: t.calAddPh, "aria-label": t.calAddPh });
+    const addNote = async () => {
+      const text = input.value.trim(); if (!text || !state.store) return;
+      input.value = "";
+      const meta = state.sample ? await classify(text, "", null) : { ...heuristic(text), text };
+      const { folderOptions: _o, ...rest } = meta;
+      await state.store.add({ ...rest, tags: withHashtags(rest.tags, rest.text), remindAt: state.calDay, url: null, createdAt: Date.now(), helpful: 0, pinned: false });
+      toast(t.calAdded(dayLabel)); renderCal();
+    };
+    input.addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.isComposing) addNote(); });
+    box.replaceChildren(
+      el("div", { class: "cal-head" },
+        el("h2", {}, m.toLocaleDateString(loc, { year: "numeric", month: "long" })),
+        el("button", { type: "button", class: "icon-btn", "aria-label": t.calPrev, onclick: () => { state.calMonth = new Date(m.getFullYear(), m.getMonth() - 1, 1); renderCal(); } }, "‹"),
+        el("button", { type: "button", class: "mini", onclick: () => { const d = new Date(); state.calMonth = new Date(d.getFullYear(), d.getMonth(), 1); state.calDay = todayISO(); renderCal(); } }, t.calToday),
+        el("button", { type: "button", class: "icon-btn", "aria-label": t.calNext, onclick: () => { state.calMonth = new Date(m.getFullYear(), m.getMonth() + 1, 1); renderCal(); } }, "›")),
+      el("div", { class: "cgrid" }, ...WD[state.lang].map((w) => el("span", { class: "cdow" }, w)), ...cells),
+      el("p", { class: "cal-legend" }, el("i", { class: "lg saved" }), t.calSaved, el("i", { class: "lg plan" }), t.calPlan),
+      el("h3", { class: "group-h" }, dayLabel),
+      el("div", { class: "choice-in cal-add" }, input, el("button", { type: "button", onclick: addNote }, t.calAdd)),
+      plans.length ? el("h3", { class: "group-h" }, t.calPlan, el("span", { class: "n" }, String(plans.length))) : null,
+      el("div", { class: "slips" }, ...plans.map((x) => slip(x.n))),
+      saved.length ? el("h3", { class: "group-h" }, t.calSaved, el("span", { class: "n" }, String(saved.length))) : null,
+      el("div", { class: "slips" }, ...saved.map((x) => slip(x.n))),
+      !sel.length ? el("p", { class: "none" }, t.calNone) : null);
+  }
+
+  // ---------- スクショ・写真からメモを作る（LINE などのチャットも） ----------
+  let tess = null;
+  async function ocrImage(file) {
+    if (!tess) {
+      await new Promise((ok, ng) => { const sc = document.createElement("script"); sc.src = "https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js"; sc.onload = ok; sc.onerror = ng; document.head.append(sc); });
+      tess = window.Tesseract;
+    }
+    const r = await tess.recognize(file, state.lang === "ja" ? "jpn+eng" : "eng");
+    // 日本語の文字のあいだに入る空白を詰める
+    return String(r?.data?.text || "").replace(/([^\x00-\x7f]) +(?=[^\x00-\x7f])/g, "$1").trim();
+  }
+  const CHAT_DROP = /^(?:(?:午前|午後)?\s*\d{1,2}[:：]\d{2}|既読(?:\s*\d+)?|Read(?: \d+)?|\d{4}[./年]\d{1,2}[./月]\d{1,2}日?(?:\s*\([^)]*\))?|(?:今日|昨日|Today|Yesterday)|\d{1,2}\/\d{1,2}\s*\([^)]*\)|メッセージを入力|Aa|トーク|送信取消.*|.*がメッセージの送信を取り消しました|\d+%|[<＜]\s*\d*)$/i;
+  /** チャットのスクショの文から、時刻・既読・日付・入力欄を除く（スマホ版の cleanChatText と同じ） */
+  function cleanChatText(raw) {
+    const out = [];
+    for (const l of String(raw).split("\n")) {
+      const t = l.trim(); if (!t || CHAT_DROP.test(t)) continue;
+      const t2 = t.replace(/\s*(?:既読\s*\d*)?\s*(?:(?:午前|午後)\s*)?\d{1,2}[:：]\d{2}$/, "");
+      if (t2 && out[out.length - 1] !== t2) out.push(t2);
+    }
+    return out.join("\n");
+  }
+  function looksLikeChat(raw) {
+    const lines = String(raw).split("\n").filter((l) => l.trim());
+    if (lines.length < 3) return false;
+    return lines.filter((l) => /既読|Read|(?:午前|午後)?\s*\d{1,2}[:：]\d{2}/.test(l)).length / lines.length >= 0.2;
+  }
+  /** 画像を読み取って、メモの案を出す。直してからしまえる */
+  async function proposeFromImage(file) {
+    const t = T(), dlg = $("memoDlg");
+    setMode("save");
+    const img = el("img", { class: "prop-img", alt: "" }); img.src = URL.createObjectURL(file);
+    const ta = el("textarea", { class: "memo-ta", placeholder: t.propReading }); ta.disabled = true;
+    const note = el("p", { class: "set-note" }, t.propReading);
+    const saveBtn = el("button", { type: "button", disabled: "" }, t.propSave);
+    fill(dlg,
+      el("div", { class: "help-head" }, el("h2", {}, t.propH), el("button", { type: "button", class: "help-x", "aria-label": t.close, onclick: () => dlg.close() }, "×")),
+      img, note, ta,
+      el("div", { class: "ef-acts" },
+        state.sample && !state.noVision ? el("button", { type: "button", class: "ghost", onclick: () => { dlg.close(); setImage(file); } }, t.propAttach) : null,
+        saveBtn));
+    dlg.onclose = null;
+    dlg.showModal();
+    let proposal = "";
+    try {
+      if (state.sample && !state.noVision) {
+        const r = await state.sample.json(`Read this screenshot or photo and turn its useful content into a short note for a personal tips app, in ${langName()}.
+If it is a chat (LINE, messages): drop UI chrome (times, "既読"/read marks, names unless they matter, the input box) and write the essence — plans, places, dates, decisions, recommendations, things to remember — as short lines starting with "・".
+Otherwise, transcribe the useful text cleanly. Keep URLs, prices, dates and names.
+Return JSON only: {"text":""}`, { modelTier: "default", images: [file] });
+        proposal = String(r.text || "").trim();
+      } else {
+        const raw = await ocrImage(file);
+        proposal = looksLikeChat(raw) ? cleanChatText(raw) : raw;
+      }
+    } catch { proposal = ""; }
+    if (!dlg.open) return;
+    ta.disabled = false; ta.value = proposal; saveBtn.disabled = !proposal;
+    note.textContent = proposal ? t.propNote : t.propFail;
+    ta.oninput = () => { saveBtn.disabled = !ta.value.trim(); };
+    saveBtn.onclick = async () => { const v = ta.value.trim(); if (!v) return; dlg.close(); $("noteText").value = v; await save(); };
+    setTimeout(() => ta.focus(), 0);
+  }
+
   // ---------- render ----------
   function folderOf(n) { return state.view === "cat" ? n.category || T().other : String(monthKey(n.createdAt)); }
   function folderLabel(k) { return state.view === "cat" ? k : monthLabel(Number(k)); }
@@ -2757,7 +2912,7 @@ Return JSON only: {"answer":"","ids":["ids of the notes you used, max 5"]}`;
     $("askBox").hidden = state.mode !== "ask"; $("suggest").hidden = state.mode !== "ask";
     $("noteText").placeholder = t.notePh; $("askText").placeholder = t.askPh; $("noteUrl").placeholder = t.urlPh;
     $("fileLabel").textContent = t.fileLabel; $("fileRm").textContent = t.remove;
-    $("tabTodayL").textContent = t.tabToday; $("tabNotesL").textContent = t.tabNotes; $("tabAskL").textContent = t.recall; $("tabChatL").textContent = t.tabChat;
+    $("tabTodayL").textContent = t.tabToday; $("tabNotesL").textContent = t.tabNotes; $("tabCalL").textContent = t.tabCal; $("tabChatL").textContent = t.tabChat;
     for (const [id, l] of [["chatBtn", t.chat], ["setBtn", t.settings], ["helpBtn", t.help], ["wpBtn", t.wp]]) { $(id).title = l; $(id).setAttribute("aria-label", l); }
     $("micLabel").textContent = t.micLabel; $("tplLabel").textContent = t.tplLabel;
     $("micTool").hidden = !(window.SpeechRecognition || window.webkitSpeechRecognition);
@@ -2931,10 +3086,10 @@ Return JSON only: {"answer":"","ids":["ids of the notes you used, max 5"]}`;
   $("mAsk").onclick = () => setMode("ask");
   $("go").onclick = () => (state.mode === "save" ? save() : ask());
   $("noteText").addEventListener("keydown", (e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) save(); });
-  $("noteText").addEventListener("paste", (e) => { const f = [...(e.clipboardData?.files || [])].find((x) => x.type.startsWith("image/")); if (f && !$("imgTool").hidden) { e.preventDefault(); setImage(f); } });
+  $("noteText").addEventListener("paste", (e) => { const f = [...(e.clipboardData?.files || [])].find((x) => x.type.startsWith("image/")); if (f) { e.preventDefault(); proposeFromImage(f); } });
   $("askText").addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.isComposing) ask(); });
   $("addSrc").onclick = () => { $("srcRow").hidden = !$("srcRow").hidden; if (!$("srcRow").hidden) $("noteUrl").focus(); };
-  $("imgInput").onchange = (e) => setImage(e.target.files[0]);
+  $("imgInput").onchange = (e) => { const f = e.target.files[0]; $("imgInput").value = ""; if (f) proposeFromImage(f); };
   $("thumbRm").onclick = clearImage;
   $("answerClose").onclick = () => { state.lastAnswer = null; state.hits = null; renderAnswer(); renderList(); };
   $("byCat").onclick = () => { state.view = "cat"; state.folder = "__all"; renderAll(); };
@@ -2962,11 +3117,12 @@ Return JSON only: {"answer":"","ids":["ids of the notes you used, max 5"]}`;
   $("importInput").onchange = (e) => e.target.files[0] && importNotes(e.target.files[0]);
   $("otherInput").onchange = (e) => e.target.files.length && importOther([...e.target.files]);
   $("setBtn").onclick = openSettings;
+  $("calBtn").onclick = () => { if (document.body.dataset.tab === "cal") setTab("today"); else { setTab("cal"); renderCal(); } };
   $("sortSel").onchange = (e) => { setJSON(PREF.sort, e.target.value); renderList(); };
   for (const b of document.querySelectorAll("#tabbar button")) b.onclick = () => {
     const tab = b.dataset.tab;
     if (tab === "chat") { openChat(); return; }
-    if (tab === "ask") { setTab("today"); setMode("ask"); window.scrollTo({ top: 0, behavior: "smooth" }); return; }
+    if (tab === "cal") { setTab("cal"); renderCal(); window.scrollTo({ top: 0 }); return; }
     setTab(tab); window.scrollTo({ top: 0 });
   };
   setTab((() => { try { return sessionStorage.getItem("mindrawer.tab") || "today"; } catch { return "today"; } })());
@@ -2992,12 +3148,12 @@ Return JSON only: {"answer":"","ids":["ids of the notes you used, max 5"]}`;
     state.inClaude = !!c?.use;
     if (!state.inClaude) {
       const k = readKey();
-      if (k) { state.sample = keySample(k); $("imgTool").hidden = false; }
+      if (k) { state.sample = keySample(k); }
     }
     if (c?.use) {
       const [db, user, sample, downloads] = await Promise.all(["db", "user", "sample", "downloads"].map((n) => c.use(n).catch(() => null)));
       state.sample = sample; state.downloads = downloads;
-      if (sample) { try { const lim = await sample.limits(); $("imgTool").hidden = !lim?.images; } catch {} }
+      if (sample) { try { const lim = await sample.limits(); state.noVision = !lim?.images; } catch {} }
       const uid = user ? await user.id().catch(() => null) : null;
       if (db && uid) store = dbStore(db, uid);
     }
