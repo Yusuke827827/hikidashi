@@ -39,6 +39,11 @@ public struct HikidashiRootView: View {
     @State private var chatting = false
     @AppStorage("autoBackup") private var autoBackup = true
     @State private var mergeRefresh = 0
+    /// スマホの幅での画面（今日・メモ）
+    enum Tab: Hashable { case today, notes }
+    @State private var tab: Tab = .today
+    @AppStorage("noteSort") private var sortRaw = NoteSort.new.rawValue
+    private var sort: NoteSort { NoteSort(rawValue: sortRaw) ?? .new }
 
     @MainActor
     public init() {
@@ -77,13 +82,13 @@ public struct HikidashiRootView: View {
                     } else {
                         ScrollView {
                             LazyVStack(alignment: .leading, spacing: 18) {
-                                mainColumn
-                                listColumn
+                                if tab == .today { mainColumn } else { header; listColumn }
                             }
                             .padding(.horizontal, 16)
-                            .padding(.bottom, 48)
+                            .padding(.bottom, 24)
                         }
                         .scrollDismissesKeyboard(.interactively)
+                        .safeAreaInset(edge: .bottom) { tabBar }
                     }
                 }
                 .onChange(of: jumpTarget) { _, id in
@@ -276,24 +281,56 @@ public struct HikidashiRootView: View {
 
     private var header: some View {
         HStack(alignment: .firstTextBaseline, spacing: 8) {
-            Text("Mindrawer").font(Fonts.mincho(26)).foregroundStyle(palette.text)
-            Text("引出").font(.caption.weight(.bold)).tracking(3).foregroundStyle(palette.accent)
+            Text(!wide && tab == .notes ? L("メモ", "Notes") : "Mindrawer")
+                .font(!wide && tab == .notes ? .largeTitle.weight(.bold) : Fonts.mincho(26))
+                .foregroundStyle(palette.text)
             Spacer()
-            Button { chatting = true } label: {
-                Image(systemName: "bubble.left.and.text.bubble.right").font(.title3).frame(width: 40, height: 44)
-            }
-            .foregroundStyle(palette.text)
-            .accessibilityLabel(L("メモに聞く", "Ask your notes"))
             Text(aiLabel)
-                .font(.caption.monospaced())
+                .font(.caption2.weight(.medium))
                 .foregroundStyle(palette.muted)
-            Button { showSettings = true } label: {
-                Image(systemName: "gearshape").font(.title3).frame(width: 44, height: 44)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 3)
+                .background(Capsule().fill(palette.surface2))
+            if wide {
+                Button { chatting = true } label: {
+                    Image(systemName: "bubble.left.and.text.bubble.right").font(.title3).frame(width: 40, height: 44)
+                }
+                .foregroundStyle(palette.text)
+                .accessibilityLabel(L("メモに聞く", "Ask your notes"))
+                Button { showSettings = true } label: {
+                    Image(systemName: "gearshape").font(.title3).frame(width: 44, height: 44)
+                }
+                .foregroundStyle(palette.text)
+                .accessibilityLabel(L("設定", "Settings"))
             }
-            .foregroundStyle(palette.text)
-            .accessibilityLabel(L("設定", "Settings"))
         }
         .padding(.top, 4)
+    }
+
+    /// 下のタブ（スマホの幅）。今日・メモは画面を切り替え、聞く・設定は開く
+    private var tabBar: some View {
+        HStack(spacing: 0) {
+            tabButton(L("今日", "Today"), "house", on: tab == .today) { withAnimation(.easeOut(duration: 0.15)) { tab = .today } }
+            tabButton(L("メモ", "Notes"), "note.text", on: tab == .notes) { withAnimation(.easeOut(duration: 0.15)) { tab = .notes } }
+            tabButton(L("聞く", "Ask"), "bubble.left.and.text.bubble.right", on: false) { chatting = true }
+            tabButton(L("設定", "Settings"), "gearshape", on: false) { showSettings = true }
+        }
+        .padding(.top, 6)
+        .padding(.bottom, 2)
+        .background(.bar)
+        .overlay(alignment: .top) { Divider() }
+    }
+
+    private func tabButton(_ title: String, _ symbol: String, on: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            VStack(spacing: 3) {
+                Image(systemName: on ? symbol + ".fill" : symbol).font(.system(size: 19)).frame(height: 22)
+                Text(title).font(.caption2.weight(.semibold))
+            }
+            .frame(maxWidth: .infinity, minHeight: 46)
+            .foregroundStyle(on ? palette.accent : palette.muted)
+        }
+        .accessibilityAddTraits(on ? .isSelected : [])
     }
 
     private func errorBanner(_ e: String) -> some View {
@@ -419,7 +456,7 @@ public struct HikidashiRootView: View {
                     if let t = item.time {
                         Text(t, format: .dateTime.hour().minute()).font(.caption.monospacedDigit()).foregroundStyle(palette.muted)
                     } else if item.reason == .remind {
-                        Text("⏰").font(.caption)
+                        Image(systemName: "alarm").font(.caption).foregroundStyle(palette.accent)
                     }
                 }
             }
@@ -598,43 +635,47 @@ public struct HikidashiRootView: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 6) {
                     folderTab(Self.allKey, L("すべて", "All"), store.notes.count)
-                    if pinned > 0 { folderTab(Self.pinKey, "★ " + L("お気に入り", "Favorites"), pinned) }
+                    if pinned > 0 { folderTab(Self.pinKey, L("お気に入り", "Favorites"), pinned, favorite: true) }
                     ForEach(smartFolders) { sf in
-                        folderTab(Self.smartPrefix + sf.id, "⚡︎ " + sf.name, store.notes.filter { sf.matches($0) }.count)
+                        folderTab(Self.smartPrefix + sf.id, sf.name, store.notes.filter { sf.matches($0) }.count)
                             .contextMenu {
                                 Button(role: .destructive) { deleteSmartFolder(sf.id) } label: { Label(L("このスマートフォルダを消す", "Delete smart folder"), systemImage: "trash") }
                             }
                     }
                     ForEach(keys, id: \.self) { k in
-                        folderTab(k, (folderMode == .topic && store.isFavoriteFolder(k) ? "★ " : "") + folderLabel(k), counts[k] ?? 0)
+                        folderTab(k, folderLabel(k), counts[k] ?? 0, badge: folderMode == .topic, favorite: folderMode == .topic && store.isFavoriteFolder(k))
                     }
                 }
             }
         }
     }
 
-    private func folderTab(_ key: String, _ label: String, _ count: Int) -> some View {
+    private func folderTab(_ key: String, _ label: String, _ count: Int, badge: Bool = false, favorite: Bool = false) -> some View {
         let on = folder == key
         return Button { folder = key } label: {
-            HStack(alignment: .firstTextBaseline, spacing: 5) {
-                Text(label).font(.subheadline.weight(on ? .bold : .regular))
-                Text("\(count)").font(.caption2.monospacedDigit()).opacity(0.7)
+            HStack(spacing: 6) {
+                if badge { FolderBadge(name: key, store: store, size: 20) }
+                if favorite { Image(systemName: "star.fill").font(.caption2).foregroundStyle(on ? palette.bg : palette.accent) }
+                Text(label).font(.subheadline.weight(on ? .semibold : .regular))
+                Text("\(count)").font(.caption2.monospacedDigit()).opacity(0.6)
             }
-            .padding(.horizontal, 12)
-            .frame(minHeight: 34)
-            .foregroundStyle(on ? palette.accentText : palette.text)
-            .background(RoundedRectangle(cornerRadius: 10).fill(on ? palette.accent : palette.surface2))
+            .padding(.leading, badge ? 6 : 12)
+            .padding(.trailing, 12)
+            .frame(minHeight: 36)
+            .foregroundStyle(on ? palette.bg : palette.text)
+            .background(Capsule().fill(on ? palette.text : palette.surface))
+            .overlay(Capsule().stroke(palette.line, lineWidth: on ? 0 : 1))
         }
     }
 
     private var shownNotes: [Note] {
         let f = filter.trimmingCharacters(in: .whitespaces).lowercased()
         let smart = folder.hasPrefix(Self.smartPrefix) ? smartFolders.first { Self.smartPrefix + $0.id == folder } : nil
-        return store.notes.filter { n in
+        return sort.sorted(store.notes.filter { n in
             if let smart, !smart.matches(n) { return false }
             let inFolder = smart != nil || folder == Self.allKey || (folder == Self.pinKey ? n.pinned : folderKey(n) == folder)
             return inFolder && (f.isEmpty || n.haystack.contains(f)) && noteFilter.matches(n)
-        }
+        })
     }
 
     private var listHeader: some View {
@@ -660,6 +701,17 @@ public struct HikidashiRootView: View {
             }
             .foregroundStyle(noteFilter.isActive ? palette.accent : palette.muted)
             .accessibilityLabel(L("詳しく絞り込む", "More filters"))
+            Menu {
+                Picker(L("並べ方", "Sort"), selection: $sortRaw) {
+                    ForEach(NoteSort.allCases, id: \.rawValue) { Text($0.label).tag($0.rawValue) }
+                }
+            } label: {
+                Image(systemName: "arrow.up.arrow.down.circle")
+                    .font(.title3)
+                    .frame(width: 36, height: 36)
+            }
+            .foregroundStyle(sort == .new ? palette.muted : palette.accent)
+            .accessibilityLabel(L("並べ方: ", "Sort: ") + sort.label)
         }
     }
 
@@ -669,14 +721,34 @@ public struct HikidashiRootView: View {
             if notes.isEmpty {
                 Text(L("該当するメモはありません。", "No notes match.")).font(.subheadline).foregroundStyle(palette.muted)
             }
-            ForEach(notes) { n in
-                NoteCard(note: n, librarian: librarian, highlighted: jumpTarget == n.id, onEdit: { editing = $0 }, onJump: jump)
-                    .id(n.id)
+            if sort == .folder {
+                ForEach(Dictionary(grouping: notes, by: { $0.category.isEmpty ? Heuristics.otherFolder : $0.category }).sorted { $0.key.localizedStandardCompare($1.key) == .orderedAscending }, id: \.key) { group in
+                    HStack(spacing: 8) {
+                        FolderBadge(name: group.key, store: store)
+                        Text(group.key).font(.subheadline.weight(.semibold)).foregroundStyle(palette.text)
+                        Text("\(group.value.count)").font(.caption).foregroundStyle(palette.muted)
+                    }
+                    .padding(.top, 8)
+                    ForEach(group.value) { card($0) }
+                }
+            } else {
+                ForEach(notes) { card($0) }
             }
         }
     }
 
+    private func card(_ n: Note) -> some View {
+        NoteCard(note: n, librarian: librarian, highlighted: jumpTarget == n.id, onEdit: { editing = $0 }, onJump: jump, onTag: { t in
+            noteFilter.tags = [t]
+            folder = Self.allKey
+            tab = .notes
+            show(L("#\(t) のメモだけを出しています。絞り込みで解除できます。", "Showing #\(t). Clear it in Filters."))
+        })
+        .id(n.id)
+    }
+
     private func jump(_ n: Note) {
+        tab = .notes
         folderMode = .topic
         folder = Self.allKey
         filter = ""

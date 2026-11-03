@@ -82,7 +82,7 @@ enum Alarms {
 
     private static func request(_ n: Note, id: String, trigger: UNNotificationTrigger) -> UNNotificationRequest {
         let content = UNMutableNotificationContent()
-        content.title = "🔔 " + n.title
+        content.title = n.title
         content.body = n.summary.isEmpty ? String(n.text.prefix(140)) : n.summary
         // 音は鳴らさない（見えるだけ）
         content.sound = nil

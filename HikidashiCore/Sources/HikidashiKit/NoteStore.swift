@@ -23,11 +23,17 @@ public struct FolderInfo: Codable, Hashable, Sendable {
     public var name: String
     public var favorite: Bool
     public var createdAt: Date
+    /// 色（Heuristics.folderColors の番号。nil なら名前から決める）
+    public var color: Int?
+    /// 印（Heuristics.folderIcons の名前。nil なら名前から決める）
+    public var icon: String?
 
-    public init(name: String, favorite: Bool = false, createdAt: Date = Date()) {
+    public init(name: String, favorite: Bool = false, createdAt: Date = Date(), color: Int? = nil, icon: String? = nil) {
         self.name = name
         self.favorite = favorite
         self.createdAt = createdAt
+        self.color = color
+        self.icon = icon
     }
 }
 
@@ -242,6 +248,21 @@ public final class NoteStore {
         folderInfo.append(FolderInfo(name: n))
         saveFolders()
         return true
+    }
+
+    /// フォルダの色と印
+    public func folderLook(_ name: String) -> FolderLook {
+        Heuristics.folderLook(name, info: folderInfo.first { $0.name == name })
+    }
+
+    public func setFolderLook(_ name: String, color: Int? = nil, icon: String? = nil) {
+        if let i = folderInfo.firstIndex(where: { $0.name == name }) {
+            if let color { folderInfo[i].color = color }
+            if let icon { folderInfo[i].icon = icon }
+        } else {
+            folderInfo.append(FolderInfo(name: name, color: color, icon: icon))
+        }
+        saveFolders()
     }
 
     public func setFavoriteFolder(_ name: String, _ on: Bool) {

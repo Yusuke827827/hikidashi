@@ -144,15 +144,22 @@ struct Chip: View {
     @Environment(\.palette) private var p
     let text: String
     var kind: Kind = .plain
+    /// 前に付ける小さなアイコン（SF Symbols）
+    var symbol: String? = nil
+    /// タグの色（フォルダの色）
+    var tint: Color? = nil
 
     var body: some View {
-        Text(kind == .tag ? "#" + text : text)
+        HStack(spacing: 3) {
+            if let symbol { Image(systemName: symbol).font(.caption2) }
+            Text(kind == .tag ? "#" + text : text)
+        }
             .font(.caption)
             .lineLimit(1)
             .padding(.horizontal, 9)
             .padding(.vertical, 3)
-            .foregroundStyle(kind == .situation || kind == .remind ? p.accent : p.muted)
-            .background(Capsule().fill(kind == .situation ? p.accentSoft : (kind == .remind ? Color.clear : p.surface2)))
+            .foregroundStyle(kind == .tag ? (tint ?? p.muted) : (kind == .situation || kind == .remind ? p.accent : p.muted))
+            .background(Capsule().fill(kind == .tag ? (tint ?? p.muted).opacity(0.12) : (kind == .situation ? p.accentSoft : (kind == .remind ? Color.clear : p.surface2))))
             .overlay { if kind == .remind { Capsule().stroke(p.accent, lineWidth: 1) } }
     }
 }

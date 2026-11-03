@@ -114,6 +114,7 @@ struct FolderManagerView: View {
     @State private var deleting: String?
     @State private var refresh = 0
     @State private var sharing: String?
+    @State private var styling: String?
     @State private var joining = false
 
     private var suggestions: [FolderMergeSuggestion] {
@@ -148,8 +149,8 @@ struct FolderManagerView: View {
                 } header: {
                     Text(L("フォルダ", "Folders"))
                 } footer: {
-                    Text(L("★ でお気に入りにすると、一覧の先頭に出ます。左にスワイプで消す・名前を変える・まとめる。消したフォルダのメモは「その他」に移ります。右にスワイプで、家族や友だちとフォルダを共有できます（右上の 👥＋ で参加）。",
-                           "Tap ★ to favorite a folder; favorites come first. Swipe left to delete, rename or merge. Notes in a deleted folder move to Other. Swipe right to share a folder with family or friends (join with 👥+ at the top)."))
+                    Text(L("★ でお気に入りにすると、一覧の先頭に出ます。左にスワイプで消す・名前を変える・まとめる。消したフォルダのメモは「その他」に移ります。右にスワイプで、家族や友だちとフォルダを共有できます（右上の人のマークで参加）。左の印を押すと、色とアイコンを変えられます。",
+                           "Tap ★ to favorite a folder; favorites come first. Swipe left to delete, rename or merge. Notes in a deleted folder move to Other. Swipe right to share a folder with family or friends (join with the people button at the top). Tap the icon on the left to change its color and icon."))
                 }
             }
             .navigationTitle(L("フォルダの管理", "Manage folders"))
@@ -186,6 +187,9 @@ struct FolderManagerView: View {
                     deleting = nil
                 }
             }
+            .sheet(item: Binding(get: { styling.map(MergeSource.init) }, set: { styling = $0?.name; refresh += 1 })) { src in
+                FolderLookPicker(name: src.name, store: store)
+            }
             .sheet(item: Binding(get: { sharing.map(MergeSource.init) }, set: { sharing = $0?.name; refresh += 1 })) { src in
                 if let librarian { ShareFolderSheet(folder: src.name, librarian: librarian) }
             }
@@ -207,6 +211,9 @@ struct FolderManagerView: View {
             }
             .buttonStyle(.borderless)
             .accessibilityLabel(L("お気に入り", "Favorite"))
+            Button { styling = name } label: { FolderBadge(name: name, store: store, size: 28) }
+                .buttonStyle(.borderless)
+                .accessibilityLabel(L("色とアイコン", "Color and icon"))
             Text(name)
             if librarian?.isShared(name) == true {
                 Image(systemName: "person.2.fill").font(.caption).foregroundStyle(.secondary).accessibilityLabel(L("共有中", "Shared"))

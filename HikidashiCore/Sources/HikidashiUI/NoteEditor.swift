@@ -186,7 +186,7 @@ struct NoteEditor: View {
             n.summary = summary.trimmingCharacters(in: .whitespacesAndNewlines)
             n.category = folder.isEmpty ? Heuristics.otherFolder : folder
             n.situations = split(situations)
-            n.tags = split(tags)
+            n.tags = Heuristics.withHashtags(split(tags), text: n.text)
             n.url = link.isEmpty ? nil : link
             n.remindAt = remind
             n.place = place

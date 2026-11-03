@@ -144,6 +144,7 @@ public final class Librarian {
         var note = Note(id: id, text: text.trimmingCharacters(in: .whitespacesAndNewlines), url: Note.nonEmpty(url), filed: false, imageFile: imageFile,
                         original: original, file: fileName, fileTitle: file?.name)
         Heuristics.file(&note, notes: store.notes, folders: store.folders)
+        note.tags = Heuristics.withHashtags(note.tags, text: note.text)
         // AI が無いときは、ここで候補を出す（AI があれば整理のあとに出す）
         if !hasAI, note.category == Heuristics.otherFolder || folderMode == .ask {
             let options = Heuristics.folderOptions(text: note.text, title: note.title, notes: store.notes, folders: store.folders,
@@ -207,7 +208,7 @@ public final class Librarian {
             let keep = note.filed && note.folderChosen == true
             if let first = options.first { r.category = first.name }
             if keep { r.category = note.category }
-            store.update(id) { $0.apply(r, replaceText: image != nil || memo) }
+            store.update(id) { $0.apply(r, replaceText: image != nil || memo); $0.tags = Heuristics.withHashtags($0.tags, text: $0.text) }
             if firstTime, folderMode == .ask, !options.isEmpty, !quiet.contains(id) {
                 folderChoice = FolderChoiceRequest(noteID: id, title: r.title.isEmpty ? note.title : r.title, options: options)
             }

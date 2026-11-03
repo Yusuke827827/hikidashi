@@ -219,7 +219,7 @@ struct CaptureCard: View {
                 Menu {
                     Section(L("テンプレート", "Templates")) {
                         ForEach(templates) { t in
-                            Button(t.icon + " " + t.name) {
+                            Button(t.name) {
                                 let f = t.filled()
                                 text = [f.title, f.text].filter { !$0.isEmpty }.joined(separator: "\n")
                             }

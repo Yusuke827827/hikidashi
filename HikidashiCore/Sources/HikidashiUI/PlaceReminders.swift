@@ -37,7 +37,7 @@ enum PlaceReminders {
             region.notifyOnEntry = true
             region.notifyOnExit = false
             let content = UNMutableNotificationContent()
-            content.title = "📍 " + p.name
+            content.title = p.name
             content.body = n.title
             content.sound = .default
             content.userInfo = ["noteID": n.id]

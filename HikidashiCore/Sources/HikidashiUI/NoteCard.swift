@@ -11,6 +11,8 @@ struct NoteCard: View {
     var highlighted = false
     var onEdit: (Note) -> Void
     var onJump: (Note) -> Void
+    /// タグを押したとき（そのタグで絞り込む）
+    var onTag: ((String) -> Void)? = nil
 
     @Environment(\.palette) private var p
     @State private var expanded = false
@@ -21,13 +23,16 @@ struct NoteCard: View {
     @State private var exportMessage: String?
 
     private var store: NoteStore { librarian.store }
+    private var folderName: String { note.category.isEmpty ? Heuristics.otherFolder : note.category }
+    private var folderColor: Color { Looks.color(store.folderLook(folderName).color) }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 8) {
-                Text(note.category.isEmpty ? Heuristics.otherFolder : note.category)
+                FolderBadge(name: folderName, store: store)
+                Text(folderName)
                     .font(.caption.weight(.bold))
-                    .foregroundStyle(p.accent)
+                    .foregroundStyle(folderColor)
                 if librarian.filing.contains(note.id) {
                     ProgressView().controlSize(.mini)
                     Text(L("整理中", "Filing")).font(.caption2).foregroundStyle(p.muted)
@@ -70,6 +75,10 @@ struct NoteCard: View {
             actions
         }
         .card()
+        .overlay(alignment: .leading) {
+            // フォルダの色の線
+            Capsule().fill(folderColor.opacity(0.85)).frame(width: 3).padding(.vertical, 14)
+        }
         .overlay {
             if highlighted { RoundedRectangle(cornerRadius: 14).stroke(p.accent, lineWidth: 2) }
         }
@@ -83,12 +92,18 @@ struct NoteCard: View {
         if hasChips {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 6) {
-                    if let r = note.remindAt { Chip(text: "⏰ " + r, kind: .remind) }
-                    if let a = note.alarm, !a.summary.isEmpty { Chip(text: "🔔 " + a.summary, kind: .remind) }
-                    if note.review != nil { Chip(text: L("🧠 復習中", "🧠 Learning"), kind: .remind) }
-                    if note.linkBroken == true { Chip(text: L("リンク切れ", "Broken link"), kind: .remind) }
+                    if let r = note.remindAt { Chip(text: r, kind: .remind, symbol: "calendar") }
+                    if let a = note.alarm, !a.summary.isEmpty { Chip(text: a.summary, kind: .remind, symbol: "bell") }
+                    if note.review != nil { Chip(text: L("復習中", "Learning"), kind: .remind, symbol: "brain.head.profile") }
+                    if note.linkBroken == true { Chip(text: L("リンク切れ", "Broken link"), kind: .remind, symbol: "link") }
                     ForEach(note.situations, id: \.self) { Chip(text: $0, kind: .situation) }
-                    ForEach(note.tags, id: \.self) { Chip(text: $0, kind: .tag) }
+                    ForEach(note.tags, id: \.self) { t in
+                        if let onTag {
+                            Button { onTag(t) } label: { Chip(text: t, kind: .tag, tint: folderColor) }.buttonStyle(.plain)
+                        } else {
+                            Chip(text: t, kind: .tag, tint: folderColor)
+                        }
+                    }
                 }
             }
         }

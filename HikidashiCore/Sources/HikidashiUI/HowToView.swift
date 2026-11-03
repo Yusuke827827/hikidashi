@@ -16,7 +16,7 @@ struct HowToView: View {
         [
             Step(icon: "square.and.arrow.down",
                  title: L("しまう", "Save"),
-                 body: L("上の欄に Tips やメモを書いて「しまう」を押します。出典の URL、写真・スクショ（🖼）、PDF などのファイル（📎）、紙の書類のスキャン（📄）も付けられ、中の文字を iPhone の中で読み取って整理します。声で入れたいときは、キーボードのマイクを押してください。",
+                 body: L("上の欄に Tips やメモを書いて「しまう」を押します。出典の URL、写真・スクショ、PDF などのファイル、紙の書類のスキャンも付けられ、中の文字を iPhone の中で読み取って整理します。声で入れたいときは、キーボードのマイクを押してください。",
                          "Type a tip or note in the box at the top and tap Save. You can attach a link, a photo or screenshot, a file such as a PDF, or scan a paper document; the text inside is read on your iPhone and filed. To dictate, tap the mic on the keyboard.")),
             Step(icon: "square.and.arrow.up",
                  title: L("共有シートから保存", "Save from the share sheet"),
