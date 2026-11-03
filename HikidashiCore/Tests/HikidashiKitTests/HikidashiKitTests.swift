@@ -1014,3 +1014,28 @@ final class ExtrasTests: XCTestCase {
         XCTAssertTrue(n.text.hasPrefix("【訳】"))
     }
 }
+
+final class LooksTests: XCTestCase {
+    func testFolderLook() {
+        XCTAssertEqual(Heuristics.folderLook("料理・食").icon, "food")
+        XCTAssertEqual(Heuristics.folderLook("ポケカ").icon, "folder")
+        XCTAssertEqual(Heuristics.folderLook("ポケカ"), Heuristics.folderLook("ポケカ"), "名前が同じなら同じ色")
+        XCTAssertEqual(Heuristics.folderLook("料理", info: FolderInfo(name: "料理", color: 6, icon: "star")), FolderLook(color: 6, icon: "star"))
+    }
+
+    func testHashtags() {
+        XCTAssertEqual(Heuristics.hashtags("洗剤は詰め替え #節約 ＃日用品 a#b"), ["節約", "日用品"])
+        XCTAssertEqual(Heuristics.withHashtags(["節約"], text: "#節約 #洗濯"), ["節約", "洗濯"])
+    }
+
+    func testSort() {
+        let a = Note(id: "a", text: "短い", title: "い", category: "B", createdAt: Date(timeIntervalSince1970: 100), helpful: 1)
+        let b = Note(id: "b", text: "とても長い本文です", title: "あ", category: "A", createdAt: Date(timeIntervalSince1970: 200))
+        XCTAssertEqual(NoteSort.new.sorted([a, b]).map(\.id), ["b", "a"])
+        XCTAssertEqual(NoteSort.old.sorted([a, b]).map(\.id), ["a", "b"])
+        XCTAssertEqual(NoteSort.long.sorted([a, b]).map(\.id), ["b", "a"])
+        XCTAssertEqual(NoteSort.short.sorted([a, b]).map(\.id), ["a", "b"])
+        XCTAssertEqual(NoteSort.helpful.sorted([a, b]).map(\.id), ["a", "b"])
+        XCTAssertEqual(NoteSort.folder.sorted([a, b]).map(\.id), ["b", "a"])
+    }
+}
