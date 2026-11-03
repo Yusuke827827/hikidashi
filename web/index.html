@@ -406,6 +406,105 @@ body.locked .wrap { visibility: hidden; }
 .onb-dots i.on { background: var(--accent); }
 .onb-big { font-size: 40px; text-align: center; margin: 14px 0 4px; }
 #filtBtn[data-n]:not([data-n="0"]) { background: var(--accent); color: var(--accent-text); }
+
+/* ---------- アプリらしい見た目（上書き） ---------- */
+:root { --font-mono: var(--font-body); --radius: 14px; }
+.sr, .tool > span[id$="Label"] { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.top { gap: 10px; min-height: 44px; }
+.top .mark b { font-size: 21px; letter-spacing: 0; }
+.status { margin-right: auto; font-size: 11.5px; padding: 3px 9px; border-radius: 999px; background: var(--sunk); }
+.status::before { width: 6px; height: 6px; }
+.top-right { margin-left: 0; gap: 2px; }
+.icon-btn { width: 38px; height: 38px; border: 0; background: transparent; border-radius: 10px; color: var(--ink); opacity: .78; }
+.icon-btn:hover { background: var(--sunk); opacity: 1; }
+.top .lang { margin-left: 8px; }
+@media (max-width: 760px) { .top .lang { display: none; } .top, .top-right { flex-wrap: nowrap !important; } .status { display: none; } .top .mark { margin-right: auto; } .top-right { gap: 0; } }
+.hero { gap: 12px; }
+.main > *, .rail, .rail > div, #folders { min-width: 0; }
+#choiceBox:empty, .toast:empty { display: none; }
+.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(24px + env(safe-area-inset-bottom, 0px)); z-index: 40; max-width: min(92vw, 520px);
+  background: var(--ink); color: var(--bg); border-radius: 14px; padding: 10px 16px; font-size: 14px; box-shadow: 0 8px 30px rgba(0,0,0,.18); text-align: center; min-height: 0; }
+@media (max-width: 760px) { .toast { bottom: calc(84px + env(safe-area-inset-bottom, 0px)); } }
+.has-notes .hero h1, .has-notes .hero > p { display: none; }
+.has-notes .hero { padding-top: 4px; }
+#micHint { display: none; }
+.omni { border-radius: 18px; box-shadow: 0 1px 0 rgba(0,0,0,.02), 0 8px 24px -12px rgba(0,0,0,.12); }
+.omni-head { padding: 10px 10px 0; }
+#noteText { font-size: 16px; }
+.omni-foot { gap: 2px; padding: 6px 8px 8px; }
+.tool { width: 40px; height: 40px; justify-content: center; padding: 0; border-radius: 10px; position: relative; }
+.tool[aria-pressed="true"] { background: var(--ai-soft); color: var(--accent); }
+.kbd { display: none; }
+@media (hover: hover) and (min-width: 761px) { .kbd { display: inline; margin-left: 8px; font-size: 12px; color: var(--faint); } }
+.go { min-height: 42px; border-radius: 12px; padding: 0 22px; font-size: 15px; }
+.rail h2, .list-head h2 { font: 600 13px var(--font-body); letter-spacing: 0; text-transform: none; color: var(--muted); }
+.slip { box-shadow: none; border-radius: 16px; padding: 14px 16px 8px; gap: 6px; }
+.slip:hover { border-color: color-mix(in srgb, var(--accent) 25%, var(--line)); }
+.slip h3 { font-size: 16.5px; }
+.slip .sum { font-size: 14.5px; color: var(--muted); opacity: 1; }
+.slip-meta { font-size: 12px; }
+.slip-meta time { font-size: 12px; }
+.chip { font-size: 11.5px; padding: 2px 9px; }
+.chip.rem { display: inline-flex; gap: 4px; align-items: center; }
+.slip .acts { display: flex; align-items: center; gap: 2px; margin: 2px -6px 0; border-top: 1px solid var(--line); padding-top: 4px; }
+.slip .acts .ib { border: 0; background: none; color: var(--muted); height: 36px; min-width: 36px; padding: 0 8px; border-radius: 10px; display: inline-flex; align-items: center; gap: 5px; font-size: 12.5px; }
+.slip .acts .ib:hover { background: var(--sunk); color: var(--ink); }
+.slip .acts .ib[aria-pressed="true"] { color: var(--accent); }
+.slip .acts .ib[aria-pressed="true"] svg { fill: currentColor; fill-opacity: .15; }
+.slip .acts .sp { flex: 1; }
+.menu { display: grid; gap: 2px; margin-top: 8px; }
+.menu button { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; border: 0; background: none; padding: 11px 8px; border-radius: 10px; font-size: 15px; color: var(--ink); }
+.menu button:hover { background: var(--sunk); }
+.menu button svg { color: var(--muted); flex: none; }
+.menu button.danger, .menu button.danger svg { color: var(--alert); }
+.menu hr { border: 0; border-top: 1px solid var(--line); margin: 4px 0; }
+.sort { border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 10px; font: 13px var(--font-body); padding: 6px 8px; min-height: 34px; }
+.group-h { margin: 14px 2px 2px; font-size: 13px; font-weight: 600; color: var(--muted); display: flex; gap: 6px; align-items: baseline; }
+.group-h .n { font-weight: 400; color: var(--faint); font-size: 12px; }
+.help { border-radius: 20px; }
+.help h2 { font-family: var(--font-body); font-size: 18px; font-weight: 700; }
+.set-sec h3 { font-size: 13px; color: var(--muted); font-weight: 600; }
+.mini { font-size: 12.5px; padding: 6px 12px; border-radius: 10px; }
+.tabbar { display: none; }
+@media (max-width: 760px) {
+  body { padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px)); }
+  .tabbar { display: grid; grid-template-columns: repeat(4, 1fr); position: fixed; left: 0; right: 0; bottom: 0; z-index: 30;
+    padding: 6px 8px calc(6px + env(safe-area-inset-bottom, 0px)); background: color-mix(in srgb, var(--surface) 88%, transparent);
+    -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); border-top: 1px solid var(--line); }
+  .tabbar button { border: 0; background: none; display: grid; justify-items: center; gap: 2px; padding: 4px 0; color: var(--faint); font-size: 10.5px; font-weight: 600; }
+  .tabbar button[aria-current="page"] { color: var(--accent); }
+  .wrap { gap: 18px; }
+  .main { gap: 18px; }
+  body[data-tab="today"] .main > section > :not(#reviewBox):not(#upkeepBox):not(#mergeBox) { display: none; }
+  body[data-tab="today"] .foldBox, body[data-tab="today"] .rail-foot { display: none; }
+  body[data-tab="notes"] .hero, body[data-tab="notes"] #todayBox, body[data-tab="notes"] #pickBox, body[data-tab="notes"] #remBox,
+  body[data-tab="notes"] #reviewBox, body[data-tab="notes"] #upkeepBox, body[data-tab="notes"] #mergeBox, body[data-tab="notes"] .rail-foot { display: none !important; }
+  body[data-tab="notes"] .rail { position: static; gap: 0; }
+  body[data-tab="notes"] #folders { display: flex; overflow-x: auto; gap: 6px; padding-bottom: 4px; scrollbar-width: none; }
+  body[data-tab="notes"] #folders .fitem { flex: none; border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px; white-space: nowrap; background: var(--surface); }
+  body[data-tab="notes"] #folders .fitem[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); box-shadow: none; }
+  body[data-tab="notes"] #folders .fitem .dot { display: none; }
+  .list-head .filter { flex: 1 1 100%; order: 3; }
+}
+.ico { display: inline-grid; place-items: center; line-height: 0; }
+.fbadge, .fdot { --fc: var(--accent); display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 7px; background: color-mix(in srgb, var(--fc) 14%, transparent); color: var(--fc); flex: none; }
+.fdot { width: 20px; height: 20px; border-radius: 6px; }
+.slip { border-left: 3px solid var(--fc, var(--line)); }
+.slip.pinned { background: color-mix(in srgb, var(--fc) 4%, var(--surface)); }
+.slip-meta { gap: 7px; }
+.chip.tag { border: 0; cursor: pointer; background: color-mix(in srgb, var(--fc, var(--accent)) 10%, var(--sunk)); color: color-mix(in srgb, var(--fc, var(--accent)) 70%, var(--ink)); font: inherit; font-size: 11.5px; padding: 2px 9px; border-radius: 999px; }
+.chip.tag:hover { text-decoration: underline; }
+.swrow { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 4px; }
+.csw { width: 32px; height: 32px; border-radius: 50%; border: 2px solid transparent; }
+.csw[aria-pressed="true"] { outline: 2px solid var(--ink); outline-offset: 2px; }
+.isw { --fc: var(--accent); width: 42px; height: 42px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); color: var(--fc); }
+.isw[aria-pressed="true"] { background: color-mix(in srgb, var(--fc) 14%, var(--surface)); border-color: var(--fc); }
+.lookbtn { border: 0; background: none; padding: 0; margin-right: 6px; vertical-align: middle; cursor: pointer; }
+.fname { display: inline-flex; align-items: center; gap: 0; }
+.tagmini { font-size: 11px; color: var(--accent); background: var(--ai-soft); border-radius: 6px; padding: 0 6px; margin-left: 6px; }
+.frow .star { color: var(--faint); }
+.frow .star[aria-pressed="true"] { color: var(--accent); }
+.frow .star[aria-pressed="true"] svg { fill: currentColor; }
 @media (prefers-reduced-motion: no-preference) {
   .slip { transition: border-color .2s, transform .2s; }
   .answer { animation: rise .25s ease-out; }
@@ -428,14 +527,13 @@ body.locked .wrap { visibility: hidden; }
 <div id="wall"></div><div id="wallVeil" hidden></div>
 <div class="wrap">
   <header class="top">
-    <div class="mark"><b>Mindrawer</b><span>引出</span></div>
+    <div class="mark"><b>Mindrawer</b></div>
+    <button class="status" id="status" type="button"></button>
     <div class="top-right">
-      <button class="status" id="status" type="button"></button>
-      <button class="icon-btn" id="chatBtn" type="button">💬</button>
-      <button class="icon-btn" id="setBtn" type="button">⚙</button>
-      <button class="wp-btn" id="helpBtn" type="button"><span aria-hidden="true">?</span><span id="helpLabel"></span></button>
+      <button class="icon-btn" id="chatBtn" type="button"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button>
+      <button class="icon-btn" id="helpBtn" type="button"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M9.2 9a3 3 0 0 1 5.7 1c0 2-2.9 2.8-2.9 2.8"/><path d="M12 17h.01"/></svg><span class="sr" id="helpLabel"></span></button>
       <div class="wp">
-        <button class="wp-btn" id="wpBtn" aria-expanded="false" aria-controls="wpPanel"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="m3 16 5-5 4 4 3-3 6 6"/></svg><span id="wpLabel"></span></button>
+        <button class="icon-btn" id="wpBtn" type="button" aria-expanded="false" aria-controls="wpPanel"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="m3 16 5-5 4 4 3-3 6 6"/></svg><span class="sr" id="wpLabel"></span></button>
         <div class="wp-panel" id="wpPanel" hidden>
           <h3 id="wpH"></h3>
           <div class="swatches" id="swatches"></div>
@@ -445,7 +543,8 @@ body.locked .wrap { visibility: hidden; }
           <input type="file" id="wpFile" accept="image/*" hidden>
         </div>
       </div>
-      <div class="seg" role="group" aria-label="Language">
+      <button class="icon-btn" id="setBtn" type="button"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg></button>
+      <div class="seg lang" role="group" aria-label="Language">
         <button id="langEn" aria-pressed="false">EN</button>
         <button id="langJa" aria-pressed="false">日本語</button>
       </div>
@@ -465,19 +564,19 @@ body.locked .wrap { visibility: hidden; }
       <div id="saveBox">
         <textarea id="noteText"></textarea>
         <div class="thumb" id="thumb" hidden><img id="thumbImg" alt=""><span id="thumbLabel"></span><button id="thumbRm"></button></div>
-        <div class="thumb" id="fileChip" hidden><span aria-hidden="true">📄</span><span id="fileName"></span><button id="fileRm"></button></div>
+        <div class="thumb" id="fileChip" hidden><span id="fileName"></span><button id="fileRm"></button></div>
         <div class="omni-src" id="srcRow" hidden><input type="url" id="noteUrl"></div>
       </div>
       <div id="askBox" hidden><input type="text" id="askText"></div>
       <div class="mic-hint" id="micHint"></div>
       <div class="omni-foot">
         <span id="saveTools">
-          <button class="tool" id="addSrc"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg><span id="addSrcLabel"></span></button>
-          <label class="tool" id="imgTool" hidden><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg><span id="imgLabel"></span><input type="file" id="imgInput" accept="image/*" hidden></label>
-          <label class="tool" id="fileTool"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21 12-9 9a6 6 0 0 1-8.5-8.5l9-9a4 4 0 0 1 5.7 5.7l-9 9a2 2 0 0 1-2.8-2.8l8.5-8.5"/></svg><span id="fileLabel"></span><input type="file" id="fileInput" accept=".pdf,.txt,.md,.csv,.json,text/*,application/pdf" hidden></label>
-          <button class="tool" id="memoTool" aria-pressed="false" type="button"><span aria-hidden="true">≡</span><span id="memoLabel"></span></button>
-          <button class="tool" id="micTool" type="button" hidden><span aria-hidden="true">🎤</span><span id="micLabel"></span></button>
-          <button class="tool" id="tplTool" type="button"><span aria-hidden="true">＋</span><span id="tplLabel"></span></button>
+          <button class="tool" id="addSrc"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg><span id="addSrcLabel"></span></button>
+          <label class="tool" id="imgTool" hidden><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg><span id="imgLabel"></span><input type="file" id="imgInput" accept="image/*" hidden></label>
+          <label class="tool" id="fileTool"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m21 12-9 9a6 6 0 0 1-8.5-8.5l9-9a4 4 0 0 1 5.7 5.7l-9 9a2 2 0 0 1-2.8-2.8l8.5-8.5"/></svg><span id="fileLabel"></span><input type="file" id="fileInput" accept=".pdf,.txt,.md,.csv,.json,text/*,application/pdf" hidden></label>
+          <button class="tool" id="memoTool" aria-pressed="false" type="button"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h7M4.5 6h.01M4.5 12h.01M4.5 18h.01"/></svg><span id="memoLabel"></span></button>
+          <button class="tool" id="micTool" type="button" hidden><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2.5" width="6" height="12" rx="3"/><path d="M19 10.5a7 7 0 0 1-14 0M12 17.5V21"/></svg><span id="micLabel"></span></button>
+          <button class="tool" id="tplTool" type="button"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M12 8v8M8 12h8"/></svg><span id="tplLabel"></span></button>
         </span>
         <span class="kbd" id="kbd"></span>
         <button class="go" id="go"></button>
@@ -500,7 +599,7 @@ body.locked .wrap { visibility: hidden; }
       <div id="todayBox" hidden><h2><span id="todayH"></span><span class="today-n" id="todayN"></span></h2><div class="today" id="todayList"></div><button class="mini" id="notifBtn" hidden></button></div>
       <div id="pickBox" hidden><h2 id="pickH"></h2><div class="pick" id="pick"></div></div>
       <div id="remBox" hidden><h2 id="remH"></h2><div class="flist" id="remList"></div></div>
-      <div>
+      <div class="foldBox">
         <h2><span id="foldH"></span><button class="mini" id="foldManage" type="button"></button>
           <span class="seg" role="group"><button id="byCat" aria-pressed="true"></button><button id="byDate" aria-pressed="false"></button></span>
         </h2>
@@ -516,6 +615,7 @@ body.locked .wrap { visibility: hidden; }
       <div class="list-head">
         <h2 id="listH"></h2>
         <div class="filter"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input type="search" id="filter"></div>
+        <select id="sortSel" class="sort" aria-label="Sort"></select>
         <button class="mini" id="filtBtn" type="button" data-n="0"></button>
       </div>
       <div id="reviewBox"></div>
@@ -525,6 +625,12 @@ body.locked .wrap { visibility: hidden; }
     </section>
   </div>
 </div>
+<nav class="tabbar" id="tabbar" aria-label="Tabs">
+  <button type="button" data-tab="today"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg><span id="tabTodayL"></span></button>
+  <button type="button" data-tab="notes"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2.5"/><path d="M8 8h8M8 12h8M8 16h5"/></svg><span id="tabNotesL"></span></button>
+  <button type="button" data-tab="ask"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span id="tabAskL"></span></button>
+  <button type="button" data-tab="chat"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span id="tabChatL"></span></button>
+</nav>
 
 <script>
 (() => {
@@ -536,7 +642,7 @@ body.locked .wrap { visibility: hidden; }
       heroTitle: "Save it once. <em>It finds you</em> when it matters.",
       heroSub: "Paste a tip from X, a screenshot, or a note to self. Mindrawer files it, and hands it back when you're about to need it.",
       save: "Save", recall: "Recall", saving: "Filing…", searching: "Looking…",
-      notePh: "Paste a tip, a thread, or a note to self…\ne.g. “To get a coffee stain out, blot from the outside in. Never rub.”",
+      notePh: "Write or paste a tip or note",
       askPh: "What are you about to do, or what do you need?  e.g. “packing for a trip”",
       urlPh: "Source URL (optional)", addSrc: "Source", addImg: "Screenshot", imgReady: "Screenshot attached — text will be read from it", remove: "Remove",
       kbdSave: "⌘/Ctrl + Enter", kbdAsk: "Enter",
@@ -557,7 +663,7 @@ body.locked .wrap { visibility: hidden; }
       stCloud: "Synced", stLocal: "This device", stAi: "AI on", stBasic: "Basic",
       keyPrompt: "Paste your Anthropic API key (sk-ant-…). It stays in this browser and is sent only to Anthropic. Get one at console.anthropic.com",
       keySaved: "API key saved. Claude will file your notes.", keyRemoveQ: "Remove the saved API key from this browser?", keyRemoved: "API key removed.",
-      keyBad: "The API key didn't work. Tap the status to set it again.", useAI: "Use AI ›", help: "How to use", helpSteps: [["Save", "Type a tip or note in the box and press Save (Ctrl/⌘ + Enter). You can add a source link, or a screenshot when AI is on."], ["AI files it", "AI adds a title, summary, folder, tags and the moments it will help. Dates in the note become reminders."], ["Recall", "Switch to Recall and describe what you're about to do or what's bothering you, e.g. \"About to do laundry\". You get the notes that help, plus short advice."], ["Today's pick", "One stored note resurfaces each day. Notes you mark Helpful come first when you recall."], ["Working with notes", "Pin, mark Helpful, edit or re-file each note. Switch the list between Topic and Date, or narrow it with Filter."], ["Use AI", "Tap the status at the top right and paste your Anthropic API key (console.anthropic.com). It stays in this browser and is sent only to Anthropic. Without a key, Mindrawer files and searches by keyword."], ["Wallpaper", "Pick a wallpaper or your own image from Wallpaper at the top."], ["Condense into a memo", "Turn on Memo in the input box and AI turns long text into a bulleted memo. Edit it in the review screen before saving; the original can be restored."], ["Notifications and today's checklist", "Edit a note → Notify me to pick a date, daily, every N days, weekdays or monthly (silent). Those notes appear in Today's checklist, where you tick them off. Set words to see the note when you type them."], ["Choosing folders", "Each time you save, AI suggests three folder names (e.g. detergent → Detergent, Laundry supplies, Shopping). Pick one or type your own; Mindrawer learns your naming style. In ⚙ Settings → Folders you can let AI decide, sort Other automatically and choose how similar folders are merged."], ["Manage folders", "Use Manage next to Folders to create, rename, merge, delete or ★ favorite folders. Similar folders get a merge suggestion."], ["Files", "Attach a PDF or text file and its text goes into the note."], ["Use it like an app", "Add Mindrawer to your Home Screen (Safari: Share → Add to Home Screen). It opens full screen, works offline, and the browser is less likely to clear your notes."], ["Keeping notes tidy", "Look-alike notes can be merged. Expired deals and notes you haven't seen in a year show under Worth a check. Learn it on a note brings it back after 1, 3, 7 days and so on. In Filters, save the conditions as a smart folder."], ["Import from other apps", "From other apps (next to Import) reads Evernote (.enex), Google Keep (Takeout .json), CSV, text/Markdown and HTML."], ["Shared folders", "In Manage next to Folders, tap 👥 Share to share a folder with family or friends and send them the code. They join with 👥＋ Join a shared folder. Changes sync each time you open the page."], ["Voice, templates and sketches", "Voice turns speech into text (Chrome, Edge, Safari). Template fills in a shopping or packing list and more, and lets you save your own. With AI on, you can sketch and have the text read."], ["Email, LINE, public links, calendar", "⚙ Settings → Save by email or LINE gives you an address and a LINE word. On a note, More → public link or calendar (.ics). Settings → More: translate notes in other languages, and Your stats."], ["Your data", "Notes are saved in this browser. Use Export / Import to back them up or move them; the same file works with the iPhone app."]],
+      keyBad: "The API key didn't work. Tap the status to set it again.", useAI: "Use AI ›", help: "How to use", helpSteps: [["Save", "Type a tip or note in the box and press Save (Ctrl/⌘ + Enter). You can add a source link, or a screenshot when AI is on."], ["AI files it", "AI adds a title, summary, folder, tags and the moments it will help. Dates in the note become reminders."], ["Recall", "Switch to Recall and describe what you're about to do or what's bothering you, e.g. \"About to do laundry\". You get the notes that help, plus short advice."], ["Today's pick", "One stored note resurfaces each day. Notes you mark Helpful come first when you recall."], ["Working with notes", "Pin, mark Helpful, edit or re-file each note. Switch the list between Topic and Date, or narrow it with Filter."], ["Use AI", "Tap the status at the top right and paste your Anthropic API key (console.anthropic.com). It stays in this browser and is sent only to Anthropic. Without a key, Mindrawer files and searches by keyword."], ["Wallpaper", "Pick a wallpaper or your own image from Wallpaper at the top."], ["Condense into a memo", "Turn on Memo in the input box and AI turns long text into a bulleted memo. Edit it in the review screen before saving; the original can be restored."], ["Notifications and today's checklist", "Edit a note → Notify me to pick a date, daily, every N days, weekdays or monthly (silent). Those notes appear in Today's checklist, where you tick them off. Set words to see the note when you type them."], ["Choosing folders", "Each time you save, AI suggests three folder names (e.g. detergent → Detergent, Laundry supplies, Shopping). Pick one or type your own; Mindrawer learns your naming style. In ⚙ Settings → Folders you can let AI decide, sort Other automatically and choose how similar folders are merged."], ["Manage folders", "Use Manage next to Folders to create, rename, merge, delete or ★ favorite folders. Similar folders get a merge suggestion."], ["Files", "Attach a PDF or text file and its text goes into the note."], ["Use it like an app", "Add Mindrawer to your Home Screen (Safari: Share → Add to Home Screen). It opens full screen, works offline, and the browser is less likely to clear your notes."], ["Keeping notes tidy", "Look-alike notes can be merged. Expired deals and notes you haven't seen in a year show under Worth a check. Learn it on a note brings it back after 1, 3, 7 days and so on. In Filters, save the conditions as a smart folder."], ["Import from other apps", "From other apps (next to Import) reads Evernote (.enex), Google Keep (Takeout .json), CSV, text/Markdown and HTML."], ["Shared folders", "In Manage next to Folders, tap Share to share a folder with family or friends and send them the code. They join with Join a shared folder. Changes sync each time you open the page."], ["Voice, templates and sketches", "Voice turns speech into text (Chrome, Edge, Safari). Template fills in a shopping or packing list and more, and lets you save your own. With AI on, you can sketch and have the text read."], ["Email, LINE, public links, calendar", "⚙ Settings → Save by email or LINE gives you an address and a LINE word. On a note, More → public link or calendar (.ics). Settings → More: translate notes in other languages, and Your stats."], ["Your data", "Notes are saved in this browser. Use Export / Import to back them up or move them; the same file works with the iPhone app."]],
       month: (d) => d.toLocaleDateString("en", { year: "numeric", month: "long" }),
       other: "Other",
       edit: "Edit", saveEdit: "Save", saveRefile: "Save & re-file with AI", cancel: "Cancel", editSaved: "Saved.",
@@ -572,7 +678,7 @@ body.locked .wrap { visibility: hidden; }
       heroTitle: "しまっておけば、<em>必要なときに</em>出てくる。",
       heroSub: "X で見た Tips、スクショ、自分用の備忘録。貼るだけで整理され、それが要る場面で手元に戻ってきます。",
       save: "しまう", recall: "ひきだす", saving: "整理中…", searching: "探し中…",
-      notePh: "Tips、スレッド、備忘録をそのまま貼り付け…\n例：「コーヒーのシミは、こすらず外から内へ叩く」",
+      notePh: "Tips やメモを書く・貼り付ける",
       askPh: "これから何をする？何が知りたい？　例：「旅行の荷造り」",
       urlPh: "出典 URL（任意）", addSrc: "出典", addImg: "スクショ", imgReady: "スクショから文字を読み取って保存します", remove: "外す",
       kbdSave: "⌘/Ctrl + Enter", kbdAsk: "Enter",
@@ -593,7 +699,7 @@ body.locked .wrap { visibility: hidden; }
       stCloud: "アカウントに保存", stLocal: "この端末に保存", stAi: "AI 整理", stBasic: "簡易整理",
       keyPrompt: "Anthropic の API キー（sk-ant-…）を貼り付けてください。キーはこのブラウザにだけ保存され、Anthropic にだけ送られます。取得: console.anthropic.com",
       keySaved: "API キーを保存しました。Claude が整理します。", keyRemoveQ: "このブラウザに保存した API キーを削除しますか？", keyRemoved: "API キーを削除しました。",
-      keyBad: "API キーが使えませんでした。右上の表示を押して入れ直してください。", useAI: "AI を使う ›", help: "使い方", helpSteps: [["しまう", "欄に Tips やメモを書いて「しまう」を押します（Ctrl/⌘ + Enter でも可）。出典の URL や、AI がオンのときはスクショも付けられます。"], ["AI が整理", "しまったメモに、タイトル・要約・フォルダ・タグ・「役立つ場面」を AI が付けます。本文に日付があればリマインドにも入ります。"], ["ひきだす", "「ひきだす」に切り替えて、これからすることや困りごとを書きます。例:「これから洗濯する」。言葉が一致していなくても、役立つメモと短い助言が出ます。"], ["今日のひとつ", "しまったままのメモを毎日 1 件見せます。「役立った」を押したメモは、取り出しで優先されます。"], ["メモの操作", "ピン留め・役立った・編集・再整理ができます。一覧は「分類」と「日付」で切り替え、「絞り込み」で探せます。"], ["AI を使う", "右上の表示を押して、Anthropic の API キー（console.anthropic.com で取得）を貼り付けます。キーはこのブラウザにだけ保存され、Anthropic にだけ送られます。キーが無くても、キーワードで整理と検索ができます。"], ["壁紙", "上の「壁紙」から好きな壁紙や自分の画像を選べます。"], ["メモ風にまとめる", "入力欄の「メモ風」をオンにすると、長い文を AI が箇条書きのメモにまとめます。しまう前に出る画面で直せます。元の文は「原文と関連」から戻せます。"], ["通知と今日の確認リスト", "メモの「編集」→「通知する」で、日時・毎日・何日おき・曜日・毎月を選べます（音なし）。その日のメモは「今日の確認リスト」に並び、☐ でチェックできます。言葉を決めると、その言葉を入力したときにメモを出します。"], ["フォルダの決め方", "しまうたびに AI がフォルダ名を 3 つ出します（例: 洗剤 → 「洗剤」「洗濯用品」「買い物」）。選ぶか自分で入力すると、あなたの名付け方を覚えて次に生かします。⚙ 設定の「フォルダ分け」で、おまかせ・「その他」の自動振り分け・似たフォルダのまとめ方を変えられます。"], ["フォルダの管理", "フォルダの「管理」から、作る・名前を変える・まとめる・消す・★ お気に入りができます。似たフォルダができると「まとめますか？」と出ます。"], ["ファイル", "「ファイル」から PDF やテキストを付けると、中の文字を読み取ってメモに入れます。"], ["アプリのように使う", "ホーム画面に追加すると（Safari: 共有 →「ホーム画面に追加」）、全画面で開き、電波が無くても使えます。ブラウザにメモを消されにくくもなります。"], ["メモの手入れ", "同じようなメモは 1 つにまとめられます。期限が過ぎたキャンペーンや 1 年以上見ていないメモは「見直したいメモ」に出ます。「覚える」にしたメモは 1・3・7 日…と間をあけて「今日の復習」に出ます。絞り込みの条件は「スマートフォルダ」として保存できます。"], ["他のアプリから取り込む", "「読み込む」の横の「他のアプリから」で、Evernote（.enex）・Google Keep（.json）・CSV・テキスト／Markdown・HTML を取り込めます。"], ["共有フォルダ", "フォルダの「管理」→「👥 共有」で、家族や友だちとフォルダを一緒に使えます。送った共有コードで、相手は「👥＋ 共有フォルダに参加」から入れます。開くたびに変更がそろいます。"], ["声・テンプレート・手書き", "「声」で話した内容が文字になります（Chrome・Edge・Safari）。「テンプレート」で買い物リストや旅行の持ち物などを入れられ、自分のテンプレートも作れます。AI がオンなら手書きの文字も読み取ります。"], ["メール・LINE・公開リンク・カレンダー", "⚙ 設定の「メール・LINE で送る」で、自分だけの送り先と LINE の言葉ができます。メモの「その他」から、公開リンクやカレンダー用のファイル（.ics）。設定の「もっと便利に」で、外国語のメモの翻訳と使われ方のまとめ。"], ["データ", "メモはこのブラウザの中に保存されます。「書き出す」「読み込む」でバックアップや移動ができます。iPhone アプリとも同じファイルでやり取りできます。"]],
+      keyBad: "API キーが使えませんでした。右上の表示を押して入れ直してください。", useAI: "AI を使う ›", help: "使い方", helpSteps: [["しまう", "欄に Tips やメモを書いて「しまう」を押します（Ctrl/⌘ + Enter でも可）。出典の URL や、AI がオンのときはスクショも付けられます。"], ["AI が整理", "しまったメモに、タイトル・要約・フォルダ・タグ・「役立つ場面」を AI が付けます。本文に日付があればリマインドにも入ります。"], ["ひきだす", "「ひきだす」に切り替えて、これからすることや困りごとを書きます。例:「これから洗濯する」。言葉が一致していなくても、役立つメモと短い助言が出ます。"], ["今日のひとつ", "しまったままのメモを毎日 1 件見せます。「役立った」を押したメモは、取り出しで優先されます。"], ["メモの操作", "ピン留め・役立った・編集・再整理ができます。一覧は「分類」と「日付」で切り替え、「絞り込み」で探せます。"], ["AI を使う", "右上の表示を押して、Anthropic の API キー（console.anthropic.com で取得）を貼り付けます。キーはこのブラウザにだけ保存され、Anthropic にだけ送られます。キーが無くても、キーワードで整理と検索ができます。"], ["壁紙", "上の「壁紙」から好きな壁紙や自分の画像を選べます。"], ["メモ風にまとめる", "入力欄の「メモ風」をオンにすると、長い文を AI が箇条書きのメモにまとめます。しまう前に出る画面で直せます。元の文は「原文と関連」から戻せます。"], ["通知と今日の確認リスト", "メモの「編集」→「通知する」で、日時・毎日・何日おき・曜日・毎月を選べます（音なし）。その日のメモは「今日の確認リスト」に並び、☐ でチェックできます。言葉を決めると、その言葉を入力したときにメモを出します。"], ["フォルダの決め方", "しまうたびに AI がフォルダ名を 3 つ出します（例: 洗剤 → 「洗剤」「洗濯用品」「買い物」）。選ぶか自分で入力すると、あなたの名付け方を覚えて次に生かします。⚙ 設定の「フォルダ分け」で、おまかせ・「その他」の自動振り分け・似たフォルダのまとめ方を変えられます。"], ["フォルダの管理", "フォルダの「管理」から、作る・名前を変える・まとめる・消す・★ お気に入りができます。似たフォルダができると「まとめますか？」と出ます。"], ["ファイル", "「ファイル」から PDF やテキストを付けると、中の文字を読み取ってメモに入れます。"], ["アプリのように使う", "ホーム画面に追加すると（Safari: 共有 →「ホーム画面に追加」）、全画面で開き、電波が無くても使えます。ブラウザにメモを消されにくくもなります。"], ["メモの手入れ", "同じようなメモは 1 つにまとめられます。期限が過ぎたキャンペーンや 1 年以上見ていないメモは「見直したいメモ」に出ます。「覚える」にしたメモは 1・3・7 日…と間をあけて「今日の復習」に出ます。絞り込みの条件は「スマートフォルダ」として保存できます。"], ["他のアプリから取り込む", "「読み込む」の横の「他のアプリから」で、Evernote（.enex）・Google Keep（.json）・CSV・テキスト／Markdown・HTML を取り込めます。"], ["共有フォルダ", "フォルダの「管理」→「共有」で、家族や友だちとフォルダを一緒に使えます。送った共有コードで、相手は「共有フォルダに参加」から入れます。開くたびに変更がそろいます。"], ["声・テンプレート・手書き", "「声」で話した内容が文字になります（Chrome・Edge・Safari）。「テンプレート」で買い物リストや旅行の持ち物などを入れられ、自分のテンプレートも作れます。AI がオンなら手書きの文字も読み取ります。"], ["メール・LINE・公開リンク・カレンダー", "⚙ 設定の「メール・LINE で送る」で、自分だけの送り先と LINE の言葉ができます。メモの「その他」から、公開リンクやカレンダー用のファイル（.ics）。設定の「もっと便利に」で、外国語のメモの翻訳と使われ方のまとめ。"], ["データ", "メモはこのブラウザの中に保存されます。「書き出す」「読み込む」でバックアップや移動ができます。iPhone アプリとも同じファイルでやり取りできます。"]],
       month: (d) => `${d.getFullYear()}年${d.getMonth() + 1}月`,
       other: "その他",
       edit: "編集", saveEdit: "保存", saveRefile: "保存して AI で再整理", cancel: "キャンセル", editSaved: "保存しました。",
@@ -644,12 +750,12 @@ body.locked .wrap { visibility: hidden; }
   Object.assign(I18N.en, { importOther: "From other apps", importedOther: (n) => `Imported ${n} notes.`, importNone: "No notes found in that file.", importFiling: (i, n) => `Filing imported notes… ${i}/${n}`,
     dupH: "These look the same", dupMerge: "Merge into one", dupKeep: "Keep both", dupMerged: "Merged into one note.", dupSaved: (x) => `(A similar note, “${x}”, already exists.)`,
     staleH: "Worth a check", staleOk: "Still good", staleEdit: "Edit", staleTrash: "Trash", staleExpired: (d) => `Its date (${d}) has passed`, staleOld: (y) => `Saved over ${y} year(s) ago. Still right?`,
-    learn: "Learn it", learnStop: "Stop reviewing", learning: "🧠 Learning", revH: "Review", revLeft: (n) => `${n} left`, revShow: "Show it", revYes: "Remembered", revNo: "Forgot",
+    learn: "Learn it", learnStop: "Stop reviewing", learning: "Learning", revH: "Review", revLeft: (n) => `${n} left`, revShow: "Show it", revYes: "Remembered", revNo: "Forgot",
     smartH: "Smart folder", smartPh: "Name (e.g. ★ Recent recipes)", smartSave: "Save", smartNote: "Saves the current filter (text, folder and these options) as a folder.", smartDel: "Delete smart folder", smartDelQ: (x) => `Delete the smart folder “${x}”? Notes stay.` });
   Object.assign(I18N.ja, { importOther: "他のアプリから", importedOther: (n) => `${n} 件を取り込みました。`, importNone: "取り込めるメモが見つかりませんでした。", importFiling: (i, n) => `取り込んだメモを整理中… ${i}/${n}`,
     dupH: "同じようなメモがあります", dupMerge: "1 つにまとめる", dupKeep: "別のままにする", dupMerged: "1 つにまとめました。", dupSaved: (x) => `（似たメモ「${x}」がもうあります）`,
     staleH: "見直したいメモ", staleOk: "まだ使える", staleEdit: "直す", staleTrash: "ゴミ箱へ", staleExpired: (d) => `期限（${d}）が過ぎています`, staleOld: (y) => `${y} 年以上前のメモです。今も正しい？`,
-    learn: "覚える", learnStop: "復習から外す", learning: "🧠 復習中", revH: "今日の復習", revLeft: (n) => `残り ${n} 件`, revShow: "中身を見る", revYes: "覚えてた", revNo: "忘れてた",
+    learn: "覚える", learnStop: "復習から外す", learning: "復習中", revH: "今日の復習", revLeft: (n) => `残り ${n} 件`, revShow: "中身を見る", revYes: "覚えてた", revNo: "忘れてた",
     smartH: "スマートフォルダ", smartPh: "名前（例: ★ 今月の料理）", smartSave: "保存", smartNote: "今の絞り込み（文字・フォルダ・ここでの条件）に名前を付けて、フォルダの列から開けるようにします。", smartDel: "スマートフォルダを消す", smartDelQ: (x) => `スマートフォルダ「${x}」を消しますか？メモは消えません。` });
   Object.assign(I18N.en, { shareBtn: "Share", shareCodeBtn: "Code", shareLeave: "Stop sharing", shareLeaveQ: (x) => `Stop sharing "${x}"? Notes stay on this device.`, joinBtn: "Join a shared folder",
     shareH: (x) => `Share "${x}"`, shareSend: "Send", shareCopy: "Copy invitation", shareCopied: "Copied.", shareInvite: (f, c, w) => `Join my Mindrawer shared folder "${f}".\n\nWeb: ${w}#join=${c}\niPhone: mindrawer://join?c=${c}\n\nShare code: ${c}`,
@@ -663,16 +769,22 @@ body.locked .wrap { visibility: hidden; }
     shareFail: "共有できませんでした。", shareForbidden: "共有コードが正しくありません。", shareNotFound: "共有フォルダが見つかりませんでした。", shareServerErr: (c) => `共有のサーバーでエラーが起きました（${c}）。`, shareBadCode: "共有コードが読み取れませんでした。",
     shareLocalOnly: "共有は、メモをこのブラウザに保存しているときに使えます。", sharedSuffix: "（共有）", joinH: "共有フォルダに参加", joinP: "送られてきた共有コードかリンクを貼り付けてください。そのフォルダがここにもでき、メモが一緒に使えます。", joinPh: "MD1-…", joinGo: "参加する", joined: (x) => `共有フォルダ「${x}」に参加しました。`,
     secShare: "共有フォルダ", shareServerL: "共有に使うサーバー", shareSetNote: "フォルダの「管理」から、フォルダを共有できます。参加は共有コードだけでできます。自分のフォルダを共有するには、中継サーバーの URL が必要です。" });
-  Object.assign(I18N.en, { micLabel: "Voice", micOn: "Listening… tap Voice again to stop.", micOff: "Stopped listening.", micFail: "Voice input isn't available here.", tplLabel: "Template", tplH: "Templates & sketch", tplSave: "Save this text as a template", tplSaved: "Saved as a template.", sketch: "✍️ Handwriting or sketch", sketchH: "Sketch", sketchClear: "Clear", sketchAttach: "Attach", sketchNoAI: "Sketches are read by AI. Turn on AI from the status at the top right.",
-    more: "More", moreH: "More", pubCreate: "🌐 Create a public link", pubOpen: "🌐 Public link", pubH: "Public link", pubNote: "Anyone with the link can read this note in a browser, no app needed. Not indexed by search engines. Later edits aren't reflected.", pubStop: "Unpublish", pubStopped: "Unpublished.", pubCopy: "Copy link", ics: "📅 Add to calendar (.ics)", icsNone: "This note has no date. Set a notification or reminder date first.", icsAll: "Export dated notes for calendar",
+  Object.assign(I18N.en, { micLabel: "Voice", micOn: "Listening… tap Voice again to stop.", micOff: "Stopped listening.", micFail: "Voice input isn't available here.", tplLabel: "Template", tplH: "Templates & sketch", tplSave: "Save this text as a template", tplSaved: "Saved as a template.", sketch: "Handwriting or sketch", sketchH: "Sketch", sketchClear: "Clear", sketchAttach: "Attach", sketchNoAI: "Sketches are read by AI. Turn on AI from the status at the top right.",
+    more: "More", moreH: "More", pubCreate: "Create a public link", pubOpen: "Public link", pubH: "Public link", pubNote: "Anyone with the link can read this note in a browser, no app needed. Not indexed by search engines. Later edits aren't reflected.", pubStop: "Unpublish", pubStopped: "Unpublished.", pubCopy: "Copy link", ics: "Add to calendar (.ics)", icsNone: "This note has no date. Set a notification or reminder date first.", icsAll: "Export dated notes for calendar",
     secMore: "More", translateL: "Translate notes in other languages", statsBtn: "Your stats", moreNote: "Translation and reading sketches need AI. The calendar file (.ics) opens in Google Calendar, Outlook or Apple Calendar.",
     statsH: "Your stats", statsTotal: "Notes", statsMonth: "This month", statsFav: "Favorites", statsPerMonth: "Saved per month", statsFolders: "By folder", statsHelpful: "Most helpful", statsLearning: "Learning", statsLearned: "Learned",
     secInbox: "Save by email or LINE", inboxOn: "Turn on email and LINE", inboxOff: "Turn off", inboxEmail: "Email to", inboxLine: "Send on LINE", inboxNone: "Email or LINE isn't set up on the relay server yet.", inboxNote: "Forward an email to your own address or send a LINE message; it becomes a note next time you open this page. Keep the address private.", inboxGot: (n) => `${n} notes arrived by email or LINE.` });
-  Object.assign(I18N.ja, { micLabel: "声", micOn: "聞き取り中…もう一度「声」を押すと止まります。", micOff: "聞き取りを止めました。", micFail: "このブラウザでは声の入力が使えません。", tplLabel: "テンプレート", tplH: "テンプレート・手書き", tplSave: "今の文をテンプレートにする", tplSaved: "テンプレートにしました。", sketch: "✍️ 手書き・スケッチ", sketchH: "手書き", sketchClear: "消す", sketchAttach: "添付する", sketchNoAI: "手書きの文字は AI が読み取ります。右上の表示から AI をオンにしてください。",
-    more: "その他", moreH: "その他", pubCreate: "🌐 公開リンクを作る", pubOpen: "🌐 公開リンク", pubH: "公開リンク", pubNote: "リンクを知っている人は、アプリが無くてもブラウザでこのメモを見られます。検索エンジンには載りません。あとで直した内容は反映されません。", pubStop: "公開をやめる", pubStopped: "公開をやめました。", pubCopy: "リンクをコピー", ics: "📅 カレンダーに入れる（.ics）", icsNone: "このメモには日付がありません。通知かリマインド日を決めてください。", icsAll: "日付のあるメモをカレンダー用に書き出す",
+  Object.assign(I18N.ja, { micLabel: "声", micOn: "聞き取り中…もう一度「声」を押すと止まります。", micOff: "聞き取りを止めました。", micFail: "このブラウザでは声の入力が使えません。", tplLabel: "テンプレート", tplH: "テンプレート・手書き", tplSave: "今の文をテンプレートにする", tplSaved: "テンプレートにしました。", sketch: "手書き・スケッチ", sketchH: "手書き", sketchClear: "消す", sketchAttach: "添付する", sketchNoAI: "手書きの文字は AI が読み取ります。右上の表示から AI をオンにしてください。",
+    more: "その他", moreH: "その他", pubCreate: "公開リンクを作る", pubOpen: "公開リンク", pubH: "公開リンク", pubNote: "リンクを知っている人は、アプリが無くてもブラウザでこのメモを見られます。検索エンジンには載りません。あとで直した内容は反映されません。", pubStop: "公開をやめる", pubStopped: "公開をやめました。", pubCopy: "リンクをコピー", ics: "カレンダーに入れる（.ics）", icsNone: "このメモには日付がありません。通知かリマインド日を決めてください。", icsAll: "日付のあるメモをカレンダー用に書き出す",
     secMore: "もっと便利に", translateL: "外国語のメモを日本語に訳す", statsBtn: "使われ方のまとめ", moreNote: "翻訳と手書きの読み取りには AI を使います。カレンダー用のファイル（.ics）は Google カレンダー・Outlook・iPhone のカレンダーで開けます。",
     statsH: "使われ方のまとめ", statsTotal: "しまった数", statsMonth: "今月", statsFav: "お気に入り", statsPerMonth: "月ごとにしまった数", statsFolders: "フォルダごと", statsHelpful: "よく役立ったメモ", statsLearning: "復習中", statsLearned: "覚えた",
     secInbox: "メール・LINE で送る", inboxOn: "メール・LINE で送れるようにする", inboxOff: "受け取りをやめる", inboxEmail: "送り先のメール", inboxLine: "LINE で送る言葉", inboxNone: "中継サーバーで、メールか LINE の設定がまだです。", inboxNote: "自分だけの送り先にメールを転送したり、LINE で送ったりすると、次にこのページを開いたときにメモとして入ります。送り先は人に教えないでください。", inboxGot: (n) => `メール・LINE から ${n} 件届きました。` });
+  Object.assign(I18N.en, { secAI: "AI", aiKeyChange: "Remove API key", langL: "Language", secData: "Data" });
+  Object.assign(I18N.ja, { secAI: "AI", aiKeyChange: "API キーを外す", langL: "言葉", secData: "データ" });
+  Object.assign(I18N.en, { tabToday: "Today", tabNotes: "Notes", tabChat: "Ask", sharedMark: "Shared", delQ: (x) => `Move “${x}” to the trash?`, tagFiltered: (x) => `Showing #${x}. Clear it in Filters.`,
+    lookH: "Color and icon", lookColor: "Color", lookIcon: "Icon", sorts: { new: "Newest", old: "Oldest", updated: "Recently edited", long: "Longest", short: "Shortest", title: "Title", helpful: "Most helpful", folder: "By folder" } });
+  Object.assign(I18N.ja, { tabToday: "今日", tabNotes: "メモ", tabChat: "聞く", sharedMark: "共有", delQ: (x) => `「${x}」をゴミ箱に移しますか？`, tagFiltered: (x) => `#${x} のメモだけを出しています。絞り込みで解除できます。`,
+    lookH: "色とアイコン", lookColor: "色", lookIcon: "アイコン", sorts: { new: "新しい順", old: "古い順", updated: "直した順", long: "文字が多い順", short: "文字が少ない順", title: "タイトル順", helpful: "役立った順", folder: "フォルダ別" } });
   Object.assign(I18N.en, { aiFiledBasic: "Couldn't reach Claude, so it was filed by keyword.", resortQ: (n, f) => `Move ${n} ${n === 1 ? "note" : "notes"} from Other into ${f.slice(0, 3).join(", ")}${f.length > 3 ? " and more" : ""}?`, resortYes: "Sort them", resortNo: "Not now", resortDone: (n) => `Sorted ${n} notes.` });
   Object.assign(I18N.ja, { aiFiledBasic: "AI に届かなかったので、キーワードで整理しました。", resortQ: (n, f) => `「その他」の ${n} 件を、${f.slice(0, 3).map((x) => `「${x}」`).join("・")}${f.length > 3 ? " など" : ""}に分けますか？`, resortYes: "振り分ける", resortNo: "今はしない", resortDone: (n) => `${n} 件を振り分けました。` });
   Object.assign(I18N.ja, {
@@ -695,8 +807,8 @@ body.locked .wrap { visibility: hidden; }
     onb: [["🗂", "しまうだけ", "Tips、スクショ、ファイル、備忘録を貼るだけ。自動でフォルダに入ります。"], ["🔎", "必要なときに出てくる", "「ひきだす」でこれからすることを書くと、言葉が違っても役立つメモが出てきます。"], ["☑", "その日に見える", "メモに日付・繰り返し・言葉を決めておくと、「今日の確認リスト」に並びます。"], ["⚙", "安心して使う", "設定から PIN ロック・毎週の控え・ゴミ箱が使えます。右上の表示から自分のキーで AI も使えます。"]],
     onbNext: "次へ", onbStart: "はじめる", onbExamples: "見本の 3 件で始める", onbSkip: "スキップ",
   });
-  I18N.en.helpSteps.push(["Trash, PIN lock and copies", "⚙ Settings → Safety: a PIN lock for shared devices, a weekly copy kept in this browser (export it to keep it safe), and a trash that keeps deleted notes for 30 days."], ["Ask your notes, combined notes", "💬 at the top lets you ask about your notes in a chat. From Recall results, Combine these into one note turns related notes into one page. On Sundays and Mondays a weekly review appears."], ["Filters and quick save", "Filters next to the list narrows by period, tags, favorites, files or notifications. Bookmark this page with #save at the end to open straight into Save."])
-  I18N.ja.helpSteps.push(["ゴミ箱・ロック・控え", "⚙ 設定の「安心」で、共有の端末向けの PIN ロック、毎週ブラウザに残す控え（「書き出す」で外に保存できます）、消したメモが 30 日残るゴミ箱を使えます。"], ["メモに聞く・まとめノート", "上の 💬 から、しまったメモについて会話で聞けます。「ひきだす」の結果からは「まとめノートを作る」で、関係するメモを 1 枚にまとめます。日曜と月曜には今週のふりかえりが出ます。"], ["絞り込みとすぐしまう", "一覧の横の「絞り込み」で、時期・タグ・お気に入り・添付・通知で絞り込めます。ページの URL の最後に #save を付けてブックマークすると、すぐ「しまう」画面で開きます。"])
+  I18N.en.helpSteps.push(["Trash, PIN lock and copies", "⚙ Settings → Safety: a PIN lock for shared devices, a weekly copy kept in this browser (export it to keep it safe), and a trash that keeps deleted notes for 30 days."], ["Ask your notes, combined notes", "at the top lets you ask about your notes in a chat. From Recall results, Combine these into one note turns related notes into one page. On Sundays and Mondays a weekly review appears."], ["Filters and quick save", "Filters next to the list narrows by period, tags, favorites, files or notifications. Bookmark this page with #save at the end to open straight into Save."])
+  I18N.ja.helpSteps.push(["ゴミ箱・ロック・控え", "⚙ 設定の「安心」で、共有の端末向けの PIN ロック、毎週ブラウザに残す控え（「書き出す」で外に保存できます）、消したメモが 30 日残るゴミ箱を使えます。"], ["メモに聞く・まとめノート", "上の吹き出しから、しまったメモについて会話で聞けます。「ひきだす」の結果からは「まとめノートを作る」で、関係するメモを 1 枚にまとめます。日曜と月曜には今週のふりかえりが出ます。"], ["絞り込みとすぐしまう", "一覧の横の「絞り込み」で、時期・タグ・お気に入り・添付・通知で絞り込めます。ページの URL の最後に #save を付けてブックマークすると、すぐ「しまう」画面で開きます。"])
   const EXAMPLES = {
     en: [
       { text: "Coffee or soy sauce spill: don't rub. Blot with a damp cloth from the outside in, then a drop of dish soap.", category: "Home", title: "Blot stains, never rub", summary: "Work from the outside in with a damp cloth, finish with dish soap.", tags: ["stains", "laundry"], situations: ["Spilled on clothes", "Doing laundry"] },
@@ -1000,7 +1112,7 @@ Return JSON only:
     const file = state.file;
     busy(true);
     try {
-      if (file) text = (text ? text + "\n\n" : "") + "📄 " + file.name + (file.text ? "\n" + file.text : "");
+      if (file) text = (text ? text + "\n\n" : "") + file.name + (file.text ? "\n" + file.text : "");
       let original = null;
       // メモ風モード: 長い文は AI がまとめる。確認がオンなら、直してからしまう
       if (state.memoMode && state.sample && !state.image && worthMemo(text)) {
@@ -1031,6 +1143,7 @@ Return JSON only:
       if (opts.length) rest.category = opts[0].name;
       const createdAt = Date.now();
       const dup = similarNote(rest.text, url || null, state.notes);
+      rest.tags = withHashtags(rest.tags, rest.text);
       await state.store.add({ ...rest, ...extra, url: url || null, createdAt, helpful: 0, pinned: false });
       $("noteText").value = ""; $("noteUrl").value = ""; $("srcRow").hidden = true; clearImage(); clearFile(); renderKw("");
       toast(T().saved(rest.title, rest.category, rest.remindAt) + (dup ? " " + T().dupSaved(dup.title) : ""));
@@ -1112,7 +1225,7 @@ Return JSON only:
 
 
   // ---------- この端末の設定 ----------
-  const PREF = { memo: "mindrawer.memoMode", memoPreview: "mindrawer.memoPreview", checks: "mindrawer.checks", folders: "mindrawer.folders", dismissed: "mindrawer.mergeDismissed", notified: "mindrawer.notified", trash: "mindrawer.trash", templates: "mindrawer.templates", pubLinks: "mindrawer.publicLinks", translate: "mindrawer.translate", inbox: "mindrawer.inbox", shares: "mindrawer.shares", shareServer: "mindrawer.shareServer", smart: "mindrawer.smartFolders", dupDismissed: "mindrawer.dupDismissed", pin: "mindrawer.pinHash", backups: "mindrawer.backups", onboarded: "mindrawer.onboarded", reviewSeen: "mindrawer.reviewSeen", fprefs: "mindrawer.folderPrefs", choices: "mindrawer.folderChoices" };
+  const PREF = { memo: "mindrawer.memoMode", memoPreview: "mindrawer.memoPreview", checks: "mindrawer.checks", folders: "mindrawer.folders", dismissed: "mindrawer.mergeDismissed", notified: "mindrawer.notified", trash: "mindrawer.trash", sort: "mindrawer.sort", templates: "mindrawer.templates", pubLinks: "mindrawer.publicLinks", translate: "mindrawer.translate", inbox: "mindrawer.inbox", shares: "mindrawer.shares", shareServer: "mindrawer.shareServer", smart: "mindrawer.smartFolders", dupDismissed: "mindrawer.dupDismissed", pin: "mindrawer.pinHash", backups: "mindrawer.backups", onboarded: "mindrawer.onboarded", reviewSeen: "mindrawer.reviewSeen", fprefs: "mindrawer.folderPrefs", choices: "mindrawer.folderChoices" };
   const getJSON = (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch { return d; } };
   const setJSON = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
   state.memoMode = getJSON(PREF.memo, false);
@@ -1228,7 +1341,7 @@ ${text}`;
   function renderKw(text) {
     const hits = keywordAlarms(text).slice(0, 3), box = $("kwBanner");
     box.hidden = !hits.length;
-    box.replaceChildren(...(hits.length ? [el("small", {}, "🔔 " + T().kwH), ...hits.map((n) => el("button", { onclick: () => jumpTo(n) }, "→ " + n.title))] : []));
+    box.replaceChildren(...(hits.length ? [el("small", {}, T().kwH), ...hits.map((n) => el("button", { onclick: () => jumpTo(n) }, "→ " + n.title))] : []));
   }
 
   // ---------- 今日の確認リスト ----------
@@ -1280,7 +1393,7 @@ ${text}`;
       if (sent[k]) continue;
       sent[k] = now;
       try {
-        const no = new Notification("🔔 " + n.title, { body: n.summary || String(n.text).slice(0, 120), silent: true, tag: k });
+        const no = new Notification(n.title, { body: n.summary || String(n.text).slice(0, 120), silent: true, tag: k });
         no.onclick = () => { window.focus(); jumpTo(n); };
       } catch {}
     }
@@ -1324,16 +1437,16 @@ ${text}`;
         const sel = el("select", { "aria-label": t.foldMergeTo }, el("option", { value: "" }, t.foldMergeTo), ...names.filter((x) => x !== name).map((x) => el("option", { value: x }, x)));
         sel.onchange = async () => { if (sel.value) { await moveFolder(name, sel.value); openFolders(); } };
         return el("div", { class: "frow" },
-          el("button", { class: "star", "aria-pressed": String(isFavFolder(name)), "aria-label": "★", onclick: () => toggleFavFolder(name) }, isFavFolder(name) ? "★" : "☆"),
-          el("span", {}, name, isSharedFolder(name) ? " 👥" : "", " ", el("span", { class: "n" }, String(counts.get(name))),
+          el("button", { class: "star", "aria-pressed": String(isFavFolder(name)), "aria-label": t.pin, onclick: () => toggleFavFolder(name) }, ico("star", 16)),
+          el("span", { class: "fname" }, el("button", { type: "button", class: "lookbtn", "aria-label": t.lookH, title: t.lookH, onclick: () => openFolderLook(name) }, folderBadge(name)), name, isSharedFolder(name) ? el("span", { class: "tagmini" }, T().sharedMark) : "", " ", el("span", { class: "n" }, String(counts.get(name))),
             name === t.other || state.store?.kind !== "local" ? null : isSharedFolder(name)
               ? el("span", {}, " ", el("button", { class: "mini", onclick: () => showShareCode(name) }, t.shareCodeBtn), " ", el("button", { class: "mini", onclick: () => { if (confirm(t.shareLeaveQ(name))) { leaveShare(name); openFolders(); } } }, t.shareLeave))
-              : el("span", {}, " ", el("button", { class: "mini", onclick: () => shareFolder(name) }, "👥 " + t.shareBtn))),
+              : el("span", {}, " ", el("button", { class: "mini", onclick: () => shareFolder(name) }, t.shareBtn))),
           el("button", { class: "mini", onclick: async () => { const v = prompt(t.foldRenameQ, name); if (v) { await moveFolder(name, v); openFolders(); } } }, t.foldRename),
           name === t.other ? el("span") : el("span", {}, sel, " ",
             el("button", { class: "mini", onclick: async () => { if (confirm(t.foldDelQ)) { await moveFolder(name, t.other); saveFolderMeta(folderMeta().filter((f) => f.name !== name)); openFolders(); } } }, t.foldDel)));
       }),
-      state.store?.kind === "local" ? el("div", { class: "fnew" }, el("button", { class: "mini", onclick: () => openJoin("") }, "👥＋ " + t.joinBtn)) : null,
+      state.store?.kind === "local" ? el("div", { class: "fnew" }, el("button", { class: "mini", onclick: () => openJoin("") }, t.joinBtn)) : null,
       el("div", { class: "fnew" }, input, el("button", { class: "mini", onclick: () => {
         const v = input.value.trim().slice(0, 32);
         if (!v || folderNames().has(v)) return;
@@ -1494,6 +1607,20 @@ ${text}`;
     const trash = trashList(), bk = backups();
     fill(dlg, 
       el("div", { class: "help-head" }, el("h2", {}, t.settings), el("button", { type: "button", class: "help-x", "aria-label": t.close, onclick: () => dlg.close() }, "×")),
+      el("div", { class: "set-sec" }, el("h3", {}, t.secAI),
+        el("div", { class: "set-row" }, el("span", {}, $("status").textContent.replace(/ · .*›$/, "")),
+          state.inClaude ? null : el("button", { class: "mini", onclick: () => { dlg.close(); askKey(); } }, state.sample ? t.aiKeyChange : t.useAI))),
+      el("div", { class: "set-sec" }, el("h3", {}, t.secView),
+        el("div", { class: "set-row" }, el("span", {}, t.langL),
+          el("span", { class: "seg" }, ...[["ja", "日本語"], ["en", "English"]].map(([l, name]) => el("button", { type: "button", "aria-pressed": String(state.lang === l), onclick: () => { setLang(l); openSettings(); } }, name)))),
+        el("div", { class: "set-row" },
+          el("button", { class: "mini", onclick: () => { dlg.close(); $("wpBtn").click(); } }, t.wp),
+          el("button", { class: "mini", onclick: () => { dlg.close(); $("helpBtn").click(); } }, t.help))),
+      el("div", { class: "set-sec" }, el("h3", {}, t.secData),
+        el("div", { class: "set-row" },
+          el("button", { class: "mini", onclick: () => exportNotes() }, t.exportBtn),
+          el("button", { class: "mini", onclick: () => $("importInput").click() }, t.importText),
+          el("button", { class: "mini", onclick: () => $("otherInput").click() }, t.importOther))),
       el("div", { class: "set-sec" }, el("h3", {}, t.secMemo),
         check(state.memoMode, t.memoMode, (v) => setMemoMode(v)),
         check(state.memoPreview, t.memoPreviewL, (v) => { state.memoPreview = v; setJSON(PREF.memoPreview, v); })),
@@ -1515,16 +1642,16 @@ ${text}`;
           : installEvt ? el("div", { class: "set-row" }, el("span", {}, t.appAdd), el("button", { class: "mini", onclick: async () => { installEvt.prompt(); await installEvt.userChoice.catch(() => {}); installEvt = null; openSettings(); } }, t.appAddBtn))
           : el("p", {}, /iphone|ipad|ipod/i.test(navigator.userAgent) ? t.appIos : t.appOther),
         el("p", { class: "set-note" }, t.appNote)),
-      el("div", { class: "set-sec" }, el("h3", {}, "✨ " + t.secMore),
+      el("div", { class: "set-sec" }, el("h3", {}, t.secMore),
         check(getJSON(PREF.translate, false), t.translateL, (v) => setJSON(PREF.translate, v)),
         el("div", { class: "set-row" },
-          el("button", { class: "mini", onclick: () => { $("setDlg").close(); openStats(); } }, "📊 " + t.statsBtn),
-          el("button", { class: "mini", onclick: () => downloadICS(state.notes, "mindrawer-calendar.ics") }, "📅 " + t.icsAll)),
+          el("button", { class: "mini", onclick: () => { $("setDlg").close(); openStats(); } }, t.statsBtn),
+          el("button", { class: "mini", onclick: () => downloadICS(state.notes, "mindrawer-calendar.ics") }, t.icsAll)),
         el("p", { class: "set-note" }, t.moreNote)),
       inboxSection(t),
-      el("div", { class: "set-sec" }, el("h3", {}, "👥 " + t.secShare),
+      el("div", { class: "set-sec" }, el("h3", {}, t.secShare),
         (() => { const i = el("input", { type: "text", placeholder: "https://….workers.dev", value: getJSON(PREF.shareServer, "") }); i.onchange = () => setJSON(PREF.shareServer, i.value.trim().replace(/\/+$/, "")); return el("label", { class: "ef" }, el("span", {}, t.shareServerL), i); })(),
-        el("div", { class: "set-row" }, el("button", { class: "mini", onclick: () => { $("setDlg").close(); openJoin(""); } }, "👥＋ " + t.joinBtn)),
+        el("div", { class: "set-row" }, el("button", { class: "mini", onclick: () => { $("setDlg").close(); openJoin(""); } }, t.joinBtn)),
         el("p", { class: "set-note" }, t.shareSetNote)),
       el("div", { class: "set-sec" }, el("h3", {}, t.secSafe),
         el("div", { class: "set-row" }, el("span", {}, "🔒 " + t.pinOn),
@@ -1651,7 +1778,7 @@ Return JSON only: {"answer":"","ids":["ids of the notes you used, max 5"]}`;
       input.disabled = false; draw(); input.focus();
     };
     dlg.replaceChildren(
-      el("div", { class: "help-head" }, el("h2", {}, "💬 " + t.chat),
+      el("div", { class: "help-head" }, el("h2", {}, t.chat),
         el("span", {}, el("button", { type: "button", class: "mini", onclick: () => { state.chat = []; draw(); } }, t.chatClear), el("button", { type: "button", class: "help-x", "aria-label": t.close, onclick: () => dlg.close() }, "×"))),
       log,
       el("form", { class: "chat-form", onsubmit: send }, input, el("button", { type: "submit" }, t.chatSend)));
@@ -1684,7 +1811,7 @@ Return JSON only: {"answer":"","ids":["ids of the notes you used, max 5"]}`;
     fill(dlg, 
       el("div", { class: "help-head" }, el("h2", {}, t.filters), el("button", { type: "button", class: "help-x", "aria-label": t.close, onclick: () => dlg.close() }, "×")),
       el("label", { class: "ef" }, el("span", {}, t.fPeriod), period),
-      el("div", { class: "set-sec" }, check("fav", "★ " + t.fFav), check("attach", "📎 " + t.fAttach), check("notify", "🔔 " + t.fNotify), check("unfiled", t.fUnfiled)),
+      el("div", { class: "set-sec" }, check("fav", "★ " + t.fFav), check("attach", t.fAttach), check("notify", t.fNotify), check("unfiled", t.fUnfiled)),
       tags.length ? el("div", { class: "set-sec" }, el("h3", {}, t.fTagsH), el("div", { class: "ftags" }, ...tags.map((x) => el("button", { type: "button", "aria-pressed": String(a.tags.includes(x)), onclick: (e) => {
         a.tags = a.tags.includes(x) ? a.tags.filter((y) => y !== x) : [...a.tags, x];
         e.currentTarget.setAttribute("aria-pressed", String(a.tags.includes(x))); renderList();
@@ -1719,7 +1846,7 @@ Return JSON only: {"answer":"","ids":["ids of the notes you used, max 5"]}`;
       .sort((a, b) => ((b.helpful || 0) * 2 + (b.pinned ? 3 : 0)) - ((a.helpful || 0) * 2 + (a.pinned ? 3 : 0)) || a.createdAt - b.createdAt).slice(0, 3);
     if (!added.length && !forgotten.length) { box.replaceChildren(); return; }
     box.replaceChildren(el("div", { class: "review" },
-      el("div", { class: "review-top" }, el("b", {}, "🗓 " + t.reviewH), el("button", { onclick: () => { setJSON(PREF.reviewSeen, weekKey() + (day === 0 ? "s" : "m")); renderReview(); } }, t.reviewClose)),
+      el("div", { class: "review-top" }, el("b", {}, t.reviewH), el("button", { onclick: () => { setJSON(PREF.reviewSeen, weekKey() + (day === 0 ? "s" : "m")); renderReview(); } }, t.reviewClose)),
       el("p", {}, added.length ? t.reviewAdded(added.length) : t.reviewNone),
       added.length ? el("div", { class: "links" }, ...added.slice(0, 5).map((n) => el("button", { onclick: () => jumpTo(n) }, "→ " + n.title))) : null,
       forgotten.length ? el("p", {}, t.reviewForgot) : null,
@@ -1825,10 +1952,10 @@ Return JSON only: {"answer":"","ids":["ids of the notes you used, max 5"]}`;
     input.addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.isComposing) submit(); });
     const row = el("div", { class: "choice-in", hidden: "" }, input, el("button", { type: "button", onclick: submit }, t.choiceUse));
     box.replaceChildren(el("div", { class: "choice" },
-      el("div", { class: "choice-top" }, el("small", {}, "📁 " + t.choiceH), el("button", { type: "button", onclick: () => { state.choice = null; renderChoice(); tidyFolders(); } }, t.choiceKeep)),
+      el("div", { class: "choice-top" }, el("small", {}, t.choiceH), el("button", { type: "button", onclick: () => { state.choice = null; renderChoice(); tidyFolders(); } }, t.choiceKeep)),
       el("b", {}, c.title),
       el("div", { class: "choice-opts" },
-        ...c.options.map((o) => el("button", { type: "button", onclick: () => pickFolder(o.name, o.similar, false) }, (o.exists ? "📁 " : "＋ ") + o.name, o.exists ? null : el("span", { class: "new" }, t.choiceNew))),
+        ...c.options.map((o) => el("button", { type: "button", onclick: () => pickFolder(o.name, o.similar, false) }, (o.exists ? "" : "＋ ") + o.name, o.exists ? null : el("span", { class: "new" }, t.choiceNew))),
         el("button", { type: "button", class: "typ", onclick: () => { row.hidden = false; input.focus(); } }, t.choiceType)),
       row,
       el("p", {}, t.choiceLearn)));
@@ -1918,7 +2045,7 @@ Return JSON only: {"answer":"","ids":["ids of the notes you used, max 5"]}`;
     if (due.length) {
       const n = due[0];
       cards.push(el("div", { class: "review" },
-        el("div", { class: "review-top" }, el("b", {}, "🧠 " + t.revH), el("small", {}, t.revLeft(due.length))),
+        el("div", { class: "review-top" }, el("b", {}, t.revH), el("small", {}, t.revLeft(due.length))),
         el("b", {}, n.title),
         revShown ? el("p", { class: "raw", style: "white-space:pre-wrap;color:var(--ink)" }, n.text) : null,
         el("div", { class: "merge-acts" }, ...(revShown
@@ -1927,14 +2054,14 @@ Return JSON only: {"answer":"","ids":["ids of the notes you used, max 5"]}`;
           : [el("button", { class: "yes", onclick: () => { revShown = true; renderUpkeep(); } }, t.revShow)]))));
     }
     const stale = staleNotes();
-    if (stale.length) cards.push(el("div", { class: "merge" }, el("p", {}, el("b", {}, "🕰 " + t.staleH)),
+    if (stale.length) cards.push(el("div", { class: "merge" }, el("p", {}, el("b", {}, t.staleH)),
       ...stale.map(({ n, label }) => el("div", { class: "stale-row" }, el("b", {}, n.title), el("small", {}, label),
         el("div", { class: "merge-acts" },
           el("button", { onclick: () => state.store.update(n.id, { checkedAt: Date.now(), linkBroken: null }) }, t.staleOk),
           el("button", { onclick: () => { state.editing = n.id; jumpTo(n); } }, t.staleEdit),
           el("button", { onclick: () => trashNote(n) }, t.staleTrash))))));
     const d = duplicates();
-    if (d) cards.push(el("div", { class: "merge" }, el("p", {}, el("b", {}, "📑 " + t.dupH)),
+    if (d) cards.push(el("div", { class: "merge" }, el("p", {}, el("b", {}, t.dupH)),
       ...[d.keep, d.drop].map((n) => el("div", { class: "stale-row" }, el("b", {}, n.title), el("small", {}, String(n.text).slice(0, 80)))),
       el("div", { class: "merge-acts" },
         el("button", { class: "yes", onclick: async () => { await state.store.update(d.keep.id, mergedNote(d.keep, d.drop)); await trashNote(d.drop); toast(t.dupMerged); } }, t.dupMerge),
@@ -2115,7 +2242,7 @@ Return JSON only: {"answer":"","ids":["ids of the notes you used, max 5"]}`;
     const t = T(), sf = sharesList().find((x) => x.folder === folder); if (!sf) return;
     const code = shareCode(sf), invite = t.shareInvite(folder, code, WEB_URL), dlg = $("shareDlg");
     fill(dlg,
-      el("div", { class: "help-head" }, el("h2", {}, "👥 " + t.shareH(folder)), el("button", { type: "button", class: "help-x", "aria-label": t.close, onclick: () => dlg.close() }, "×")),
+      el("div", { class: "help-head" }, el("h2", {}, t.shareH(folder)), el("button", { type: "button", class: "help-x", "aria-label": t.close, onclick: () => dlg.close() }, "×")),
       el("p", { style: "word-break:break-all;font-family:var(--font-mono);font-size:12.5px;color:var(--ink)" }, code),
       el("div", { class: "ef-acts" },
         navigator.share ? el("button", { type: "button", class: "ghost", onclick: () => navigator.share({ text: invite }).catch(() => {}) }, t.shareSend) : null,
@@ -2155,7 +2282,7 @@ Return JSON only: {"answer":"","ids":["ids of the notes you used, max 5"]}`;
     const ta = el("textarea", { class: "memo-ta", style: "min-height:90px", placeholder: t.joinPh }); ta.value = initial || "";
     const err = el("p", { class: "err", style: "color:var(--alert)" });
     fill(dlg,
-      el("div", { class: "help-head" }, el("h2", {}, "👥＋ " + t.joinH), el("button", { type: "button", class: "help-x", "aria-label": t.close, onclick: () => dlg.close() }, "×")),
+      el("div", { class: "help-head" }, el("h2", {}, t.joinH), el("button", { type: "button", class: "help-x", "aria-label": t.close, onclick: () => dlg.close() }, "×")),
       el("p", {}, t.joinP), ta, err,
       el("div", { class: "ef-acts" }, el("button", { type: "button", class: "ghost", onclick: () => dlg.close() }, t.cancel),
         el("button", { type: "button", onclick: async (e) => {
@@ -2199,7 +2326,7 @@ Return JSON only: {"answer":"","ids":["ids of the notes you used, max 5"]}`;
     fill(dlg,
       el("div", { class: "help-head" }, el("h2", {}, t.tplH), el("button", { type: "button", class: "help-x", "aria-label": t.close, onclick: () => dlg.close() }, "×")),
       el("div", { class: "ftags", style: "margin-top:10px" }, ...all.map(([icon, name, title, text, id]) => {
-        const b = el("button", { type: "button", onclick: () => { setMode("save"); $("noteText").value = [fillTpl(title), fillTpl(text)].filter(Boolean).join("\n"); dlg.close(); $("noteText").focus(); } }, icon + " " + name);
+        const b = el("button", { type: "button", onclick: () => { setMode("save"); $("noteText").value = [fillTpl(title), fillTpl(text)].filter(Boolean).join("\n"); dlg.close(); $("noteText").focus(); } }, name);
         if (id) b.append(el("span", { class: "x", style: "margin-left:6px", onclick: (e) => { e.stopPropagation(); setJSON(PREF.templates, getJSON(PREF.templates, []).filter((x) => x.id !== id)); openTemplates(); } }, "×"));
         return b;
       })),
@@ -2223,7 +2350,7 @@ Return JSON only: {"answer":"","ids":["ids of the notes you used, max 5"]}`;
     c.addEventListener("pointermove", (e) => { if (!drawing) return; g.lineTo(...pos(e)); g.stroke(); });
     c.addEventListener("pointerup", () => { drawing = false; });
     fill(dlg,
-      el("div", { class: "help-head" }, el("h2", {}, "✍️ " + t.sketchH), el("button", { type: "button", class: "help-x", "aria-label": t.close, onclick: () => dlg.close() }, "×")),
+      el("div", { class: "help-head" }, el("h2", {}, t.sketchH), el("button", { type: "button", class: "help-x", "aria-label": t.close, onclick: () => dlg.close() }, "×")),
       c,
       el("div", { class: "ef-acts" },
         el("button", { type: "button", class: "ghost", onclick: () => { g.fillRect(0, 0, 900, 600); drawn = false; } }, t.sketchClear),
@@ -2278,13 +2405,20 @@ Return JSON only: {"answer":"","ids":["ids of the notes you used, max 5"]}`;
   }
   const pubLinks = () => getJSON(PREF.pubLinks, {});
   function openMore(n) {
-    const t = T(), dlg = $("xDlg"), link = pubLinks()[n.id];
+    const t = T(), dlg = $("xDlg"), link = pubLinks()[n.id], today = n.plannedDay === todayISO();
+    const item = (icon, label, fn, cls) => el("button", { type: "button", class: cls || null, onclick: fn }, ico(icon, 20), label);
     fill(dlg,
-      el("div", { class: "help-head" }, el("h2", {}, t.moreH), el("button", { type: "button", class: "help-x", "aria-label": t.close, onclick: () => dlg.close() }, "×")),
-      el("b", {}, n.title),
-      el("div", { class: "set-sec" },
-        el("button", { class: "mini", onclick: () => openPublic(n) }, link ? t.pubOpen : t.pubCreate),
-        el("button", { class: "mini", onclick: () => { if (downloadICS([n], "mindrawer-" + n.id + ".ics")) dlg.close(); } }, t.ics)));
+      el("div", { class: "help-head" }, el("h2", {}, n.title), el("button", { type: "button", class: "help-x", "aria-label": t.close, onclick: () => dlg.close() }, "×")),
+      el("div", { class: "menu" },
+        item("edit", t.edit, () => { dlg.close(); state.editing = n.id; setTab("notes"); jumpTo(n); }),
+        item("today", today ? t.fromToday : t.toToday, () => { dlg.close(); state.store.update(n.id, { plannedDay: today ? null : todayISO() }); }),
+        item("brain", n.review ? t.learnStop : t.learn, () => { dlg.close(); state.store.update(n.id, { review: n.review ? null : reviewStart() }); }),
+        state.sample ? item("refresh", t.refile, async () => { dlg.close(); await refile(n); }) : null,
+        el("hr"),
+        item("globe", link ? t.pubOpen : t.pubCreate, () => openPublic(n)),
+        item("cal", t.ics, () => { if (downloadICS([n], "mindrawer-" + n.id + ".ics")) dlg.close(); }),
+        el("hr"),
+        item("trash", t.del, async () => { if (confirm(t.delQ(n.title))) { dlg.close(); await trashNote(n); } }, "danger")));
     if (!dlg.open) dlg.showModal();
   }
   async function openPublic(n) {
@@ -2302,7 +2436,7 @@ Return JSON only: {"answer":"","ids":["ids of the notes you used, max 5"]}`;
       } catch (e) { toast(t.shareFail + " " + (e.message || "")); return; }
     }
     fill(dlg,
-      el("div", { class: "help-head" }, el("h2", {}, "🌐 " + t.pubH), el("button", { type: "button", class: "help-x", "aria-label": t.close, onclick: () => dlg.close() }, "×")),
+      el("div", { class: "help-head" }, el("h2", {}, t.pubH), el("button", { type: "button", class: "help-x", "aria-label": t.close, onclick: () => dlg.close() }, "×")),
       el("p", { style: "word-break:break-all;font-family:var(--font-mono);font-size:13px;color:var(--ink)" }, el("a", { href: link.url, target: "_blank", rel: "noopener" }, link.url)),
       el("p", { class: "set-note" }, t.pubNote),
       el("div", { class: "ef-acts" },
@@ -2335,7 +2469,7 @@ Return JSON only: {"answer":"","ids":["ids of the notes you used, max 5"]}`;
       }));
     const stat = (v, l) => el("div", { style: "text-align:center;flex:1" }, el("div", { style: "font:700 22px var(--font-body);color:var(--ink)" }, String(v)), el("small", { style: "color:var(--muted)" }, l));
     fill(dlg,
-      el("div", { class: "help-head" }, el("h2", {}, "📊 " + t.statsH), el("button", { type: "button", class: "help-x", "aria-label": t.close, onclick: () => dlg.close() }, "×")),
+      el("div", { class: "help-head" }, el("h2", {}, t.statsH), el("button", { type: "button", class: "help-x", "aria-label": t.close, onclick: () => dlg.close() }, "×")),
       el("div", { style: "display:flex;gap:8px;margin:12px 0" }, stat(real.length, t.statsTotal), stat(mc[months[11]], t.statsMonth), stat(real.filter((n) => n.pinned).length, t.statsFav)),
       el("h3", {}, t.statsPerMonth), bars,
       folders.length ? el("h3", {}, t.statsFolders) : null,
@@ -2387,22 +2521,125 @@ Return JSON only: {"answer":"","ids":["ids of the notes you used, max 5"]}`;
     } catch {}
   }
 
+  // ---------- アイコン・フォルダの色と印・ハッシュタグ・並べ替え・タブ ----------
+  const ICONS = {
+    star: '<path d="m12 2.8 2.8 5.8 6.4.9-4.6 4.5 1.1 6.3L12 17.3l-5.7 3 1.1-6.3-4.6-4.5 6.4-.9z"/>',
+    thumb: '<path d="M7 10v11M14.5 5.5 13.6 10h5.7a2 2 0 0 1 2 2.4l-1.4 7a2 2 0 0 1-2 1.6H7V10l4.2-7.4a2.4 2.4 0 0 1 3.3 2.9z"/>',
+    today: '<rect x="3.5" y="3.5" width="17" height="17" rx="4"/><path d="m8 12.5 2.8 2.8L16 9.5"/>',
+    more: '<circle cx="5.5" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="18.5" cy="12" r="1.3"/>',
+    edit: '<path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z"/><path d="m13.5 6.5 4 4"/>',
+    brain: '<path d="M9 4a3 3 0 0 0-3 3 3 3 0 0 0-2 5 3 3 0 0 0 2 5 3 3 0 0 0 6 1V5a2 2 0 0 0-3-1zM15 4a3 3 0 0 1 3 3 3 3 0 0 1 2 5 3 3 0 0 1-2 5 3 3 0 0 1-6 1"/>',
+    refresh: '<path d="M20 11a8 8 0 0 0-14.6-4.6L4 8M4 4v4h4M4 13a8 8 0 0 0 14.6 4.6L20 16M20 20v-4h-4"/>',
+    globe: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.8 2.5 15.2 0 18M12 3c-2.5 2.8-2.5 15.2 0 18"/>',
+    cal: '<rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/>',
+    trash: '<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>',
+    bell: '<path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15zM10 21h4"/>',
+    hash: '<path d="M5 9h15M4 15h15M10 3 8 21M16 3l-2 18"/>',
+    folder: '<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
+    home: '<path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
+    food: '<path d="M7 3v8a2 2 0 0 0 2 2v8M5 3v5M9 3v5M17 3c-2 2-2.5 5-2.5 8h3V21"/>',
+    money: '<rect x="2.5" y="6" width="19" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 9.5v5M18 9.5v5"/>',
+    heart: '<path d="M12 20s-7.5-4.3-7.5-10A4.3 4.3 0 0 1 12 7.4 4.3 4.3 0 0 1 19.5 10C19.5 15.7 12 20 12 20z"/>',
+    laptop: '<rect x="4" y="5" width="16" height="11" rx="1.5"/><path d="M2 19h20"/>',
+    work: '<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5h6v2M3 12h18"/>',
+    plane: '<path d="M2.5 13.5 21 6l-4.5 14-4-6.5zM12.5 13.5 21 6"/>',
+    cart: '<path d="M3 4h2l2.4 11h10.2L20 7H6.2"/><circle cx="9" cy="19.5" r="1.3"/><circle cx="17" cy="19.5" r="1.3"/>',
+    users: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M21.5 20a6.5 6.5 0 0 0-4-6"/>',
+    paw: '<circle cx="7" cy="9" r="1.8"/><circle cx="12" cy="6.5" r="1.8"/><circle cx="17" cy="9" r="1.8"/><path d="M12 12c-3 0-5.5 3.5-5 6 .4 2 3 1.5 5 1.5s4.6.5 5-1.5c.5-2.5-2-6-5-6z"/>',
+    music: '<path d="M9 18V5l11-2v13"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="16" r="2.5"/>',
+    sparkle: '<path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M6 18l2.5-2.5M15.5 8.5 18 6"/>',
+    doc: '<path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4M9 12h6M9 16h6"/>',
+    target: '<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1"/>',
+    bulb: '<path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.8.6 1.5 1.6 1.5 2.6h4c0-1 .7-2 1.5-2.6A6 6 0 0 0 12 3z"/>',
+  };
+  function ico(name, size = 18) {
+    const sp = document.createElement("span");
+    sp.className = "ico";
+    // 中身は上の決まった図形だけ（入力した文字は入らない）
+    sp.innerHTML = `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[name] || ICONS.folder}</svg>`;
+    return sp;
+  }
+  const FOLDER_COLORS = ["#c8553d", "#d0832b", "#b39a24", "#5a9a54", "#2d8f84", "#3c7cc0", "#6b62c9", "#a058b5", "#c4567f", "#7d7a73"];
+  const FOLDER_ICONS = ["folder", "home", "food", "money", "heart", "laptop", "work", "plane", "cart", "users", "paw", "music", "sparkle", "doc", "target", "bulb", "star"];
+  const TOPIC_ICON = [[/料理|食|food|cook/i, "food", 1], [/お金|節約|money/i, "money", 2], [/健康|体|health/i, "heart", 3], [/PC|ガジェット|tech/i, "laptop", 5], [/仕事|勉強|work|study/i, "work", 6],
+    [/暮らし|家事|home/i, "home", 4], [/旅行|おでかけ|travel/i, "plane", 5], [/買い物|shop/i, "cart", 0], [/家族|子育て|family/i, "users", 8], [/ペット|pet/i, "paw", 1], [/趣味|エンタメ|hobb/i, "music", 7],
+    [/美容|ファッション|beauty/i, "sparkle", 8], [/手続き|書類|paper/i, "doc", 9], [/習慣|考え方|habit/i, "target", 4], [/人づきあい|people/i, "users", 3]];
+  function folderLook(name) {
+    const meta = folderMeta().find((f) => f.name === name) || {};
+    const hit = TOPIC_ICON.find(([re]) => re.test(name || ""));
+    let h = 0; for (const ch of String(name)) h = (h * 31 + ch.codePointAt(0)) >>> 0;
+    return { color: meta.color || (hit ? FOLDER_COLORS[hit[2]] : FOLDER_COLORS[h % FOLDER_COLORS.length]), icon: meta.icon || (hit ? hit[1] : "folder") };
+  }
+  function setFolderLook(name, patch) {
+    const meta = folderMeta(), f = meta.find((x) => x.name === name);
+    if (f) Object.assign(f, patch); else meta.push({ name, favorite: false, ...patch });
+    saveFolderMeta(meta); renderRail(); renderList();
+  }
+  function folderBadge(name, cls = "fbadge") {
+    const lk = folderLook(name), b = el("span", { class: cls });
+    b.style.setProperty("--fc", lk.color);
+    b.append(ico(lk.icon, 14));
+    return b;
+  }
+  function openFolderLook(name) {
+    const t = T(), dlg = $("xDlg"), lk = folderLook(name);
+    fill(dlg,
+      el("div", { class: "help-head" }, el("h2", {}, name), el("button", { type: "button", class: "help-x", "aria-label": t.close, onclick: () => dlg.close() }, "×")),
+      el("h3", {}, t.lookColor),
+      el("div", { class: "swrow" }, ...FOLDER_COLORS.map((c) => { const b = el("button", { type: "button", class: "csw", "aria-label": c, "aria-pressed": String(c === lk.color), onclick: () => { setFolderLook(name, { color: c }); openFolderLook(name); } }); b.style.background = c; return b; })),
+      el("h3", {}, t.lookIcon),
+      el("div", { class: "swrow" }, ...FOLDER_ICONS.map((k) => { const b = el("button", { type: "button", class: "isw", "aria-label": k, "aria-pressed": String(k === lk.icon), onclick: () => { setFolderLook(name, { icon: k }); openFolderLook(name); } }); b.style.setProperty("--fc", lk.color); b.append(ico(k, 20)); return b; })));
+    if (!dlg.open) dlg.showModal();
+  }
+  /** 本文の #言葉 をタグにする */
+  function hashtags(text) {
+    const out = [];
+    for (const m of String(text).matchAll(/(?:^|[\s、。（(「])[#＃]([\p{L}\p{N}_ー・]{1,30})/gu)) if (!out.includes(m[1])) out.push(m[1]);
+    return out;
+  }
+  const withHashtags = (tags, text) => [...new Set([...(tags || []), ...hashtags(text)])].slice(0, 12);
+  function filterTag(tag) {
+    state.adv = { ...state.adv, tags: [tag] }; state.folder = "__all"; setTab("notes"); renderRail(); renderList();
+    toast(T().tagFiltered(tag));
+  }
+  // 並べ替え
+  const SORTS = ["new", "old", "updated", "long", "short", "title", "helpful", "folder"];
+  function sortNotes(list, how) {
+    const len = (n) => String(n.text || "").length, upd = (n) => n.updatedAt || n.createdAt;
+    const by = {
+      new: (a, b) => b.createdAt - a.createdAt, old: (a, b) => a.createdAt - b.createdAt, updated: (a, b) => upd(b) - upd(a),
+      long: (a, b) => len(b) - len(a), short: (a, b) => len(a) - len(b), title: (a, b) => String(a.title).localeCompare(String(b.title), state.lang),
+      helpful: (a, b) => (b.helpful || 0) - (a.helpful || 0) || b.createdAt - a.createdAt,
+      folder: (a, b) => String(a.category || "").localeCompare(String(b.category || ""), state.lang) || b.createdAt - a.createdAt,
+    }[how] || ((a, b) => b.createdAt - a.createdAt);
+    const pinFirst = how === "new" || how === "updated";
+    return list.slice().sort((a, b) => (pinFirst ? (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0) : 0) || by(a, b));
+  }
+  // 下のタブ（スマホの幅）
+  function setTab(tab) {
+    document.body.dataset.tab = tab;
+    for (const b of document.querySelectorAll("#tabbar button")) {
+      if (b.dataset.tab === tab) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current");
+    }
+    try { sessionStorage.setItem("mindrawer.tab", tab); } catch {}
+  }
+
   // ---------- render ----------
   function folderOf(n) { return state.view === "cat" ? n.category || T().other : String(monthKey(n.createdAt)); }
   function folderLabel(k) { return state.view === "cat" ? k : monthLabel(Number(k)); }
   function slip(n, isExample) {
     const t = T();
-    const s = el("article", { class: "slip" + (state.hits && state.hits.has(n.id) ? " hit" : "") + (isExample ? " example" : "") },
-      el("div", { class: "slip-meta" }, el("span", { class: "f" }, n.category || t.other),
+    const s = el("article", { class: "slip" + (state.hits && state.hits.has(n.id) ? " hit" : "") + (isExample ? " example" : "") + (n.pinned ? " pinned" : ""), style: `--fc:${folderLook(n.category || t.other).color}` },
+      el("div", { class: "slip-meta" }, folderBadge(n.category || t.other), el("span", { class: "f", style: `color:${folderLook(n.category || t.other).color}` }, n.category || t.other),
         isExample ? el("span", { class: "ex" }, t.example) : el("time", {}, fmtDate(n.createdAt))),
       el("h3", {}, n.title),
       n.summary ? el("p", { class: "sum" }, n.summary) : null,
       el("div", { class: "chips" },
-        n.remindAt ? el("span", { class: "chip rem" }, n.remindAt) : null,
-        n.alarm && alarmSummary(n.alarm) ? el("span", { class: "chip rem" }, "🔔 " + alarmSummary(n.alarm)) : null,
-        n.review ? el("span", { class: "chip rem" }, t.learning) : null,
+        n.remindAt ? el("span", { class: "chip rem" }, ico("cal", 12), n.remindAt) : null,
+        n.alarm && alarmSummary(n.alarm) ? el("span", { class: "chip rem" }, ico("bell", 12), alarmSummary(n.alarm)) : null,
+        n.review ? el("span", { class: "chip rem" }, ico("brain", 12), t.learning) : null,
         (n.situations || []).map((x) => el("span", { class: "chip sit" }, x)),
-        (n.tags || []).map((x) => el("span", { class: "chip" }, "#" + x))),
+        (n.tags || []).map((x) => isExample ? el("span", { class: "chip tag" }, "#" + x) : el("button", { type: "button", class: "chip tag", onclick: () => filterTag(x) }, "#" + x))),
     );
     if (isExample) { s.append(el("p", { class: "raw" }, n.text)); return s; }
     const rel = related(n);
@@ -2416,18 +2653,14 @@ Return JSON only: {"answer":"","ids":["ids of the notes you used, max 5"]}`;
         rel.map((m) => el("button", { onclick: () => jumpTo(m) }, "→ " + m.title))) : null));
     if (state.editing === n.id) { s.replaceChildren(editForm(n)); return s; }
     const armed = state.armed === n.id;
+    const today = n.plannedDay === todayISO();
     s.append(el("div", { class: "acts" },
-      el("button", { "aria-pressed": String(!!n.pinned), onclick: () => state.store.update(n.id, { pinned: !n.pinned }) }, (n.pinned ? "★ " : "☆ ") + t.pin),
-      el("button", { onclick: () => state.store.update(n.id, { helpful: (n.helpful || 0) + 1 }) }, "↑ " + t.helpful + (n.helpful ? ` · ${n.helpful}` : "")),
-      el("button", { onclick: () => { state.editing = n.id; renderList(); renderAnswer(); } }, t.edit),
-      el("button", { onclick: () => openMore(n), "aria-label": t.more }, "⋯ " + t.more),
-      el("button", { "aria-pressed": String(!!n.review), onclick: () => state.store.update(n.id, { review: n.review ? null : reviewStart() }) }, "🧠 " + (n.review ? t.learnStop : t.learn)),
-      el("button", { "aria-pressed": String(n.plannedDay === todayISO()), onclick: () => state.store.update(n.id, { plannedDay: n.plannedDay === todayISO() ? null : todayISO() }) }, "☑ " + (n.plannedDay === todayISO() ? t.fromToday : t.toToday)),
-      state.sample ? el("button", { onclick: async (e) => { e.currentTarget.disabled = true; await refile(n); } }, t.refile) : null,
-      el("button", { class: "del" + (armed ? " armed" : ""), onclick: async () => {
-        if (armed) { state.armed = null; await trashNote(n); }
-        else { state.armed = n.id; renderList(); setTimeout(() => { if (state.armed === n.id) { state.armed = null; renderList(); } }, 3000); }
-      } }, armed ? t.delSure : t.del)));
+      el("button", { class: "ib", "aria-pressed": String(!!n.pinned), "aria-label": t.pin, title: t.pin, onclick: () => state.store.update(n.id, { pinned: !n.pinned }) }, ico("star")),
+      el("button", { class: "ib", "aria-label": t.helpful, title: t.helpful, onclick: () => state.store.update(n.id, { helpful: (n.helpful || 0) + 1 }) }, ico("thumb"), n.helpful ? String(n.helpful) : null),
+      el("button", { class: "ib", "aria-pressed": String(today), "aria-label": today ? t.fromToday : t.toToday, title: today ? t.fromToday : t.toToday, onclick: () => state.store.update(n.id, { plannedDay: today ? null : todayISO() }) }, ico("today")),
+      el("span", { class: "sp" }),
+      el("button", { class: "ib", "aria-label": t.edit, title: t.edit, onclick: () => { state.editing = n.id; renderList(); renderAnswer(); } }, ico("edit")),
+      el("button", { class: "ib", "aria-label": t.more, title: t.more, onclick: () => openMore(n) }, ico("more"))));
     return s;
   }
   function editForm(n) {
@@ -2460,14 +2693,14 @@ Return JSON only: {"answer":"","ids":["ids of the notes you used, max 5"]}`;
     const intervalRow = field("interval", t.alarmEvery, al.interval), daysRow = el("div", { class: "ef" }, el("span", {}, t.alarmDays), al.days), dateRow = field("adate", t.alarmDate, al.date);
     const syncAlarm = () => { const k = al.kind.value; dateRow.hidden = k === "none"; intervalRow.hidden = k !== "interval"; daysRow.hidden = k !== "weekly"; };
     al.kind.onchange = syncAlarm; syncAlarm();
-    const alarmBox = el("fieldset", { class: "alarm" }, el("legend", {}, "🔔 " + t.alarmH), field("akind", t.alarmWhen, al.kind), dateRow, intervalRow, daysRow, field("awords", t.alarmWords, al.words), el("p", { class: "ef-hint" }, t.alarmHint));
+    const alarmBox = el("fieldset", { class: "alarm" }, el("legend", {}, t.alarmH), field("akind", t.alarmWhen, al.kind), dateRow, intervalRow, daysRow, field("awords", t.alarmWords, al.words), el("p", { class: "ef-hint" }, t.alarmHint));
     const close = () => { state.editing = null; renderList(); renderAnswer(); };
     const commit = async (refileAfter) => {
       const text = f.text.value.trim();
       if (!text) { f.text.focus(); return; }
       const patch = {
         title: f.title.value.trim() || heuristic(text).title, text, summary: f.summary.value.trim(),
-        category: f.category.value.trim() || T().other, situations: split(f.situations.value), tags: split(f.tags.value),
+        category: f.category.value.trim() || T().other, situations: split(f.situations.value), tags: withHashtags(split(f.tags.value), f.text.value),
         remindAt: /^\d{4}-\d{2}-\d{2}$/.test(f.remindAt.value) ? f.remindAt.value : null, url: f.url.value.trim() || null,
       };
       const kind = al.kind.value, kw = split(al.words.value);
@@ -2495,6 +2728,7 @@ Return JSON only: {"answer":"","ids":["ids of the notes you used, max 5"]}`;
   }
 
   function jumpTo(n) {
+    setTab("notes");
     state.view = "cat"; state.folder = n.category; state.filter = ""; $("filter").value = ""; state.hits = new Set([n.id]);
     renderRail(); renderList();
     requestAnimationFrame(() => document.querySelector(".slip.hit")?.scrollIntoView({ behavior: "smooth", block: "center" }));
@@ -2514,6 +2748,8 @@ Return JSON only: {"answer":"","ids":["ids of the notes you used, max 5"]}`;
     $("askBox").hidden = state.mode !== "ask"; $("suggest").hidden = state.mode !== "ask";
     $("noteText").placeholder = t.notePh; $("askText").placeholder = t.askPh; $("noteUrl").placeholder = t.urlPh;
     $("fileLabel").textContent = t.fileLabel; $("fileRm").textContent = t.remove;
+    $("tabTodayL").textContent = t.tabToday; $("tabNotesL").textContent = t.tabNotes; $("tabAskL").textContent = t.recall; $("tabChatL").textContent = t.tabChat;
+    for (const [id, l] of [["chatBtn", t.chat], ["setBtn", t.settings], ["helpBtn", t.help], ["wpBtn", t.wp]]) { $(id).title = l; $(id).setAttribute("aria-label", l); }
     $("micLabel").textContent = t.micLabel; $("tplLabel").textContent = t.tplLabel;
     $("micTool").hidden = !(window.SpeechRecognition || window.webkitSpeechRecognition);
     $("memoLabel").textContent = t.memoLabel; $("memoTool").setAttribute("aria-pressed", String(!!state.memoMode)); $("memoTool").hidden = !state.sample;
@@ -2572,13 +2808,13 @@ Return JSON only: {"answer":"","ids":["ids of the notes you used, max 5"]}`;
     if (!["__all", "__pin"].includes(state.folder) && !state.folder.startsWith("smart:") && !counts.has(state.folder)) state.folder = "__all";
     if (state.folder.startsWith("smart:") && !smarts.some((x) => "smart:" + x.id === state.folder)) state.folder = "__all";
     if (state.folder === "__pin" && !pinnedN) state.folder = "__all";
-    const item = (key, label, n, dot) => el("button", { class: "fitem", "aria-pressed": String(state.folder === key), onclick: () => { state.folder = key; renderRail(); renderList(); } }, dot ? el("i", { class: "dot" }) : null, label, el("span", { class: "n" }, n));
+    const item = (key, label, n, dot) => el("button", { class: "fitem", "aria-pressed": String(state.folder === key), onclick: () => { state.folder = key; renderRail(); renderList(); } }, dot ? folderBadge(key, "fdot") : null, label, el("span", { class: "n" }, n));
     const smartItems = smarts.map((sf) => {
-      const b = item("smart:" + sf.id, "⚡ " + sf.name, notes.filter((n) => smartMatch(sf, n)).length);
+      const b = item("smart:" + sf.id, sf.name, notes.filter((n) => smartMatch(sf, n)).length);
       b.append(el("span", { class: "x", role: "button", "aria-label": t.smartDel, title: t.smartDel, onclick: (e) => { e.stopPropagation(); if (confirm(t.smartDelQ(sf.name))) { setJSON(PREF.smart, getJSON(PREF.smart, []).filter((x) => x.id !== sf.id)); renderRail(); renderList(); } } }, "×"));
       return b;
     });
-    $("folders").replaceChildren(...(notes.length ? [item("__all", t.all, notes.length), pinnedN ? item("__pin", "★ " + t.pinned, pinnedN) : null, ...smartItems, ...keys.map((k) => item(k, (state.view === "cat" && isFavFolder(k) ? "★ " : "") + (state.view === "cat" && isSharedFolder(k) ? "👥 " : "") + folderLabel(k), counts.get(k), state.view === "cat"))].filter(Boolean) : []));
+    $("folders").replaceChildren(...(notes.length ? [item("__all", t.all, notes.length), pinnedN ? item("__pin", t.pinned, pinnedN) : null, ...smartItems, ...keys.map((k) => item(k, (state.view === "cat" && isFavFolder(k) ? "★ " : "") + (state.view === "cat" && isSharedFolder(k) ? "" : "") + folderLabel(k), counts.get(k), state.view === "cat"))].filter(Boolean) : []));
     let dl = $("folderNames");
     if (!dl) { dl = el("datalist", { id: "folderNames" }); document.body.append(dl); }
     dl.replaceChildren(...[...new Set(notes.map((n) => n.category))].map((c) => el("option", { value: c })));
@@ -2588,6 +2824,7 @@ Return JSON only: {"answer":"","ids":["ids of the notes you used, max 5"]}`;
     const t = T(), box = $("slips");
     renderMerge();
     if (!state.notes.length) {
+      document.body.classList.remove("has-notes");
       $("listH").textContent = t.listH(0);
       box.replaceChildren(
         el("div", { class: "empty" }, el("b", {}, t.emptyB), el("span", {}, t.emptyP), state.store ? el("button", { onclick: addExamples }, t.emptyBtn) : null),
@@ -2602,7 +2839,17 @@ Return JSON only: {"answer":"","ids":["ids of the notes you used, max 5"]}`;
     $("filtBtn").dataset.n = String(advCount());
     $("filtBtn").textContent = T().filters + (advCount() ? ` · ${advCount()}` : "");
     $("listH").textContent = t.listH(shown.length);
-    box.replaceChildren(...(shown.length ? shown.map((n) => slip(n)) : [el("div", { class: "none" }, t.none)]));
+    document.body.classList.toggle("has-notes", true);
+    const how = getJSON(PREF.sort, "new"), sorted = sortNotes(shown, how);
+    const sel = $("sortSel");
+    if (sel.options.length !== SORTS.length || sel.dataset.lang !== state.lang) { sel.replaceChildren(...SORTS.map((k) => el("option", { value: k }, t.sorts[k]))); sel.dataset.lang = state.lang; }
+    sel.value = how;
+    if (!shown.length) { box.replaceChildren(el("div", { class: "none" }, t.none)); return; }
+    if (how === "folder") {
+      const groups = new Map();
+      for (const n of sorted) { const k = n.category || t.other; if (!groups.has(k)) groups.set(k, []); groups.get(k).push(n); }
+      box.replaceChildren(...[...groups].flatMap(([k, ns]) => [el("h3", { class: "group-h" }, folderBadge(k), k, el("span", { class: "n" }, String(ns.length))), ...ns.map((n) => slip(n))]));
+    } else box.replaceChildren(...sorted.map((n) => slip(n)));
   }
   function renderAll() { renderChrome(); renderWp(); renderRail(); renderList(); }
 
@@ -2706,6 +2953,14 @@ Return JSON only: {"answer":"","ids":["ids of the notes you used, max 5"]}`;
   $("importInput").onchange = (e) => e.target.files[0] && importNotes(e.target.files[0]);
   $("otherInput").onchange = (e) => e.target.files.length && importOther([...e.target.files]);
   $("setBtn").onclick = openSettings;
+  $("sortSel").onchange = (e) => { setJSON(PREF.sort, e.target.value); renderList(); };
+  for (const b of document.querySelectorAll("#tabbar button")) b.onclick = () => {
+    const tab = b.dataset.tab;
+    if (tab === "chat") { openChat(); return; }
+    if (tab === "ask") { setTab("today"); setMode("ask"); window.scrollTo({ top: 0, behavior: "smooth" }); return; }
+    setTab(tab); window.scrollTo({ top: 0 });
+  };
+  setTab((() => { try { return sessionStorage.getItem("mindrawer.tab") || "today"; } catch { return "today"; } })());
   $("micTool").onclick = toggleMic;
   $("tplTool").onclick = openTemplates;
   $("chatBtn").onclick = openChat;
