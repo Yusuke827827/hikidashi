@@ -40,8 +40,11 @@ public struct HikidashiRootView: View {
     @AppStorage("autoBackup") private var autoBackup = true
     @State private var mergeRefresh = 0
     /// スマホの幅での画面（今日・メモ）
-    enum Tab: Hashable { case today, notes }
+    enum Tab: Hashable { case today, notes, calendar }
     @State private var tab: Tab = .today
+    @State private var calMonth = Date()
+    @State private var calDay = Heuristics.dayFormatter.string(from: Date())
+    @State private var calText = ""
     @AppStorage("noteSort") private var sortRaw = NoteSort.new.rawValue
     private var sort: NoteSort { NoteSort(rawValue: sortRaw) ?? .new }
 
@@ -82,7 +85,11 @@ public struct HikidashiRootView: View {
                     } else {
                         ScrollView {
                             LazyVStack(alignment: .leading, spacing: 18) {
-                                if tab == .today { mainColumn } else { header; listColumn }
+                                switch tab {
+                                case .today: mainColumn
+                                case .notes: header; listColumn
+                                case .calendar: header; calendarPanel
+                                }
                             }
                             .padding(.horizontal, 16)
                             .padding(.bottom, 24)
@@ -281,8 +288,8 @@ public struct HikidashiRootView: View {
 
     private var header: some View {
         HStack(alignment: .firstTextBaseline, spacing: 8) {
-            Text(!wide && tab == .notes ? L("メモ", "Notes") : "Mindrawer")
-                .font(!wide && tab == .notes ? .largeTitle.weight(.bold) : Fonts.mincho(26))
+            Text(!wide && tab == .notes ? L("メモ", "Notes") : (!wide && tab == .calendar ? L("カレンダー", "Calendar") : "Mindrawer"))
+                .font(!wide && tab != .today ? .largeTitle.weight(.bold) : Fonts.mincho(26))
                 .foregroundStyle(palette.text)
             Spacer()
             Text(aiLabel)
@@ -307,11 +314,103 @@ public struct HikidashiRootView: View {
         .padding(.top, 4)
     }
 
+    // MARK: カレンダー
+
+    private var calendarPanel: some View {
+        let cal = Calendar.current
+        let days = Heuristics.calendarDays(store.notes, month: calMonth)
+        let first = cal.date(from: cal.dateComponents([.year, .month], from: calMonth)) ?? calMonth
+        let lead = cal.component(.weekday, from: first) - 1
+        let count = cal.range(of: .day, in: .month, for: first)?.count ?? 30
+        let todayKey = Heuristics.dayFormatter.string(from: Date())
+        let entries = days[calDay] ?? []
+        let planned = entries.filter { $0.kind == .planned }.map(\.note)
+        let saved = entries.filter { $0.kind == .saved }.map(\.note)
+        let weekdays = cal.shortWeekdaySymbols
+        return VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text(first.formatted(.dateTime.year().month(.wide).locale(AppLanguage.current.locale))).font(.title3.bold())
+                Spacer()
+                Button { calMonth = cal.date(byAdding: .month, value: -1, to: first) ?? first } label: { Image(systemName: "chevron.left").frame(width: 36, height: 36) }
+                    .accessibilityLabel(L("前の月", "Previous month"))
+                Button(L("今日", "Today")) { calMonth = Date(); calDay = todayKey }.font(.subheadline)
+                Button { calMonth = cal.date(byAdding: .month, value: 1, to: first) ?? first } label: { Image(systemName: "chevron.right").frame(width: 36, height: 36) }
+                    .accessibilityLabel(L("次の月", "Next month"))
+            }
+            .foregroundStyle(palette.text)
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 4), count: 7), spacing: 4) {
+                ForEach(weekdays, id: \.self) { Text($0).font(.caption2).foregroundStyle(palette.muted) }
+                ForEach(0..<lead, id: \.self) { _ in Color.clear.frame(height: 50) }
+                ForEach(1...count, id: \.self) { d in
+                    let date = cal.date(byAdding: .day, value: d - 1, to: first) ?? first
+                    let key = Heuristics.dayFormatter.string(from: date)
+                    let list = days[key] ?? []
+                    Button { calDay = key } label: {
+                        VStack(spacing: 4) {
+                            Text("\(d)").font(.subheadline.monospacedDigit().weight(key == todayKey ? .bold : .regular))
+                                .foregroundStyle(key == todayKey ? palette.accentText : palette.text)
+                                .frame(width: 26, height: 26)
+                                .background(Circle().fill(key == todayKey ? palette.accent : Color.clear))
+                            HStack(spacing: 3) {
+                                ForEach(Array(list.filter { $0.kind == .saved }.prefix(3).enumerated()), id: \.offset) { _, e in
+                                    Circle().fill(Looks.color(store.folderLook(e.note.category).color)).frame(width: 5, height: 5)
+                                }
+                                if list.contains(where: { $0.kind == .planned }) {
+                                    Circle().stroke(palette.accent, lineWidth: 1.5).frame(width: 6, height: 6)
+                                }
+                            }
+                            .frame(height: 6)
+                        }
+                        .frame(maxWidth: .infinity, minHeight: 50)
+                        .background(RoundedRectangle(cornerRadius: 10).fill(palette.surface))
+                        .overlay(RoundedRectangle(cornerRadius: 10).stroke(key == calDay ? palette.text : Color.clear, lineWidth: 2))
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("\(d)  \(list.count)")
+                }
+            }
+            Text((Heuristics.dayFormatter.date(from: calDay) ?? Date()).formatted(.dateTime.month().day().weekday(.abbreviated).locale(AppLanguage.current.locale)))
+                .font(.headline).foregroundStyle(palette.text).padding(.top, 4)
+            HStack {
+                TextField(L("この日のメモを書く", "Add a note for this day"), text: $calText)
+                    .textFieldStyle(.roundedBorder)
+                    .submitLabel(.done)
+                    .onSubmit(addCalendarNote)
+                Button(L("追加", "Add"), action: addCalendarNote)
+                    .buttonStyle(PrimaryButtonStyle())
+                    .disabled(calText.trimmingCharacters(in: .whitespaces).isEmpty)
+            }
+            if !planned.isEmpty {
+                sectionTitle(L("予定", "Planned"))
+                ForEach(planned) { card($0) }
+            }
+            if !saved.isEmpty {
+                sectionTitle(L("しまったメモ", "Saved"))
+                ForEach(saved) { card($0) }
+            }
+            if entries.isEmpty {
+                Text(L("この日のメモはありません。", "Nothing on this day.")).font(.subheadline).foregroundStyle(palette.muted)
+            }
+        }
+    }
+
+    private func addCalendarNote() {
+        let t = calText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !t.isEmpty else { return }
+        calText = ""
+        let note = librarian.save(text: t, url: nil, image: nil)
+        let day = calDay
+        store.update(note.id) { $0.remindAt = day }
+        show(L("この日に追加しました。", "Added to this day."))
+        Task { await librarian.file(note.id) }
+    }
+
     /// 下のタブ（スマホの幅）。今日・メモは画面を切り替え、聞く・設定は開く
     private var tabBar: some View {
         HStack(spacing: 0) {
             tabButton(L("今日", "Today"), "house", on: tab == .today) { withAnimation(.easeOut(duration: 0.15)) { tab = .today } }
             tabButton(L("メモ", "Notes"), "note.text", on: tab == .notes) { withAnimation(.easeOut(duration: 0.15)) { tab = .notes } }
+            tabButton(L("カレンダー", "Calendar"), "calendar", on: tab == .calendar) { withAnimation(.easeOut(duration: 0.15)) { tab = .calendar } }
             tabButton(L("聞く", "Ask"), "bubble.left.and.text.bubble.right", on: false) { chatting = true }
             tabButton(L("設定", "Settings"), "gearshape", on: false) { showSettings = true }
         }

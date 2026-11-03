@@ -1072,3 +1072,16 @@ final class LifecycleTests: XCTestCase {
         XCTAssertFalse(Heuristics.looksLikeChat("シミは叩いて落とす\nこすらない\n中性洗剤"))
     }
 }
+
+final class CalendarTests: XCTestCase {
+    func testCalendarDays() {
+        let cal = Calendar(identifier: .gregorian)
+        let month = cal.date(from: DateComponents(year: 2026, month: 11, day: 15))!
+        let saved = Note(id: "s", text: "x", createdAt: cal.date(from: DateComponents(year: 2026, month: 11, day: 3, hour: 9))!)
+        let planned = Note(id: "p", text: "y", remindAt: "2026-11-20", createdAt: cal.date(from: DateComponents(year: 2026, month: 10, day: 1))!)
+        let days = Heuristics.calendarDays([saved, planned], month: month, calendar: cal)
+        XCTAssertEqual(days["2026-11-03"]?.first?.kind, .saved)
+        XCTAssertEqual(days["2026-11-20"]?.first?.kind, .planned)
+        XCTAssertNil(days["2026-10-01"], "ほかの月は入れない")
+    }
+}

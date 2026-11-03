@@ -91,3 +91,38 @@ extension Heuristics {
         return Double(marks) / Double(lines.count) >= 0.2
     }
 }
+
+// MARK: カレンダー
+
+/// カレンダーの 1 日に並ぶメモ（しまった日か、予定の日か）
+public struct CalendarEntry: Sendable, Equatable {
+    public enum Kind: Sendable, Equatable { case saved, planned }
+    public var note: Note
+    public var kind: Kind
+}
+
+extension Heuristics {
+    /// その月の日ごと（"yyyy-MM-dd"）のメモ: しまった日と、予定（リマインド・今日のリスト・通知・期限）。Web 版と同じ
+    public static func calendarDays(_ notes: [Note], month: Date, calendar cal: Calendar = .current) -> [String: [CalendarEntry]] {
+        guard let start = cal.date(from: cal.dateComponents([.year, .month], from: month)),
+              let end = cal.date(byAdding: .month, value: 1, to: start) else { return [:] }
+        let startKey = dayFormatter.string(from: start), endKey = dayFormatter.string(from: end)
+        var out: [String: [CalendarEntry]] = [:]
+        func add(_ key: String, _ n: Note, _ kind: CalendarEntry.Kind) {
+            if out[key, default: []].contains(where: { $0.note.id == n.id && $0.kind == kind }) { return }
+            out[key, default: []].append(CalendarEntry(note: n, kind: kind))
+        }
+        for n in notes where !n.example {
+            if n.createdAt >= start, n.createdAt < end { add(dayFormatter.string(from: n.createdAt), n, .saved) }
+            for d in [n.remindAt, n.plannedDay].compactMap({ $0 }) where d >= startKey && d < endKey { add(d, n, .planned) }
+            if let e = n.expiresAt, e >= start, e < end { add(dayFormatter.string(from: e), n, .planned) }
+            if let a = n.alarm, a.hasSchedule {
+                for t in a.occurrences(after: start.addingTimeInterval(-1), count: 40) {
+                    if t >= end { break }
+                    add(dayFormatter.string(from: t), n, .planned)
+                }
+            }
+        }
+        return out
+    }
+}

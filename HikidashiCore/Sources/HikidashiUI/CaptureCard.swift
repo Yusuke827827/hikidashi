@@ -29,6 +29,7 @@ struct CaptureCard: View {
     @State private var importingFile = false
     @State private var scanning = false
     @State private var sketching = false
+    @State private var proposal: ImageProposal?
     @State private var templates = Templates.all()
     /// メモ風にまとめた結果を、しまう前に確かめる
     @AppStorage("memoPreview") private var memoPreview = true
@@ -76,6 +77,23 @@ struct CaptureCard: View {
                 attachment = (data: data, name: url.lastPathComponent)
             }
         }
+        .sheet(item: $proposal) { prop in
+            ImageProposalSheet(proposal: prop) { text in
+                proposal = nil
+                // 読み取った文でしまう（画像は付けない。同じ文を二度読まないように）
+                imageData = nil
+                photo = nil
+                commit(text: text, original: nil)
+            } onAttach: {
+                proposal = nil
+            } onCancel: {
+                proposal = nil
+                imageData = nil
+                photo = nil
+            }
+            .environment(\.palette, p)
+            .tint(p.accent)
+        }
         .sheet(item: $memoDraft) { draft in
             MemoPreviewSheet(draft: draft) { text, original in
                 memoDraft = nil
@@ -110,6 +128,7 @@ struct CaptureCard: View {
             Task {
                 if let data = try? await item.loadTransferable(type: Data.self) {
                     imageData = ImageTools.jpeg(data: data)
+                    if let jpeg = imageData { await propose(from: jpeg) }
                 }
             }
         }
@@ -244,6 +263,14 @@ struct CaptureCard: View {
         }
     }
 
+    /// 写真・スクショの文字を読み取り、メモの案を出す（LINE などのチャットなら時刻や既読を除く）
+    private func propose(from data: Data) async {
+        guard let raw = await TextExtractor.text(fromFile: data, extension: "jpg")?.trimmingCharacters(in: .whitespacesAndNewlines), !raw.isEmpty else { return }
+        let text = Heuristics.looksLikeChat(raw) ? Heuristics.cleanChatText(raw) : raw
+        guard !text.isEmpty else { return }
+        proposal = ImageProposal(image: data, text: text, chat: Heuristics.looksLikeChat(raw))
+    }
+
     private func saveAsTemplate() {
         let body = text.trimmingCharacters(in: .whitespacesAndNewlines)
         let first = body.components(separatedBy: "\n").first ?? body
@@ -357,6 +384,55 @@ struct CaptureCard: View {
         .accessibilityLabel(speech.isRecording ? L("録音を止める", "Stop dictation") : L("声で入力", "Dictate"))
     }
 }
+struct ImageProposal: Identifiable {
+    let id = UUID()
+    let image: Data
+    var text: String
+    var chat: Bool
+}
+
+/// 写真・スクショから読み取ったメモの案を確かめて、直してからしまう
+struct ImageProposalSheet: View {
+    @State var proposal: ImageProposal
+    var onSave: (String) -> Void
+    var onAttach: () -> Void
+    var onCancel: () -> Void
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                if let ui = UIImage(data: proposal.image) {
+                    Section {
+                        Image(uiImage: ui).resizable().scaledToFit().frame(maxHeight: 200).frame(maxWidth: .infinity)
+                    }
+                }
+                Section {
+                    TextEditor(text: $proposal.text).frame(minHeight: 200)
+                } header: {
+                    Text(proposal.chat ? L("トークから読み取ったメモ（直せます）", "Note from the chat (you can edit it)") : L("読み取ったメモ（直せます）", "Note from the image (you can edit it)"))
+                } footer: {
+                    Text(proposal.chat
+                         ? L("時刻・既読・入力欄などは外しました。残したいことだけにして、しまってください。", "Times, read marks and the input box were removed. Keep what matters, then save.")
+                         : L("いらない部分を消して、しまってください。", "Trim what you don't need, then save."))
+                }
+                Section {
+                    Button(L("画像のまま添付する", "Attach the image instead"), action: onAttach)
+                }
+            }
+            .navigationTitle(L("画像からメモを作る", "Note from the image"))
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) { Button(L("キャンセル", "Cancel"), action: onCancel) }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button(L("これでしまう", "Save")) { onSave(proposal.text.trimmingCharacters(in: .whitespacesAndNewlines)) }
+                        .bold()
+                        .disabled(proposal.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                }
+            }
+        }
+    }
+}
+
 struct MemoDraft: Identifiable {
     let id = UUID()
     let original: String
