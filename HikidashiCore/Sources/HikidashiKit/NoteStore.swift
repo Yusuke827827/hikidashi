@@ -146,6 +146,7 @@ public final class NoteStore {
         let before = notes[i]
         change(&notes[i])
         guard notes[i] != before else { return }
+        notes[i].rememberVersion(from: before)
         notes[i].updatedAt = Date()
         persist()
         onChange?([id], [])

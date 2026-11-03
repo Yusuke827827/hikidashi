@@ -67,6 +67,14 @@ public struct Note: Codable, Identifiable, Hashable, Sendable {
     public var linkBroken: Bool?
     /// 覚えるメモの復習（間隔をあけて出す）
     public var review: Review?
+    /// 写真に写っているもの（「料理」「犬」など。写真で探すため）
+    public var imageLabels: [String]?
+    /// 秘密のメモ（開くときに Face ID か暗証番号を聞く。検索・AI・共有には出さない）
+    public var locked: Bool?
+    /// 直す前の内容（新しい順に 10 件まで）
+    public var history: [NoteVersion]?
+    /// この日時を過ぎたら、自動でゴミ箱へ
+    public var expiresAt: Date?
     /// 最後に変えた日時（iCloud の同期で新しい方を残すため）
     public var updatedAt: Date?
 
@@ -126,7 +134,7 @@ public struct Note: Codable, Identifiable, Hashable, Sendable {
     }
 
     enum CodingKeys: String, CodingKey {
-        case id, text, url, title, summary, category, tags, situations, remindAt, createdAt, pinned, helpful, lastSeen, example, filed, imageFile, original, file, fileTitle, enriched, place, alarm, plannedDay, sources, folderChosen, checkedAt, linkBroken, review, updatedAt
+        case id, text, url, title, summary, category, tags, situations, remindAt, createdAt, pinned, helpful, lastSeen, example, filed, imageFile, original, file, fileTitle, enriched, place, alarm, plannedDay, sources, folderChosen, checkedAt, linkBroken, review, imageLabels, locked, history, expiresAt, updatedAt
     }
 
     public init(from decoder: Decoder) throws {
@@ -168,6 +176,10 @@ public struct Note: Codable, Identifiable, Hashable, Sendable {
         checkedAt = Self.decodeDate(c, .checkedAt)
         linkBroken = try? c.decodeIfPresent(Bool.self, forKey: .linkBroken)
         review = try? c.decodeIfPresent(Review.self, forKey: .review)
+        imageLabels = try? c.decodeIfPresent([String].self, forKey: .imageLabels)
+        locked = try? c.decodeIfPresent(Bool.self, forKey: .locked)
+        history = try? c.decodeIfPresent([NoteVersion].self, forKey: .history)
+        expiresAt = Self.decodeDate(c, .expiresAt)
         updatedAt = Self.decodeDate(c, .updatedAt)
     }
 
@@ -201,6 +213,10 @@ public struct Note: Codable, Identifiable, Hashable, Sendable {
         try c.encodeIfPresent(checkedAt.map(Self.millis), forKey: .checkedAt)
         try c.encodeIfPresent(linkBroken, forKey: .linkBroken)
         try c.encodeIfPresent(review, forKey: .review)
+        try c.encodeIfPresent(imageLabels, forKey: .imageLabels)
+        try c.encodeIfPresent(locked, forKey: .locked)
+        try c.encodeIfPresent(history, forKey: .history)
+        try c.encodeIfPresent(expiresAt.map(Self.millis), forKey: .expiresAt)
         try c.encodeIfPresent(updatedAt.map(Self.millis), forKey: .updatedAt)
     }
 
@@ -225,6 +241,8 @@ public struct Note: Codable, Identifiable, Hashable, Sendable {
 
     /// 検索・関連付けに使う文字列（小文字）
     public var haystack: String {
-        ([title, summary, text, category] + tags + situations).joined(separator: " ").lowercased()
+        // 秘密のメモは、タイトルとフォルダだけで探せる
+        if locked == true { return [title, category].joined(separator: " ").lowercased() }
+        return ([title, summary, text, category] + tags + situations + (imageLabels ?? [])).joined(separator: " ").lowercased()
     }
 }

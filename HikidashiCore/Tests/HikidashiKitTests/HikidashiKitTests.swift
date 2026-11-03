@@ -1039,3 +1039,36 @@ final class LooksTests: XCTestCase {
         XCTAssertEqual(NoteSort.folder.sorted([a, b]).map(\.id), ["b", "a"])
     }
 }
+
+final class LifecycleTests: XCTestCase {
+    @MainActor
+    func testHistoryAndExpiry() throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent("lc-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        let store = NoteStore(root: root)
+        store.add(Note(id: "a", text: "一つ目", title: "A"))
+        store.update("a") { $0.text = "二つ目" }
+        store.update("a") { $0.pinned = true }
+        XCTAssertEqual(store.note("a")?.history?.map(\.text), ["一つ目"], "本文が変わったときだけ残す")
+        store.restoreVersion("a", try XCTUnwrap(store.note("a")?.history?.first))
+        XCTAssertEqual(store.note("a")?.text, "一つ目")
+        XCTAssertEqual(store.note("a")?.history?.first?.text, "二つ目")
+
+        var e = Note(id: "e", text: "期限つき")
+        e.expiresAt = Date().addingTimeInterval(-60)
+        store.add(e)
+        XCTAssertEqual(store.purgeExpired(), 1)
+        XCTAssertNil(store.note("e"))
+
+        var s = Note(id: "s", text: "暗証番号 1234", title: "秘密")
+        s.locked = true
+        XCTAssertFalse(s.haystack.contains("1234"), "秘密のメモの本文では探さない")
+    }
+
+    func testChatScreenshotCleanup() {
+        let raw = "今日\nたなか\n明日の集合は駅の東口 10:00 で\n既読\n14:32\nパン屋の名前はブーランジェリー〇〇\n午後 2:33\nメッセージを入力"
+        XCTAssertTrue(Heuristics.looksLikeChat(raw))
+        XCTAssertEqual(Heuristics.cleanChatText(raw), "たなか\n明日の集合は駅の東口 10:00 で\nパン屋の名前はブーランジェリー〇〇")
+        XCTAssertFalse(Heuristics.looksLikeChat("シミは叩いて落とす\nこすらない\n中性洗剤"))
+    }
+}
