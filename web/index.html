@@ -505,6 +505,15 @@ body.locked .wrap { visibility: hidden; }
 .frow .star { color: var(--faint); }
 .frow .star[aria-pressed="true"] { color: var(--accent); }
 .frow .star[aria-pressed="true"] svg { fill: currentColor; }
+/* 設定などの画面は、壁紙があっても透けないように（半透明の色の下に不透明な地の色を敷く） */
+.help, .wp-panel, :root[data-wall] .wp-panel, .choice, .menu-sheet {
+  background: linear-gradient(var(--surface), var(--surface)), var(--bg);
+}
+.help::backdrop { background: rgb(0 0 0 / .45); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
+@media (max-width: 760px) {
+  .tabbar { background: linear-gradient(color-mix(in srgb, var(--surface) 92%, transparent), color-mix(in srgb, var(--surface) 92%, transparent)), color-mix(in srgb, var(--bg) 94%, transparent); }
+}
+#lock { background: var(--bg); }
 @media (prefers-reduced-motion: no-preference) {
   .slip { transition: border-color .2s, transform .2s; }
   .answer { animation: rise .25s ease-out; }
