@@ -178,7 +178,8 @@ public final class Librarian {
             await enrich(id)
             if let updated = store.note(id) { note = updated }
         }
-        guard let ai = ai else { return }
+        // 秘密のメモは AI に渡さない
+        guard let ai = ai, !note.isLocked else { return }
         // スクショだけのメモは、文字を読めない AI では整理できない
         if !ai.readsImages, note.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { return }
         // スクショの文字は Claude だけが読める
@@ -323,7 +324,7 @@ public final class Librarian {
 
     /// いくつかのメモから、1 枚のまとめノートを作る（AI が無ければ、タイトルと要約を並べるだけ）
     public func compose(topic: String, noteIDs: [String]) async -> ComposeResult {
-        let notes = noteIDs.compactMap { store.note($0) }
+        let notes = noteIDs.compactMap { store.note($0) }.filter { !$0.isLocked }
         if let ai = ai, !notes.isEmpty {
             do {
                 let r = try await ai.compose(topic: topic, notes: notes, language: .current)
@@ -349,7 +350,7 @@ public final class Librarian {
     /// メモに聞く。これまでの会話から、次の答えを返す
     public func chat(_ history: [ChatMessage]) async -> ChatMessage {
         guard let last = history.last(where: { $0.role == .user })?.text else { return ChatMessage(role: .assistant, text: "") }
-        let notes = store.notes
+        let notes = store.notes.filter { !$0.isLocked }
         guard !notes.isEmpty else {
             return ChatMessage(role: .assistant, text: L("まだメモがありません。先にいくつかしまってください。", "Nothing saved yet. Save a few tips first."))
         }
@@ -390,6 +391,11 @@ public final class Librarian {
            let data = try? Data(contentsOf: store.imageURL(img)), let t = await textExtractor(data, "jpg") {
             text = TextExtractor.merge(text, extracted: t, marker: TextExtractor.imageMarker)
         }
+        // 写真に写っているものも覚えておく（写真で探すため）
+        if let img = note.imageFile, note.imageLabels == nil, let data = try? Data(contentsOf: store.imageURL(img)) {
+            let labels = await TextExtractor.imageLabels(data)
+            if !labels.isEmpty { store.update(id) { $0.imageLabels = labels } }
+        }
         if let f = note.file, !text.contains(TextExtractor.fileMarker),
            let data = try? Data(contentsOf: store.imageURL(f)), let t = await textExtractor(data, (f as NSString).pathExtension) {
             text = TextExtractor.merge(text, extracted: t, marker: TextExtractor.fileMarker)
@@ -413,7 +419,7 @@ public final class Librarian {
 
     public func recall(_ query: String) async -> RecallOutcome {
         let q = query.trimmingCharacters(in: .whitespacesAndNewlines)
-        let notes = store.notes
+        let notes = store.notes.filter { !$0.isLocked }
         guard !notes.isEmpty else {
             return RecallOutcome(query: q, answer: L("まだメモがありません。先にいくつかしまってください。", "Nothing saved yet. Save a few tips first."), noteIDs: [], keywordOnly: true)
         }

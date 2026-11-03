@@ -22,6 +22,9 @@ struct NoteEditor: View {
     @State private var alarmOn: Bool
     @State private var alarm: Alarm
     @State private var alarmWords: String
+    @State private var expiresOn: Bool
+    @State private var expiresDate: Date
+    @State private var locked: Bool
 
     init(note: Note, librarian: Librarian) {
         self.note = note
@@ -40,6 +43,9 @@ struct NoteEditor: View {
         let defaultDate = Calendar.current.date(bySettingHour: 9, minute: 0, second: 0, of: Date().addingTimeInterval(86400)) ?? Date()
         _alarm = State(initialValue: note.alarm ?? Alarm(kind: .once, date: defaultDate))
         _alarmWords = State(initialValue: (note.alarm?.keywords ?? []).joined(separator: ", "))
+        _expiresOn = State(initialValue: note.expiresAt != nil)
+        _expiresDate = State(initialValue: note.expiresAt ?? Date().addingTimeInterval(7 * 86400))
+        _locked = State(initialValue: note.isLocked)
     }
 
     var body: some View {
@@ -87,6 +93,26 @@ struct NoteEditor: View {
                     Text(L("着いたら知らせる", "Remind me at a place"))
                 } footer: {
                     Text(L("例: スーパーに着いたら買い物のコツ、ジムに着いたらフォームの注意。", "e.g. shopping tips at the supermarket, form cues at the gym."))
+                }
+                Section {
+                    Toggle(isOn: $expiresOn.animation()) { Label(L("期限つきのメモ", "Expiring note"), systemImage: "hourglass") }
+                    if expiresOn {
+                        HStack(spacing: 6) {
+                            ForEach([1, 7, 30], id: \.self) { d in
+                                Button(d == 1 ? L("明日", "Tomorrow") : L("\(d) 日後", "In \(d) days")) {
+                                    expiresDate = Calendar.current.startOfDay(for: Date()).addingTimeInterval(Double(d) * 86400 + 86399)
+                                }
+                                .buttonStyle(.bordered).controlSize(.small)
+                            }
+                        }
+                        DatePicker(L("この日まで", "Until"), selection: $expiresDate, in: Date()..., displayedComponents: .date)
+                    }
+                    Toggle(isOn: $locked) { Label(L("秘密のメモ", "Secret note"), systemImage: "lock") }
+                } header: {
+                    Text(L("しまい方", "Keeping"))
+                } footer: {
+                    Text(L("期限が過ぎるとゴミ箱へ移ります（30 日は戻せます）。秘密のメモは \(AppLock.biometryName) で開くまで本文を隠し、AI にも渡しません。",
+                           "Expired notes move to the trash (restorable for 30 days). Secret notes stay hidden until you unlock with \(AppLock.biometryName), and are never sent to AI."))
                 }
                 Section(L("出典", "Source")) {
                     TextField("https://", text: $url)
@@ -190,6 +216,8 @@ struct NoteEditor: View {
             n.url = link.isEmpty ? nil : link
             n.remindAt = remind
             n.place = place
+            n.expiresAt = expiresOn ? Calendar.current.startOfDay(for: expiresDate).addingTimeInterval(86399) : nil
+            n.locked = locked ? true : nil
             if alarmOn {
                 var a = alarm
                 a.keywords = split(alarmWords)

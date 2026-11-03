@@ -56,6 +56,35 @@ public enum TextExtractor {
     }
 
     /// ファイルの文字（PDF・テキスト・画像）
+    /// 写真に写っているもの（Vision の分類。自信が高いものを 6 つまで、よく使うものは日本語に）
+    public static func imageLabels(_ data: Data) async -> [String] {
+        #if canImport(Vision)
+        return await Task.detached(priority: .utility) { () -> [String] in
+            let req = VNClassifyImageRequest()
+            let handler = VNImageRequestHandler(data: data)
+            guard (try? handler.perform([req])) != nil, let results = req.results else { return [] }
+            return results.filter { $0.confidence > 0.35 }.prefix(6).map { labelName($0.identifier) }
+        }.value
+        #else
+        return []
+        #endif
+    }
+
+    static let jaLabels: [String: String] = [
+        "food": "食べ物", "dish": "料理", "meal": "料理", "dessert": "デザート", "drink": "飲み物", "coffee": "コーヒー", "bread": "パン",
+        "dog": "犬", "cat": "猫", "animal": "動物", "plant": "植物", "flower": "花", "tree": "木", "sky": "空", "outdoor": "屋外",
+        "building": "建物", "structure": "建物", "city": "街", "street": "道", "car": "車", "vehicle": "乗り物", "train": "電車",
+        "document": "書類", "text": "文字", "screenshot": "スクショ", "people": "人", "person": "人", "clothing": "服", "shoes": "靴",
+        "furniture": "家具", "room": "部屋", "kitchen": "台所", "electronics": "電子機器", "computer": "パソコン", "phone": "スマホ",
+        "book": "本", "receipt": "レシート", "map": "地図", "sign": "看板", "beach": "海辺", "mountain": "山",
+    ]
+
+    static func labelName(_ id: String) -> String {
+        let key = id.lowercased().replacingOccurrences(of: "_", with: " ")
+        if AppLanguage.current == .ja, let ja = jaLabels[key] ?? jaLabels[key.components(separatedBy: " ").last ?? key] { return ja }
+        return key
+    }
+
     public static func text(fromFile data: Data, extension ext: String) async -> String? {
         switch kind(ofExtension: ext) {
         case .image:

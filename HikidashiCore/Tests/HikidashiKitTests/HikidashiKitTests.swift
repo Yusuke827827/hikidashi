@@ -1085,3 +1085,30 @@ final class CalendarTests: XCTestCase {
         XCTAssertNil(days["2026-10-01"], "ほかの月は入れない")
     }
 }
+
+final class NowAndPlaceTests: XCTestCase {
+    func testForNowAndPlaceKinds() {
+        let cal = Calendar.current
+        let morning = cal.date(bySettingHour: 7, minute: 0, second: 0, of: Date())!
+        let a = Note(id: "a", text: "x", title: "白湯", situations: ["朝起きたとき"])
+        let b = Note(id: "b", text: "y", title: "ほかのメモ")
+        var c = Note(id: "c", text: "z", title: "朝の秘密")
+        c.locked = true
+        XCTAssertEqual(Heuristics.forNow([a, b, c], log: [:], now: morning).map(\.id), ["a"])
+        XCTAssertEqual(Heuristics.forNow([a, b], log: ["b": ["morning": 2]], now: morning).map(\.id).sorted(), ["a", "b"])
+        XCTAssertEqual(TimeBucket(cal.date(bySettingHour: 23, minute: 0, second: 0, of: Date())!), .night)
+        let shop = Note(id: "s", text: "牛乳", title: "買うもの", category: "買い物")
+        XCTAssertEqual(PlaceKind.all.first { $0.id == "grocery" }?.notes(in: [shop, b]).map(\.id), ["s"])
+    }
+
+    func testGraph() {
+        let a = Note(id: "a", text: "x", title: "A", tags: ["料理"])
+        let b = Note(id: "b", text: "y", title: "B", tags: ["料理", "時短"])
+        let c = Note(id: "c", text: "z", title: "C", tags: ["旅行"])
+        var d = Note(id: "d", text: "w", title: "D", tags: ["料理"])
+        d.locked = true
+        let g = Heuristics.graph([a, b, c, d])
+        XCTAssertEqual(Set(g.nodes.map(\.id)), ["a", "b"])
+        XCTAssertEqual(g.links.count, 1)
+    }
+}

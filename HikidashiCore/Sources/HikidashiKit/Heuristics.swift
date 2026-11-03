@@ -77,7 +77,7 @@ public enum Heuristics {
 
     /// 今日のひとつ。2 日以上前のメモのうち、長く見ていない 7 件から日替わりで選ぶ
     public static func todaysPick(_ notes: [Note], now: Date = Date(), skip: Int = 0) -> Note? {
-        let old = notes.filter { now.timeIntervalSince($0.createdAt) > 2 * 86400 }
+        let old = notes.filter { now.timeIntervalSince($0.createdAt) > 2 * 86400 && !$0.isLocked }
             .sorted { ($0.lastSeen ?? $0.createdAt) < ($1.lastSeen ?? $1.createdAt) }
         let pool = Array(old.prefix(7))
         guard !pool.isEmpty else { return nil }

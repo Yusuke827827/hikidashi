@@ -14,7 +14,7 @@ enum Spotlight {
 
     /// 載せ直す（メモが変わるたび）
     static func index(_ notes: [Note]) {
-        let items = notes.filter { !$0.example }.prefix(500).map { n -> CSSearchableItem in
+        let items = notes.filter { !$0.example && !$0.isLocked }.prefix(500).map { n -> CSSearchableItem in
             let a = CSSearchableItemAttributeSet(contentType: .text)
             a.title = n.title
             a.contentDescription = n.summary.isEmpty ? String(n.text.prefix(200)) : n.summary

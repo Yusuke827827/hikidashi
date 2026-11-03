@@ -21,6 +21,9 @@ struct NoteCard: View {
     @State private var previewURL: URL?
     @State private var publishing = false
     @State private var exportMessage: String?
+    @State private var showHistory = false
+    private var secrets: SecretNotes { SecretNotes.shared }
+    private var hidden: Bool { secrets.isHidden(note) }
 
     private var store: NoteStore { librarian.store }
     private var folderName: String { note.category.isEmpty ? Heuristics.otherFolder : note.category }
@@ -44,34 +47,31 @@ struct NoteCard: View {
                     .font(.caption.monospacedDigit())
                     .foregroundStyle(p.muted)
             }
-            Text(note.title)
-                .font(.headline)
-                .foregroundStyle(p.text)
-                .fixedSize(horizontal: false, vertical: true)
-            if !note.summary.isEmpty {
-                Text(note.summary).font(.subheadline).foregroundStyle(p.text.opacity(0.88))
+            HStack(alignment: .firstTextBaseline, spacing: 6) {
+                if note.isLocked {
+                    Image(systemName: hidden ? "lock.fill" : "lock.open").font(.footnote).foregroundStyle(p.muted)
+                }
+                Text(note.title)
+                    .font(.headline)
+                    .foregroundStyle(p.text)
+                    .fixedSize(horizontal: false, vertical: true)
             }
-            if let name = note.imageFile, let ui = UIImage(contentsOfFile: store.imageURL(name).path) {
-                Image(uiImage: ui)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(maxHeight: expanded ? 420 : 160)
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
-            }
-            if let f = note.file {
-                Button { previewURL = store.imageURL(f) } label: {
-                    Label(note.fileTitle ?? f, systemImage: "doc.text")
+            if hidden {
+                Button {
+                    Task { await secrets.unlock(note.id) }
+                } label: {
+                    Label(L("秘密のメモ・\(AppLock.biometryName) で開く", "Secret note · unlock with \(AppLock.biometryName)"), systemImage: "faceid")
                         .font(.footnote.weight(.semibold))
-                        .lineLimit(1)
-                        .padding(.horizontal, 10)
-                        .frame(minHeight: 32)
+                        .padding(.horizontal, 12)
+                        .frame(minHeight: 34)
                         .background(RoundedRectangle(cornerRadius: 8).fill(p.surface2))
                 }
                 .foregroundStyle(p.text)
-                .quickLookPreview($previewURL)
+            } else {
+                content
             }
             chips
-            if expanded { details }
+            if expanded && !hidden { details }
             actions
         }
         .card()
@@ -85,13 +85,42 @@ struct NoteCard: View {
         .confirmationDialog(L("このメモを削除しますか？", "Delete this note?"), isPresented: $confirmDelete, titleVisibility: .visible) {
             Button(L("ゴミ箱へ（30 日は戻せます）", "Move to trash (restorable for 30 days)"), role: .destructive) { store.remove(note.id) }
         }
+        .sheet(isPresented: $showHistory) { HistorySheet(note: note, store: store) }
+    }
+
+    @ViewBuilder private var content: some View {
+        if !note.summary.isEmpty {
+            Text(note.summary).font(.subheadline).foregroundStyle(p.text.opacity(0.88))
+        }
+        if let name = note.imageFile, let ui = UIImage(contentsOfFile: store.imageURL(name).path) {
+            Image(uiImage: ui)
+                .resizable()
+                .scaledToFit()
+                .frame(maxHeight: expanded ? 420 : 160)
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+        }
+        if let f = note.file {
+            Button { previewURL = store.imageURL(f) } label: {
+                Label(note.fileTitle ?? f, systemImage: "doc.text")
+                    .font(.footnote.weight(.semibold))
+                    .lineLimit(1)
+                    .padding(.horizontal, 10)
+                    .frame(minHeight: 32)
+                    .background(RoundedRectangle(cornerRadius: 8).fill(p.surface2))
+            }
+            .foregroundStyle(p.text)
+            .quickLookPreview($previewURL)
+        }
     }
 
     @ViewBuilder private var chips: some View {
-        let hasChips = note.remindAt != nil || note.alarm != nil || note.review != nil || note.linkBroken == true || !note.situations.isEmpty || !note.tags.isEmpty
+        let hasChips = note.expiresAt != nil || note.remindAt != nil || note.alarm != nil || note.review != nil || note.linkBroken == true || !note.situations.isEmpty || !note.tags.isEmpty
         if hasChips {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 6) {
+                    if let d = note.daysLeft() {
+                        Chip(text: d == 0 ? L("今日まで", "Ends today") : L("あと \(d) 日", "\(d) days left"), kind: .remind, symbol: "hourglass")
+                    }
                     if let r = note.remindAt { Chip(text: r, kind: .remind, symbol: "calendar") }
                     if let a = note.alarm, !a.summary.isEmpty { Chip(text: a.summary, kind: .remind, symbol: "bell") }
                     if note.review != nil { Chip(text: L("復習中", "Learning"), kind: .remind, symbol: "brain.head.profile") }
@@ -154,7 +183,9 @@ struct NoteCard: View {
         HStack(spacing: 2) {
             Button(expanded ? L("閉じる", "Less") : L("原文と関連", "More")) {
                 withAnimation(.easeOut(duration: 0.2)) { expanded.toggle() }
+                if expanded { UsageLog.record(note.id) }
             }
+            .disabled(hidden)
             Spacer()
             Button {
                 store.update(note.id) { $0.pinned.toggle() }
@@ -165,6 +196,7 @@ struct NoteCard: View {
             .accessibilityLabel(L("お気に入り", "Favorite"))
             Button {
                 store.update(note.id) { $0.helpful += 1 }
+                UsageLog.record(note.id)
             } label: {
                 HStack(spacing: 3) {
                     Image(systemName: "hand.thumbsup")
@@ -174,8 +206,28 @@ struct NoteCard: View {
             }
             .accessibilityLabel(L("役立った", "Helpful"))
             Menu {
-                Button { onEdit(note) } label: { Label(L("編集", "Edit"), systemImage: "pencil") }
-                if librarian.hasAI {
+                Button {
+                    if hidden { Task { await secrets.unlock(note.id); if !secrets.isHidden(note) { onEdit(note) } } } else { onEdit(note) }
+                } label: { Label(L("編集", "Edit"), systemImage: "pencil") }
+                if !hidden {
+                    Button { Speaker.shared.toggle(note) } label: { Label(L("読み上げる", "Read aloud"), systemImage: "speaker.wave.2") }
+                }
+                if !(note.history ?? []).isEmpty, !hidden {
+                    Button { showHistory = true } label: { Label(L("編集の履歴", "Edit history"), systemImage: "clock.arrow.circlepath") }
+                }
+                Button {
+                    if note.isLocked {
+                        Task {
+                            if await AppLock.authenticate(reason: L("秘密をやめる", "Stop keeping it secret")) { store.update(note.id) { $0.locked = nil } }
+                        }
+                    } else {
+                        store.update(note.id) { $0.locked = true }
+                    }
+                } label: {
+                    Label(note.isLocked ? L("秘密のメモをやめる", "Stop keeping secret") : L("秘密のメモにする", "Make it secret"),
+                          systemImage: note.isLocked ? "lock.open" : "lock")
+                }
+                if librarian.hasAI && !note.isLocked {
                     Button { Task { await librarian.file(note.id) } } label: { Label(L("AI で再整理", "Re-file with AI"), systemImage: "sparkles") }
                 }
                 let today = Heuristics.dayFormatter.string(from: Date())

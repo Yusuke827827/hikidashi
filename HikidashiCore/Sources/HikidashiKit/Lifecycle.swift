@@ -126,3 +126,128 @@ extension Heuristics {
         return out
     }
 }
+
+// MARK: 時間帯（よく見る時間を覚える）
+
+public enum TimeBucket: String, CaseIterable, Sendable {
+    case morning, day, evening, night
+
+    public init(_ date: Date = Date(), calendar cal: Calendar = .current) {
+        let h = cal.component(.hour, from: date)
+        switch h {
+        case 5..<10: self = .morning
+        case 10..<17: self = .day
+        case 17..<22: self = .evening
+        default: self = .night
+        }
+    }
+
+    public var title: String {
+        switch self {
+        case .morning: return L("朝によく見るメモ", "Often viewed in the morning")
+        case .day: return L("昼によく見るメモ", "Often viewed during the day")
+        case .evening: return L("夕方によく見るメモ", "Often viewed in the evening")
+        case .night: return L("夜によく見るメモ", "Often viewed at night")
+        }
+    }
+
+    /// その時間に合う言葉（使う場面・タイトルに含まれていれば少し上げる）
+    var words: String {
+        switch self {
+        case .morning: return "朝|起き|通勤|出勤|出かけ|morning|commute"
+        case .day: return "昼|ランチ|仕事|会議|lunch|work|meeting"
+        case .evening: return "夕|帰り|買い物|料理|夕飯|evening|dinner|shopping|cook"
+        case .night: return "夜|寝|睡眠|お風呂|明日の準備|night|sleep|bath|bed"
+        }
+    }
+}
+
+public enum UsageLog {
+    static let key = "usageLog"
+
+    public static func load(_ d: UserDefaults = .standard) -> [String: [String: Int]] {
+        (d.dictionary(forKey: key) as? [String: [String: Int]]) ?? [:]
+    }
+
+    /// メモを開いた・役立った・チェックした、を時間帯ごとに数える
+    public static func record(_ id: String, at date: Date = Date(), _ d: UserDefaults = .standard) {
+        var log = load(d)
+        let b = TimeBucket(date).rawValue
+        log[id, default: [:]][b, default: 0] += 1
+        d.set(log, forKey: key)
+    }
+}
+
+extension Heuristics {
+    /// 今の時間によく見るメモ（3 件まで）。Web 版と同じ点数の付け方
+    public static func forNow(_ notes: [Note], log: [String: [String: Int]], now: Date = Date()) -> [Note] {
+        let b = TimeBucket(now)
+        return notes.filter { !$0.example && !$0.isLocked }.compactMap { n -> (Note, Int)? in
+            var s = (log[n.id]?[b.rawValue] ?? 0) * 2
+            if (n.situations + [n.title]).joined(separator: " ").range(of: b.words, options: [.regularExpression, .caseInsensitive]) != nil { s += 3 }
+            return s >= 3 ? (n, s) : nil
+        }
+        .sorted { $0.1 > $1.1 }
+        .prefix(3)
+        .map(\.0)
+    }
+}
+
+// MARK: 場所の種類で知らせる
+
+/// 場所の種類と、そこで役立ちそうなメモの言葉
+public struct PlaceKind: Sendable, Equatable {
+    public var id: String
+    public var label: String
+    /// メモのフォルダ・タグ・使う場面・タイトルに当てる言葉
+    public var words: String
+
+    public static var all: [PlaceKind] {
+        [
+            PlaceKind(id: "grocery", label: L("スーパー", "Supermarket"), words: "買い物|スーパー|食材|料理|節約|shopping|grocer|cook"),
+            PlaceKind(id: "station", label: L("駅", "Station"), words: "電車|駅|通勤|旅行|おでかけ|新幹線|train|station|commute|travel"),
+            PlaceKind(id: "pharmacy", label: L("薬局", "Pharmacy"), words: "薬|健康|風邪|花粉|サプリ|medicine|pharmacy|health"),
+            PlaceKind(id: "convenience", label: L("コンビニ", "Convenience store"), words: "コンビニ|支払|振込|宅配|convenience|parcel"),
+            PlaceKind(id: "airport", label: L("空港", "Airport"), words: "空港|飛行機|旅行|パスポート|airport|flight|passport"),
+            PlaceKind(id: "hospital", label: L("病院", "Hospital"), words: "病院|診察|保険証|hospital|clinic"),
+        ]
+    }
+
+    /// この種類の場所で役立ちそうなメモ
+    public func notes(in notes: [Note]) -> [Note] {
+        notes.filter { n in
+            !n.example && !n.isLocked &&
+            ([n.category, n.title] + n.tags + n.situations).joined(separator: " ").range(of: words, options: [.regularExpression, .caseInsensitive]) != nil
+        }
+    }
+}
+
+// MARK: メモのつながりの図
+
+public struct NoteLink: Sendable, Hashable {
+    public var a: String
+    public var b: String
+    public var weight: Int
+}
+
+extension Heuristics {
+    /// 同じタグ・使う場面・ハッシュタグを持つメモどうしを結ぶ（Web 版と同じ）。点が多すぎないよう、つながりの多いメモから limit 件
+    public static func graph(_ notes: [Note], limit: Int = 40) -> (nodes: [Note], links: [NoteLink]) {
+        let pool = notes.filter { !$0.example && !$0.isLocked }
+        func keys(_ n: Note) -> Set<String> { Set((n.tags + n.situations).map { $0.lowercased() }) }
+        var links: [NoteLink] = []
+        var degree: [String: Int] = [:]
+        let ks = pool.map(keys)
+        for i in pool.indices {
+            for j in pool.indices where j > i {
+                let w = ks[i].intersection(ks[j]).count
+                guard w > 0 else { continue }
+                links.append(NoteLink(a: pool[i].id, b: pool[j].id, weight: w))
+                degree[pool[i].id, default: 0] += w
+                degree[pool[j].id, default: 0] += w
+            }
+        }
+        let keep = Set(pool.filter { degree[$0.id] != nil }.sorted { degree[$0.id]! > degree[$1.id]! }.prefix(limit).map(\.id))
+        return (pool.filter { keep.contains($0.id) }, links.filter { keep.contains($0.a) && keep.contains($0.b) })
+    }
+}

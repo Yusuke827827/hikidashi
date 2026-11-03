@@ -20,6 +20,7 @@ struct SettingsView: View {
     @State private var exportURL: URL?
     @State private var calendarOn = EventReminders.isOn
     @State private var cloudOn = CloudSync.isOn
+    @State private var placeKindsOn = PlaceKindAlerts.isOn
     @State private var managingFolders = false
     @AppStorage("memoPreview") private var memoPreview = true
     @AppStorage("autoBackup") private var autoBackup = true
@@ -147,11 +148,17 @@ struct SettingsView: View {
                     })) {
                         Label(L("予定の前にメモを知らせる", "Hints before events"), systemImage: "calendar.badge.clock")
                     }
+                    Toggle(isOn: Binding(get: { placeKindsOn }, set: { on in
+                        placeKindsOn = on
+                        Task { await PlaceKindAlerts.setOn(on, notes: librarian.store.notes) }
+                    })) {
+                        Label(L("スーパー・駅・薬局などで知らせる", "Hints at stores, stations, pharmacies"), systemImage: "storefront")
+                    }
                 } header: {
                     Text(L("通知", "Notifications"))
                 } footer: {
-                    Text(L("カレンダーの 3 日先までの予定を見て、関係するメモがあれば前の日の夜 8 時に知らせます（例: 予定「出張」→ 荷造りのメモ）。予定はこの iPhone の中で読むだけで、どこにも送りません。",
-                           "Looks at your calendar for the next 3 days and, when a note fits an event, reminds you at 8 PM the day before (e.g. a trip → packing tips). Events are read on this iPhone only and never sent anywhere."))
+                    Text(L("カレンダーの 3 日先までの予定を見て、関係するメモがあれば前の日の夜 8 時に知らせます（例: 予定「出張」→ 荷造りのメモ）。予定はこの iPhone の中で読むだけで、どこにも送りません。\n場所の種類: 近くのスーパーに着いたら買い物のメモ、駅なら電車・旅行のメモ、のように知らせます。場所は iPhone が見張るだけで、アプリは記録しません。",
+                           "Looks at your calendar for the next 3 days and, when a note fits an event, reminds you at 8 PM the day before (e.g. a trip → packing tips). Events are read on this iPhone only and never sent anywhere.\nPlace types: arrive at a nearby supermarket and get your shopping notes, a station and get train or travel notes. iOS watches the location; the app doesn't record it."))
                 }
 
                 if CloudSync.containerID != nil {

@@ -45,6 +45,8 @@ public struct HikidashiRootView: View {
     @State private var calMonth = Date()
     @State private var calDay = Heuristics.dayFormatter.string(from: Date())
     @State private var calText = ""
+    @State private var showGraph = false
+    @State private var usageTick = 0
     @AppStorage("noteSort") private var sortRaw = NoteSort.new.rawValue
     private var sort: NoteSort { NoteSort(rawValue: sortRaw) ?? .new }
 
@@ -128,6 +130,9 @@ public struct HikidashiRootView: View {
         }
         .sheet(isPresented: $managingFolders, onDismiss: { mergeRefresh += 1 }) {
             FolderManagerView(store: store, librarian: librarian).environment(\.palette, palette).tint(palette.accent)
+        }
+        .sheet(isPresented: $showGraph) {
+            GraphSheet(store: store, onOpen: jump).environment(\.palette, palette).tint(palette.accent)
         }
         .sheet(isPresented: $showSettings) {
             SettingsView(librarian: librarian, wallpaperRaw: $wallpaperRaw).environment(\.palette, palette).tint(palette.accent)
@@ -224,7 +229,7 @@ public struct HikidashiRootView: View {
             }
         }
         .onChange(of: scenePhase) { _, phase in
-            if phase == .background { AppLock.shared.lockIfNeeded() }
+            if phase == .background { AppLock.shared.lockIfNeeded(); SecretNotes.shared.closeAll(); usageTick += 1 }
             if phase == .active { Task { await refresh() } }
         }
     }
@@ -260,6 +265,9 @@ public struct HikidashiRootView: View {
         }
         if let c = NotificationRouter.shared.joinCode { NotificationRouter.shared.joinCode = nil; joinCode = c }
         store.purgeTrash()
+        let expired = store.purgeExpired()
+        if expired > 0 { show(L("期限が過ぎたメモ \(expired) 件をゴミ箱へ移しました。", "Moved \(expired) expired notes to the trash.")) }
+        await PlaceKindAlerts.sync(store.notes)
         if autoBackup {
             let last = UserDefaults.standard.object(forKey: "lastBackup") as? Date
             if Backup.runIfDue(store, last: last) != nil { UserDefaults.standard.set(Date(), forKey: "lastBackup") }
@@ -659,6 +667,8 @@ public struct HikidashiRootView: View {
         if let e = librarian.lastError { errorBanner(e) }
         if let recall { recallCard(recall) }
         todayListCard
+        let now = usageTick >= 0 ? Heuristics.forNow(store.notes, log: UsageLog.load()) : []
+        if !now.isEmpty { NowCard(notes: now, onOpen: jump) }
         let due = Heuristics.dueReviews(store.notes)
         if !due.isEmpty { ReviewCard(notes: due, store: store) }
         weeklyReviewCard
@@ -811,6 +821,13 @@ public struct HikidashiRootView: View {
             }
             .foregroundStyle(sort == .new ? palette.muted : palette.accent)
             .accessibilityLabel(L("並べ方: ", "Sort: ") + sort.label)
+            Button { showGraph = true } label: {
+                Image(systemName: "point.3.connected.trianglepath.dotted")
+                    .font(.title3)
+                    .frame(width: 36, height: 36)
+            }
+            .foregroundStyle(palette.muted)
+            .accessibilityLabel(L("つながりの図", "Connections"))
         }
     }
 
@@ -847,6 +864,7 @@ public struct HikidashiRootView: View {
     }
 
     private func jump(_ n: Note) {
+        UsageLog.record(n.id)
         tab = .notes
         folderMode = .topic
         folder = Self.allKey
