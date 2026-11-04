@@ -167,8 +167,8 @@ targets:
     sources:
       - path: SafariExtension
         excludes:
-          - Resources/**
-      - path: SafariExtension/Resources
+          - WebExtension/**
+      - path: SafariExtension/WebExtension
         type: folder
         buildPhase: resources
     dependencies:
