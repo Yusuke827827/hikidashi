@@ -168,8 +168,8 @@ targets:
       - path: SafariExtension
         excludes:
           - WebExtension/**
+      # 拡張機能の中身（manifest.json など）は、拡張機能の一番上に 1 つずつ置く
       - path: SafariExtension/WebExtension
-        type: folder
         buildPhase: resources
     dependencies:
       - package: HikidashiCore
