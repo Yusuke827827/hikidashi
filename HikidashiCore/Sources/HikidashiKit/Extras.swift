@@ -283,14 +283,14 @@ public enum PublicLinks {
 }
 
 extension Librarian {
-    /// メール・LINE の受け取り箱にたまったメモを取り込む。取り込んだ数を返す
-    @discardableResult
     /// メールで届いたメルマガを、要点だけのメモにするか（設定。最初はオン）
     public static var newsletterTips: Bool {
         get { UserDefaults.standard.object(forKey: "newsletterTips") as? Bool ?? true }
         set { UserDefaults.standard.set(newValue, forKey: "newsletterTips") }
     }
 
+    /// メール・LINE の受け取り箱にたまったメモを取り込む。取り込んだ数を返す
+    @discardableResult
     public func pullInbox() async -> Int {
         guard let c = InboxClient.load(), let items = try? await InboxClient.fetch(c), !items.isEmpty else { return 0 }
         var notes: [Note] = []
