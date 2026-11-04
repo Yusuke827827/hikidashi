@@ -29,6 +29,7 @@ struct CaptureCard: View {
     @State private var importingFile = false
     @State private var scanning = false
     @State private var sketching = false
+    @State private var scanningCode = false
     @State private var proposal: ImageProposal?
     @State private var templates = Templates.all()
     /// メモ風にまとめた結果を、しまう前に確かめる
@@ -108,6 +109,14 @@ struct CaptureCard: View {
             SketchView { data in
                 sketching = false
                 if let data { imageData = data; onToast(L("手書きを添付しました。中の文字を読み取ってしまいます。", "Sketch attached. Its text will be read when you save.")) }
+            }
+        }
+        .sheet(isPresented: $scanningCode) {
+            CodeScannerSheet { code in
+                mode = .save
+                text = [code.title, code.text].filter { !$0.isEmpty }.joined(separator: "\n")
+                if let u = code.url { url = u; showURL = true }
+                onToast(L("読み取りました。直してから「しまう」を押してください。", "Scanned. Edit it if you like, then tap Save."))
             }
         }
         .fullScreenCover(isPresented: $scanning) {
@@ -248,6 +257,7 @@ struct CaptureCard: View {
                         Button { saveAsTemplate() } label: { Label(L("今の文をテンプレートにする", "Save this as a template"), systemImage: "square.and.arrow.down.on.square") }
                     }
                     Button { sketching = true } label: { Label(L("手書き・スケッチ", "Handwriting or sketch"), systemImage: "pencil.tip.crop.circle") }
+                    Button { scanningCode = true } label: { Label(L("QR・バーコードを読む", "Scan a QR code or barcode"), systemImage: "qrcode.viewfinder") }
                 } label: {
                     Image(systemName: "plus.circle").frame(width: 40, height: 40)
                 }
@@ -265,7 +275,12 @@ struct CaptureCard: View {
 
     /// 写真・スクショの文字を読み取り、メモの案を出す（LINE などのチャットなら時刻や既読を除く）
     private func propose(from data: Data) async {
-        guard let raw = await TextExtractor.text(fromFile: data, extension: "jpg")?.trimmingCharacters(in: .whitespacesAndNewlines), !raw.isEmpty else { return }
+        // 写真に QR コード・バーコードがあれば、その中身も入れる（Wi-Fi・URL・商品コードなど）
+        let codes = await TextExtractor.barcodes(data).map(Heuristics.describeCode)
+        let read = await TextExtractor.text(fromFile: data, extension: "jpg")?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        let raw = (codes.map { [$0.title, $0.text].joined(separator: "\n") } + (read.isEmpty ? [] : [read])).joined(separator: "\n\n")
+        guard !raw.isEmpty else { return }
+        if url.isEmpty, let u = codes.compactMap(\.url).first { url = u; showURL = true }
         let text = Heuristics.looksLikeChat(raw) ? Heuristics.cleanChatText(raw) : raw
         guard !text.isEmpty else { return }
         proposal = ImageProposal(image: data, text: text, chat: Heuristics.looksLikeChat(raw))

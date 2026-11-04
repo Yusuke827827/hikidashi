@@ -51,3 +51,14 @@ describe("共有フォルダ", () => {
     expect((cleanNote({ id: "a", text: "x".repeat(30_000) })!.text as string).length).toBe(20_000);
   });
 });
+
+describe("共有の写真と名前", () => {
+  it("小さな写真と名前は通し、大きすぎる写真は落とす", async () => {
+    const { cleanNote } = await import("../src/share");
+    const ok = cleanNote({ id: "a", text: "t", photo: "QUJD", addedBy: "ママ".repeat(30) })!;
+    expect(ok.photo).toBe("QUJD");
+    expect((ok.addedBy as string).length).toBe(40);
+    expect(cleanNote({ id: "b", text: "t", photo: "x".repeat(300_000) })!.photo).toBeUndefined();
+    expect(cleanNote({ id: "c", text: "t", photo: "<script>" })!.photo).toBeUndefined();
+  });
+});

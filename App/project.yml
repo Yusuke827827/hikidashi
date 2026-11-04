@@ -46,6 +46,7 @@ targets:
       - target: HikidashiShare
       - target: HikidashiWidget
       - target: MindrawerWatch
+      - target: MindrawerSafari
     entitlements:
       path: Hikidashi.entitlements
       properties:
@@ -82,6 +83,7 @@ targets:
         NSSpeechRecognitionUsageDescription: 話した内容を文字にしてメモに入れます。
         NSCalendarsFullAccessUsageDescription: 予定の前に、関係するメモを知らせるために予定を読みます。予定はこの iPhone の中だけで使います。
         NSFaceIDUsageDescription: メモを開くときのロックに Face ID を使います。
+        NSCameraUsageDescription: 書類のスキャンや、QR コード・バーコードの読み取りにカメラを使います。写真はこの端末の中だけで使います。
         UIFileSharingEnabled: true
         LSSupportsOpeningDocumentsInPlace: true
         NSLocationWhenInUseUsageDescription: メモに付けた場所に着いたときに知らせるためと、設定でオンにしたときにしまった場所をメモに付けるために使います。場所はこの端末の中にだけ残ります。
@@ -156,6 +158,40 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: $(BUNDLE_PREFIX).widget
+        TARGETED_DEVICE_FAMILY: "1,2"
+
+  # Safari の拡張機能（iPhone・iPad）。見ているページや選んだ文を、受け取り箱に置く
+  MindrawerSafari:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: SafariExtension
+        excludes:
+          - Resources/**
+      - path: SafariExtension/Resources
+        type: folder
+        buildPhase: resources
+    dependencies:
+      - package: HikidashiCore
+        product: HikidashiKit
+    entitlements:
+      path: SafariExtension/MindrawerSafari.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - $(APP_GROUP)
+    info:
+      path: SafariExtension/Info.plist
+      properties:
+        CFBundleDisplayName: Mindrawer
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        HikidashiAppGroup: $(APP_GROUP)
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.Safari.web-extension
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).SafariWebExtensionHandler
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(BUNDLE_PREFIX).safari
         TARGETED_DEVICE_FAMILY: "1,2"
 
   # Apple Watch のアプリ（iPhone のアプリに入れて配る）。今日の確認リストと今日のひとつを出し、チェックできる

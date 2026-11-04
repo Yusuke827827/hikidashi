@@ -40,6 +40,12 @@ final class WatchBridge: NSObject, WCSessionDelegate {
     }
 
     private func handle(_ msg: [String: Any]) {
+        // Watch で話したメモは、受け取り箱に置く（アプリを開いたとき・次の更新で整理される）
+        if let text = msg["save"] as? String, let store {
+            _ = try? Inbox.put(text: text, url: nil, comment: "", image: nil, root: store.root)
+            NotificationRouter.shared.inboxArrived += 1
+            return
+        }
         guard let id = msg["toggle"] as? String, let day = msg["day"] as? String, let store else { return }
         store.toggleCheck(id, day: day)
         WidgetCenter.shared.reloadAllTimelines()

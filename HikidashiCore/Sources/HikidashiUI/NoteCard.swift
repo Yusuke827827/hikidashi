@@ -22,6 +22,7 @@ struct NoteCard: View {
     @State private var publishing = false
     @State private var exportMessage: String?
     @State private var showHistory = false
+    @State private var showSteps = false
     @AppStorage("simpleMode") private var simpleMode = false
     private var secrets: SecretNotes { SecretNotes.shared }
     private var hidden: Bool { secrets.isHidden(note) }
@@ -88,6 +89,7 @@ struct NoteCard: View {
             Button(L("ゴミ箱へ（30 日は戻せます）", "Move to trash (restorable for 30 days)"), role: .destructive) { store.remove(note.id) }
         }
         .sheet(isPresented: $showHistory) { HistorySheet(note: note, store: store) }
+        .fullScreenCover(isPresented: $showSteps) { StepsView(note: note).environment(\.palette, p) }
     }
 
     @ViewBuilder private var content: some View {
@@ -147,10 +149,15 @@ struct NoteCard: View {
     }
 
     @ViewBuilder private var chips: some View {
-        let hasChips = note.savedPlace != nil || note.expiresAt != nil || note.remindAt != nil || note.alarm != nil || note.review != nil || note.linkBroken == true || !note.situations.isEmpty || !note.tags.isEmpty
+        let hasChips = note.readLater == true || note.addedBy != nil || note.archived == true || note.savedPlace != nil || note.expiresAt != nil || note.remindAt != nil || note.alarm != nil || note.review != nil || note.linkBroken == true || !note.situations.isEmpty || !note.tags.isEmpty
         if hasChips {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 6) {
+                    if note.readLater == true {
+                        Chip(text: note.readAt == nil ? L("あとで読む", "Read later") : L("読んだ", "Read"), kind: .remind, symbol: note.readAt == nil ? "bookmark" : "checkmark")
+                    }
+                    if note.archived == true { Chip(text: L("しまい込んだ", "Archived"), kind: .situation, symbol: "archivebox") }
+                    if let by = note.addedBy, !by.isEmpty { Chip(text: by, kind: .situation, symbol: "person") }
                     if let pl = note.savedPlace, !pl.name.isEmpty { Chip(text: pl.name, kind: .situation, symbol: "mappin") }
                     if let d = note.daysLeft() {
                         Chip(text: d == 0 ? L("今日まで", "Ends today") : L("あと \(d) 日", "\(d) days left"), kind: .remind, symbol: "hourglass")
@@ -216,6 +223,7 @@ struct NoteCard: View {
                     Button("→ " + r.title) { onJump(r) }.font(.footnote).foregroundStyle(p.accent)
                 }
             }
+            SeriesNav(note: note, notes: store.notes, onJump: onJump)
             let related = Heuristics.related(to: note, in: store.notes)
             if !related.isEmpty {
                 Text(L("関連", "Related").uppercased()).font(.caption2.weight(.semibold)).foregroundStyle(p.muted).tracking(1)
@@ -257,6 +265,30 @@ struct NoteCard: View {
                     if hidden { Task { await secrets.unlock(note.id); if !secrets.isHidden(note) { onEdit(note) } } } else { onEdit(note) }
                 } label: { Label(L("編集", "Edit"), systemImage: "pencil") }
                 if !hidden {
+                    if Heuristics.steps(note.text).count >= 2 {
+                        Button { showSteps = true; UsageLog.record(note.id) } label: { Label(L("手順モードで見る", "Step-by-step mode"), systemImage: "list.number") }
+                    }
+                    if note.url != nil {
+                        Button {
+                            store.update(note.id) { n in
+                                if n.readLater == true && n.readAt == nil { n.readAt = Date() } else { n.readLater = true; n.readAt = nil }
+                            }
+                        } label: {
+                            note.readLater == true && note.readAt == nil
+                                ? Label(L("読んだ", "Mark as read"), systemImage: "checkmark.circle")
+                                : Label(L("あとで読む", "Read later"), systemImage: "bookmark")
+                        }
+                    }
+                    Button {
+                        store.update(note.id) { $0.board = $0.board == nil ? BoardColumn.week.rawValue : nil }
+                    } label: {
+                        Label(note.board == nil ? L("やることボードへ", "Add to to-do board") : L("ボードから外す", "Remove from board"), systemImage: "rectangle.split.3x1")
+                    }
+                    Button {
+                        store.update(note.id) { $0.archived = $0.archived == true ? nil : true }
+                    } label: {
+                        Label(note.archived == true ? L("しまい込みから戻す", "Unarchive") : L("しまい込む", "Archive"), systemImage: "archivebox")
+                    }
                     Button { Speaker.shared.toggle(note) } label: { Label(L("読み上げる", "Read aloud"), systemImage: "speaker.wave.2") }
                     if Heuristics.checkItems(note.text).isEmpty {
                         Button { store.update(note.id) { $0.text = Heuristics.toChecklist($0.text) } } label: {

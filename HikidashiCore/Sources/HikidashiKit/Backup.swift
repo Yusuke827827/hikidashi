@@ -47,3 +47,37 @@ public enum Backup {
         return names.filter { $0.hasPrefix("mindrawer-") && $0.hasSuffix(".json") }.sorted(by: >).map { dir.appendingPathComponent($0) }
     }
 }
+
+// MARK: 外の保存先（iCloud Drive・Google Drive などのフォルダ）
+
+extension Backup {
+    static let bookmarkKey = "backupFolderBookmark"
+
+    /// 選んだフォルダを覚える（ファイル App で選んだ場所。端末を変えても、そこにバックアップが残る）
+    public static func setExternalFolder(_ url: URL?) {
+        guard let url else { UserDefaults.standard.removeObject(forKey: bookmarkKey); return }
+        let ok = url.startAccessingSecurityScopedResource()
+        defer { if ok { url.stopAccessingSecurityScopedResource() } }
+        if let data = try? url.bookmarkData() { UserDefaults.standard.set(data, forKey: bookmarkKey) }
+    }
+
+    public static var externalFolder: URL? {
+        guard let data = UserDefaults.standard.data(forKey: bookmarkKey) else { return nil }
+        var stale = false
+        return try? URL(resolvingBookmarkData: data, bookmarkDataIsStale: &stale)
+    }
+
+    /// 外の保存先にも書き出す（選んでいなければ nil）
+    @MainActor
+    @discardableResult
+    public static func writeExternal(_ store: NoteStore, now: Date = Date()) throws -> URL? {
+        guard let dir = externalFolder else { return nil }
+        let ok = dir.startAccessingSecurityScopedResource()
+        defer { if ok { dir.stopAccessingSecurityScopedResource() } }
+        let url = try write(store, now: now, dir: dir)
+        UserDefaults.standard.set(now, forKey: "lastExternalBackup")
+        return url
+    }
+
+    public static var lastExternal: Date? { UserDefaults.standard.object(forKey: "lastExternalBackup") as? Date }
+}

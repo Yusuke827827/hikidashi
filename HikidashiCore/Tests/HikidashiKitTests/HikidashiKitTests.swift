@@ -1213,3 +1213,73 @@ final class OCRArrangeTests: XCTestCase {
         XCTAssertEqual(TextExtractor.arrange(lines), "明日は10時に駅の改札前で集合。\n\n持ち物  12:30\n・お弁当")
     }
 }
+
+final class PlannerTests: XCTestCase {
+    func testSteps() {
+        XCTAssertEqual(Heuristics.steps("カレーの作り方\n1. 玉ねぎを炒める\n2. 肉を入れる\n3. 煮込む"), ["玉ねぎを炒める", "肉を入れる", "煮込む"])
+        XCTAssertEqual(Heuristics.steps("湯を沸かす。麺を入れる。3分待つ。"), ["湯を沸かす。", "麺を入れる。", "3分待つ。"])
+        XCTAssertEqual(Heuristics.stepCommand("次"), 1)
+        XCTAssertEqual(Heuristics.stepCommand("もどって"), -1)
+        XCTAssertEqual(Heuristics.stepCommand("あいうえお"), 0)
+    }
+
+    func testBoardSeriesUnused() {
+        let now = Date(timeIntervalSince1970: 1_800_000_000)
+        let today = Heuristics.dayFormatter.string(from: now)
+        var a = Note(id: "a", text: "x", title: "A"); a.plannedDay = today
+        let b = Note(id: "b", text: "☐ 牛乳", title: "B")
+        var c = Note(id: "c", text: "x", title: "C"); c.board = "week"
+        let d = Note(id: "d", text: "x", title: "D")
+        let board = Heuristics.board([a, b, c, d], now: now)
+        XCTAssertEqual(board[.today]?.map(\.id), ["a"])
+        XCTAssertEqual(board[.week]?.map(\.id), ["c"])
+        XCTAssertEqual(board[.someday]?.map(\.id), ["b"])
+
+        XCTAssertEqual(Heuristics.seriesKey("旅行の準備 2")?.index, 2)
+        XCTAssertEqual(Heuristics.seriesKey("旅行の準備②")?.stem, "旅行の準備")
+        XCTAssertEqual(Heuristics.seriesKey("英語のコツ その3")?.index, 3)
+        XCTAssertEqual(Heuristics.seriesKey("Tips Part 4")?.index, 4)
+        XCTAssertNil(Heuristics.seriesKey("2024"))
+        let s1 = Note(id: "s1", text: "x", title: "旅行の準備 2"), s2 = Note(id: "s2", text: "x", title: "旅行の準備 1")
+        XCTAssertEqual(Heuristics.series(of: s1, in: [s1, s2, d]).map(\.id), ["s2", "s1"])
+
+        let old = Note(id: "o", text: "x", title: "O", createdAt: now.addingTimeInterval(-400 * 86400))
+        var pin = old; pin.id = "p"; pin.pinned = true
+        XCTAssertEqual(Heuristics.unused([old, pin, d], now: now).map(\.id), ["o"])
+        XCTAssertTrue(Heuristics.tidyDue(now: now, lastShown: nil) == (Calendar.current.component(.day, from: now) <= 7))
+    }
+
+    func testCodes() {
+        let w = Heuristics.describeCode("WIFI:T:WPA;S:my\;home;P:pa ss;;")
+        XCTAssertEqual(w.title, "Wi-Fi my;home")
+        XCTAssertTrue(w.text.contains("pa ss"))
+        XCTAssertEqual(Heuristics.describeCode("https://e.com/x").url, "https://e.com/x")
+        XCTAssertTrue(Heuristics.describeCode("4901234567894").title.contains("4901234567894"))
+        XCTAssertEqual(Heuristics.describeCode("MECARD:N:山田,太郎;TEL:0312345678;;").title, "山田 太郎")
+    }
+
+    func testKindle() {
+        let clip = """
+        本のタイトル (著者)
+        - 位置No. 120-121のハイライト |作成日: 2024年1月1日
+        
+        大事な一文。
+        ==========
+        本のタイトル (著者)
+        - 位置No. 130のブックマーク |作成日: 2024年1月1日
+        
+        
+        ==========
+        別の本
+        - Your Highlight on Location 10-11 | Added on Monday
+        
+        Another line.
+        ==========
+        """
+        let notes = Importer.parse(Data(clip.utf8), filename: "My Clippings.txt")
+        XCTAssertEqual(notes.map(\.title), ["本のタイトル (著者)", "別の本"])
+        XCTAssertEqual(notes.first?.text, "・大事な一文。")
+        let html = "<div class='bookTitle'>本A</div><div class='noteHeading'>ハイライト(黄)</div><div class='noteText'>一つ目</h3><div class='noteText'>二つ目</h3>"
+        XCTAssertEqual(Importer.parse(Data(html.utf8), filename: "notebook.html").first?.text, "・一つ目\n・二つ目")
+    }
+}

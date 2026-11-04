@@ -57,6 +57,19 @@ final class WatchModel: NSObject, ObservableObject, WCSessionDelegate {
         }
     }
 
+    @Published var lastSaved = ""
+
+    /// 話した（書いた）メモを iPhone に送る。iPhone が近くになくても、つながったときに届く
+    func save(_ text: String) {
+        let t = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !t.isEmpty else { return }
+        let msg: [String: Any] = ["save": t, "at": Date().timeIntervalSince1970]
+        let s = WCSession.default
+        guard s.activationState == .activated else { return }
+        s.transferUserInfo(msg)
+        lastSaved = t
+    }
+
     nonisolated func session(_ session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState, error: Error?) {
         let ctx = session.receivedApplicationContext
         guard !ctx.isEmpty else { return }
@@ -76,6 +89,16 @@ struct MindrawerWatchApp: App {
         WindowGroup {
             NavigationStack {
                 List {
+                    Section {
+                        TextFieldLink(prompt: Text("しまうことを話す")) {
+                            Label("話してしまう", systemImage: "mic.fill")
+                        } onSubmit: { text in
+                            model.save(text)
+                        }
+                        if !model.lastSaved.isEmpty {
+                            Text("しまいました: \(model.lastSaved)").font(.caption2).foregroundStyle(.secondary).lineLimit(2)
+                        }
+                    }
                     Section {
                         if model.items.isEmpty {
                             Text(model.day.isEmpty ? "iPhone の Mindrawer を開いてください" : "今日確認するメモはありません")

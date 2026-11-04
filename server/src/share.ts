@@ -18,7 +18,7 @@ export interface ShareDoc {
   updatedAt: number;
 }
 
-export const SHARE_LIMITS = { notes: 500, textChars: 20_000, bodyBytes: 2 * 1024 * 1024, tombstoneDays: 90 };
+export const SHARE_LIMITS = { notes: 500, textChars: 20_000, bodyBytes: 8 * 1024 * 1024, tombstoneDays: 90, photoChars: 200_000 };
 
 /** 端末にしか無いもの（画像・ファイル）は共有しない。本文は長すぎれば切る */
 const DROP_FIELDS = ["imageFile", "file", "place", "folderChosen", "review", "checkedAt", "linkBroken", "plannedDay", "lastSeen"];
@@ -34,6 +34,9 @@ export function cleanNote(n: unknown): SharedNote | null {
     if (x[f] != null && typeof x[f] !== "string") delete x[f];
     if (typeof x[f] === "string") x[f] = (x[f] as string).slice(0, f === "original" ? SHARE_LIMITS.textChars : 500);
   }
+  // 家族に見せる小さな写真（base64 の JPEG）と、足した人の名前
+  if (typeof x.photo !== "string" || x.photo.length > SHARE_LIMITS.photoChars || !/^[A-Za-z0-9+/=]+$/.test(x.photo)) delete x.photo;
+  if (typeof x.addedBy === "string") x.addedBy = x.addedBy.slice(0, 40); else delete x.addedBy;
   x.updatedAt = Number(x.updatedAt) || Number(x.createdAt) || 0;
   return x as SharedNote;
 }

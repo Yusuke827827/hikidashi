@@ -132,6 +132,21 @@ public enum TextExtractor {
 
     static func isWordChar(_ c: Character) -> Bool { c.isASCII && (c.isLetter || c.isNumber) }
 
+    /// 写真に写った QR コード・バーコードの中身
+    public static func barcodes(_ data: Data) async -> [String] {
+        #if canImport(Vision)
+        return await Task.detached(priority: .userInitiated) { () -> [String] in
+            let req = VNDetectBarcodesRequest()
+            guard (try? VNImageRequestHandler(data: data).perform([req])) != nil else { return [] }
+            var seen: [String] = []
+            for r in req.results ?? [] { if let s = r.payloadStringValue, !s.isEmpty, !seen.contains(s) { seen.append(s) } }
+            return seen
+        }.value
+        #else
+        return []
+        #endif
+    }
+
     /// ファイルの文字（PDF・テキスト・画像）
     /// 写真に写っているもの（Vision の分類。自信が高いものを 6 つまで、よく使うものは日本語に）
     public static func imageLabels(_ data: Data) async -> [String] {

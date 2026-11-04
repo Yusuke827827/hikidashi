@@ -172,7 +172,7 @@ extension Librarian {
     public func shareFolder(_ folder: String, server: String?) async throws -> String {
         if let sf = SharedFolders.load().first(where: { $0.folder == folder }) { return sf.code }
         guard let server, !server.isEmpty else { throw ShareError.noServer }
-        let notes = store.notes.filter { $0.category == folder }.map(SharedFolders.outgoing)
+        let notes = withPhotos(store.notes.filter { $0.category == folder })
         let r = try await ShareClient().create(server: server, name: folder, notes: notes)
         let sf = SharedFolder(folder: folder, server: server, id: r.id, key: r.key, lastIDs: notes.map(\.id), syncedAt: Date())
         SharedFolders.save(SharedFolders.load() + [sf])
@@ -211,7 +211,7 @@ extension Librarian {
             let ids = Set(mine.map(\.id))
             let deleted = sf.lastIDs.filter { !ids.contains($0) }
             do {
-                let remote = try await ShareClient().push(sf, notes: mine.map(SharedFolders.outgoing), deleted: deleted)
+                let remote = try await ShareClient().push(sf, notes: withPhotos(mine), deleted: deleted)
                 apply(remote, to: &sf)
                 all[i] = sf
             } catch {
@@ -224,8 +224,38 @@ extension Librarian {
         SharedFolders.save(latest)
     }
 
+    /// 送る形。新しい 40 件の写真は小さくして一緒に送る（家族にも写真が見えるように）
+    func withPhotos(_ notes: [Note]) -> [Note] {
+        var budget = 40
+        return notes.sorted { $0.modifiedAt > $1.modifiedAt }.map { n in
+            var x = SharedFolders.outgoing(n)
+            #if canImport(UIKit)
+            if budget > 0, let f = n.imageFile, let d = try? Data(contentsOf: store.imageURL(f)), let small = ImageTools.jpeg(data: d, maxSide: 720) {
+                x.photo = small.base64EncodedString()
+                budget -= 1
+            }
+            #endif
+            return x
+        }
+    }
+
+    /// 共有で足したメモに付ける名前（設定の「共有で使う名前」）
+    public static var shareName: String {
+        get { UserDefaults.standard.string(forKey: "shareName") ?? "" }
+        set { UserDefaults.standard.set(newValue.trimmingCharacters(in: .whitespaces), forKey: "shareName") }
+    }
+
     private func apply(_ remote: ShareRemote, to sf: inout SharedFolder) {
-        let incoming = remote.notes.map { SharedFolders.incoming($0, local: store.note($0.id), folder: sf.folder) }
+        let incoming = remote.notes.map { r -> Note in
+            var n = SharedFolders.incoming(r, local: store.note(r.id), folder: sf.folder)
+            // 届いた写真は、この端末に写真が無ければ保存する
+            if let p = r.photo, n.imageFile == nil, let data = Data(base64Encoded: p) {
+                let name = r.id + "-shared.jpg"
+                if (try? data.write(to: store.imageURL(name), options: .atomic)) != nil { n.imageFile = name }
+            }
+            n.photo = nil
+            return n
+        }
         store.applyRemote(saved: incoming, deleted: remote.deleted.filter { id in store.note(id)?.category == sf.folder })
         if !store.folders.contains(sf.folder) { _ = store.createFolder(sf.folder) }
         sf.lastIDs = store.notes.filter { $0.category == sf.folder }.map(\.id)

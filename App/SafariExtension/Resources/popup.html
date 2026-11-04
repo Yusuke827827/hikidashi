@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root { --bg: #f6f5f2; --ink: #1c1c1e; --muted: #6b6a66; --accent: #c8553d; --card: #fff; --line: #e4e2dd; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #17181b; --ink: #ecebe7; --muted: #9b9a95; --accent: #e0745a; --card: #212226; --line: #34353a; } }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 -apple-system, "Hiragino Sans", sans-serif; min-width: 300px; }
+  main { padding: 14px; display: grid; gap: 10px; }
+  h1 { font-size: 16px; margin: 0; }
+  .src { font-size: 12.5px; color: var(--muted); overflow-wrap: anywhere; }
+  textarea { width: 100%; box-sizing: border-box; min-height: 120px; border: 1px solid var(--line); border-radius: 12px; padding: 10px; font: inherit; background: var(--card); color: var(--ink); }
+  button { min-height: 44px; border: 0; border-radius: 12px; background: var(--accent); color: #fff; font: 600 16px -apple-system, sans-serif; }
+  button:disabled { opacity: .5; }
+  .msg { font-size: 13px; color: var(--muted); min-height: 1em; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Mindrawer にしまう</h1>
+  <div class="src" id="src"></div>
+  <textarea id="text" placeholder="選んだ文がここに入ります。何も選んでいなければ、このページをしまいます。"></textarea>
+  <button id="save">しまう</button>
+  <p class="msg" id="msg" role="status"></p>
+</main>
+<script src="popup.js"></script>
+</body>
+</html>

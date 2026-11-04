@@ -61,6 +61,8 @@ final class NotificationRouter: NSObject, UNUserNotificationCenterDelegate {
     var focusSave = false
     /// 共有フォルダのリンク（mindrawer://join?c=…）から開いたときの共有コード
     var joinCode: String?
+    /// Apple Watch から話したメモが届いた（受け取り箱を読み直す）
+    var inboxArrived = 0
 
     // アプリを開いている間に届いた通知も表示する
     nonisolated func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification) async -> UNNotificationPresentationOptions {

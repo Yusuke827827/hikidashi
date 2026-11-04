@@ -5,14 +5,25 @@
 // 取り込んだメモは「整理待ち」にして、あとで AI（無ければ言葉の辞書）が整理する。規則は Web 版と同じ。
 
 import Foundation
+#if canImport(PDFKit)
+import PDFKit
+#endif
 
 public enum Importer {
-    public static let extensions = ["enex", "json", "csv", "txt", "md", "markdown", "html", "htm"]
+    public static let extensions = ["enex", "json", "csv", "txt", "md", "markdown", "html", "htm", "pdf"]
 
     public static func parse(_ data: Data, filename: String) -> [Note] {
         let ext = (filename as NSString).pathExtension.lowercased()
         let base = ((filename as NSString).lastPathComponent as NSString).deletingPathExtension
+        if ext == "pdf" { return pdfHighlights(data, title: base).map { [$0] } ?? [] }
         guard let text = String(data: data, encoding: .utf8) ?? String(data: data, encoding: .shiftJIS) else { return [] }
+        // Kindle のハイライト（端末の My Clippings.txt・アプリの「ノートブックを書き出す」の HTML）
+        if text.contains("=========="), text.range(of: #"(?m)^- .*(?:Highlight|ハイライト|Your Note|メモ)"#, options: .regularExpression) != nil {
+            return kindleClippings(text)
+        }
+        if (ext == "html" || ext == "htm"), text.contains("noteText"), text.contains("bookTitle") {
+            return kindleNotebook(text)
+        }
         let notes: [Note]
         switch ext {
         case "enex": notes = evernote(text)
@@ -22,6 +33,83 @@ public enum Importer {
         default: notes = plainFile(text, fallbackTitle: base)
         }
         return notes.filter { !$0.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+    }
+
+    // MARK: Kindle・PDF のハイライト
+
+    /// Kindle の My Clippings.txt。本ごとに 1 つのメモ（ハイライトを「・」で並べる）
+    static func kindleClippings(_ text: String) -> [Note] {
+        var books: [(String, [String])] = []
+        for block in text.replacingOccurrences(of: "\r\n", with: "\n").components(separatedBy: "==========") {
+            let lines = block.components(separatedBy: "\n").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+            guard lines.count >= 3 else { continue }
+            let book = lines[0].replacingOccurrences(of: "\u{FEFF}", with: "")
+            // 2 行目は「- ハイライト 位置No. 120-121 | 追加日: …」。ブックマークは飛ばす
+            guard lines[1].range(of: #"ブックマーク|Bookmark"#, options: .regularExpression) == nil else { continue }
+            let body = lines.dropFirst(2).joined(separator: " ")
+            let isNote = lines[1].range(of: #"Your Note|メモ"#, options: .regularExpression) != nil
+            let entry = (isNote ? "📝 " : "") + body
+            if let i = books.firstIndex(where: { $0.0 == book }) {
+                if !books[i].1.contains(entry) { books[i].1.append(entry) }
+            } else { books.append((book, [entry])) }
+        }
+        return books.map { book, items in
+            var n = Note(text: items.map { "・" + $0 }.joined(separator: "\n"), title: String(book.prefix(80)), filed: false)
+            n.tags = ["Kindle"]
+            return n
+        }
+    }
+
+    /// Kindle アプリの「ノートブックを書き出す」（HTML）
+    static func kindleNotebook(_ html: String) -> [Note] {
+        let book = firstClass(html, "bookTitle").map { decode(stripHTML($0)) } ?? "Kindle"
+        let items = allClass(html, "noteText").map { decode(stripHTML($0)) }.filter { !$0.isEmpty }
+        guard !items.isEmpty else { return [] }
+        var n = Note(text: items.map { "・" + $0 }.joined(separator: "\n"), title: String(book.prefix(80)), filed: false)
+        n.tags = ["Kindle"]
+        return [n]
+    }
+
+    static func allClass(_ s: String, _ cls: String) -> [String] {
+        guard let re = try? NSRegularExpression(pattern: "<(div|h3|span)[^>]*class=[\"'][^\"']*\\b\(cls)\\b[^\"']*[\"'][^>]*>([\\s\\S]*?)</(?:div|h3|span)>") else { return [] }
+        let ns = s as NSString
+        return re.matches(in: s, range: NSRange(location: 0, length: ns.length)).map { ns.substring(with: $0.range(at: 2)) }
+    }
+
+    static func firstClass(_ s: String, _ cls: String) -> String? { allClass(s, cls).first }
+
+    /// PDF のハイライト（マーカーを引いたところの文）を 1 つのメモに
+    static func pdfHighlights(_ data: Data, title: String) -> Note? {
+        #if canImport(PDFKit)
+        guard let doc = PDFDocument(data: data) else { return nil }
+        var items: [String] = []
+        for i in 0..<doc.pageCount {
+            guard let page = doc.page(at: i) else { continue }
+            for a in page.annotations where (a.type ?? "").lowercased().contains("highlight") || (a.type ?? "").lowercased().contains("underline") {
+                let quads = a.quadrilateralPoints ?? []
+                var text = ""
+                if quads.count >= 4 {
+                    // 1 行ごとの四角から、その下の文を読む
+                    for q in stride(from: 0, to: quads.count - 3, by: 4) {
+                        let pts = (0..<4).map { quads[q + $0].pointValue }
+                        let xs = pts.map(\.x), ys = pts.map(\.y)
+                        let r = CGRect(x: a.bounds.minX + xs.min()!, y: a.bounds.minY + ys.min()!, width: xs.max()! - xs.min()!, height: ys.max()! - ys.min()!)
+                        if let s = page.selection(for: r)?.string { text += s }
+                    }
+                }
+                if text.isEmpty { text = page.selection(for: a.bounds)?.string ?? "" }
+                text = text.replacingOccurrences(of: "\n", with: " ").trimmingCharacters(in: .whitespaces)
+                if let c = a.contents, !c.isEmpty { text += (text.isEmpty ? "" : "\n  📝 ") + c }
+                if !text.isEmpty { items.append(text + "（p.\(i + 1)）") }
+            }
+        }
+        guard !items.isEmpty else { return nil }
+        var n = Note(text: items.map { "・" + $0 }.joined(separator: "\n"), title: String(((doc.documentAttributes?[PDFDocumentAttribute.titleAttribute] as? String) ?? title).prefix(80)), filed: false)
+        n.tags = ["PDF"]
+        return n
+        #else
+        return nil
+        #endif
     }
 
     // MARK: Evernote

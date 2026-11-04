@@ -156,6 +156,8 @@ public final class Librarian {
                 folderChoice = FolderChoiceRequest(noteID: note.id, title: note.title, options: options)
             }
         }
+        // 共有で使う名前があれば、誰が足したかを残す（共有フォルダで見える）
+        if !Self.shareName.isEmpty { note.addedBy = Self.shareName }
         store.add(note)
         onSaved?(note)
         return note

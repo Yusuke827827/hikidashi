@@ -22,6 +22,9 @@ struct SettingsView: View {
     @State private var archiveOn = PageArchive.isOn
     @State private var newsletterOn = Librarian.newsletterTips
     @AppStorage("savePlace") private var savePlace = false
+    @State private var choosingBackupFolder = false
+    @State private var backupFolder = Backup.externalFolder
+    @State private var shareName = Librarian.shareName
     @State private var calendarOn = EventReminders.isOn
     @State private var cloudOn = CloudSync.isOn
     @State private var placeKindsOn = PlaceKindAlerts.isOn
@@ -186,6 +189,17 @@ struct SettingsView: View {
                 SyncSection(librarian: librarian, message: $message)
 
                 Section {
+                    TextField(L("例: ママ・たろう", "e.g. Mom, Taro"), text: $shareName)
+                        .onSubmit { Librarian.shareName = shareName }
+                        .onChange(of: shareName) { _, v in Librarian.shareName = v }
+                } header: {
+                    Text(L("共有で使う名前", "Your name in shared folders"))
+                } footer: {
+                    Text(L("家族と共有しているフォルダで、誰が足したメモかがわかるように付けます。共有フォルダでは写真も小さくして一緒に送ります。",
+                           "Shown on notes you add to folders shared with family. Photos in shared folders are sent too, in a smaller size."))
+                }
+
+                Section {
                     Toggle(isOn: Binding(get: { archiveOn }, set: { archiveOn = $0; PageArchive.isOn = $0 })) {
                         Label(L("リンク先のページを丸ごと残す", "Keep a copy of linked pages"), systemImage: "doc.text.magnifyingglass")
                     }
@@ -243,10 +257,32 @@ struct SettingsView: View {
                         if (try? Backup.write(librarian.store)) != nil {
                             lastBackup = Date()
                             UserDefaults.standard.set(lastBackup, forKey: "lastBackup")
+                            _ = try? Backup.writeExternal(librarian.store)
                             message = L("バックアップしました。", "Backed up.")
                         }
                     } label: {
                         Label(L("今すぐバックアップ", "Back up now"), systemImage: "arrow.down.doc")
+                    }
+                    Button { choosingBackupFolder = true } label: {
+                        HStack {
+                            Label(L("外の保存先（iCloud Drive・Google Drive など）", "Also save to (iCloud Drive, Google Drive…)"), systemImage: "externaldrive.badge.icloud")
+                            Spacer()
+                            Text(backupFolder?.lastPathComponent ?? L("なし", "None")).foregroundStyle(.secondary).lineLimit(1)
+                        }
+                    }
+                    .fileImporter(isPresented: $choosingBackupFolder, allowedContentTypes: [.folder]) { result in
+                        guard case let .success(url) = result else { return }
+                        Backup.setExternalFolder(url)
+                        backupFolder = Backup.externalFolder
+                        message = (try? Backup.writeExternal(librarian.store)) != nil
+                            ? L("「\(url.lastPathComponent)」にも毎週バックアップします。", "Weekly backups will also go to “\(url.lastPathComponent)”.")
+                            : L("そのフォルダには書き込めませんでした。別のフォルダを選んでください。", "Couldn't write to that folder. Pick another one.")
+                    }
+                    if backupFolder != nil {
+                        Button(L("外の保存先をやめる", "Stop saving outside"), role: .destructive) {
+                            Backup.setExternalFolder(nil)
+                            backupFolder = nil
+                        }
                     }
                     NavigationLink {
                         TrashView(store: librarian.store)

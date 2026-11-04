@@ -11,6 +11,8 @@ public struct HikidashiRootView: View {
     enum FolderMode: Hashable { case topic, date }
     static let allKey = "__all"
     static let pinKey = "__pin"
+    static let laterKey = "__later"
+    static let archiveKey = "__archive"
 
     @State private var librarian: Librarian
     @AppStorage("wallpaper") private var wallpaperRaw = Wallpaper.plain.rawValue
@@ -47,6 +49,8 @@ public struct HikidashiRootView: View {
     @State private var calText = ""
     @State private var showGraph = false
     @State private var showMap = false
+    @State private var showBoard = false
+    @State private var showTidy = false
     @State private var usageTick = 0
     @AppStorage("simpleMode") private var simpleMode = false
     @AppStorage("textSize") private var textSizeRaw = TextSize.system.rawValue
@@ -134,6 +138,12 @@ public struct HikidashiRootView: View {
         .sheet(isPresented: $managingFolders, onDismiss: { mergeRefresh += 1 }) {
             FolderManagerView(store: store, librarian: librarian).environment(\.palette, palette).tint(palette.accent)
         }
+        .sheet(isPresented: $showBoard) {
+            BoardSheet(store: store, onOpen: jump).environment(\.palette, palette).tint(palette.accent)
+        }
+        .sheet(isPresented: $showTidy) {
+            TidySheet(store: store).environment(\.palette, palette).tint(palette.accent)
+        }
         .sheet(isPresented: $showMap) {
             NotesMapSheet(store: store, onOpen: jump).environment(\.palette, palette).tint(palette.accent)
         }
@@ -205,6 +215,13 @@ public struct HikidashiRootView: View {
             guard !DemoMode.isOn, !librarian.sharedFolders.isEmpty else { return }
             try? await Task.sleep(for: .seconds(2))
             await librarian.syncShares()
+        }
+        .onChange(of: NotificationRouter.shared.inboxArrived) { _, _ in
+            let n = librarian.ingestInbox()
+            if n > 0 {
+                show(L("Apple Watch から \(n) 件しまいました。", "Saved \(n) from Apple Watch."))
+                Task { await librarian.fileAll() }
+            }
         }
         .onChange(of: NotificationRouter.shared.focusSave) { _, on in
             guard on else { return }
@@ -292,7 +309,10 @@ public struct HikidashiRootView: View {
         await PlaceKindAlerts.sync(store.notes)
         if autoBackup {
             let last = UserDefaults.standard.object(forKey: "lastBackup") as? Date
-            if Backup.runIfDue(store, last: last) != nil { UserDefaults.standard.set(Date(), forKey: "lastBackup") }
+            if Backup.runIfDue(store, last: last) != nil {
+                UserDefaults.standard.set(Date(), forKey: "lastBackup")
+                _ = try? Backup.writeExternal(store)
+            }
         }
         await librarian.fileAll()
         await EventReminders.sync(store.notes)
@@ -689,7 +709,12 @@ public struct HikidashiRootView: View {
         if let e = librarian.lastError { errorBanner(e) }
         if let recall { recallCard(recall) }
         todayListCard
+        boardButton
         if !simpleMode {
+            NextCard(librarian: librarian, onOpen: jump)
+            if Heuristics.tidyDue(lastShown: UserDefaults.standard.object(forKey: "tidyShown") as? Date), !Heuristics.unused(store.notes).isEmpty {
+                tidyCard
+            }
             let now = usageTick >= 0 ? Heuristics.forNow(store.notes, log: UsageLog.load()) : []
             if !now.isEmpty { NowCard(notes: now, onOpen: jump) }
             let due = Heuristics.dueReviews(store.notes)
@@ -769,6 +794,10 @@ public struct HikidashiRootView: View {
                 HStack(spacing: 6) {
                     folderTab(Self.allKey, L("すべて", "All"), store.notes.count)
                     if pinned > 0 { folderTab(Self.pinKey, L("お気に入り", "Favorites"), pinned, favorite: true) }
+                    let later = store.notes.filter { $0.readLater == true && $0.readAt == nil }.count
+                    if later > 0 { folderTab(Self.laterKey, L("あとで読む", "Read later"), later) }
+                    let archived = store.notes.filter { $0.archived == true }.count
+                    if archived > 0 { folderTab(Self.archiveKey, L("しまい込んだ", "Archived"), archived) }
                     ForEach(smartFolders) { sf in
                         folderTab(Self.smartPrefix + sf.id, sf.name, store.notes.filter { sf.matches($0) }.count)
                             .contextMenu {
@@ -806,9 +835,51 @@ public struct HikidashiRootView: View {
         let smart = folder.hasPrefix(Self.smartPrefix) ? smartFolders.first { Self.smartPrefix + $0.id == folder } : nil
         return sort.sorted(store.notes.filter { n in
             if let smart, !smart.matches(n) { return false }
-            let inFolder = smart != nil || folder == Self.allKey || (folder == Self.pinKey ? n.pinned : folderKey(n) == folder)
+            // しまい込んだメモは「しまい込んだ」か、言葉で探したときだけ出す
+            if n.archived == true, folder != Self.archiveKey, f.isEmpty { return false }
+            let inFolder: Bool
+            switch folder {
+            case Self.allKey: inFolder = true
+            case Self.pinKey: inFolder = n.pinned
+            case Self.laterKey: inFolder = n.readLater == true && n.readAt == nil
+            case Self.archiveKey: inFolder = n.archived == true
+            default: inFolder = smart != nil || folderKey(n) == folder
+            }
             return inFolder && (f.isEmpty || store.haystack(n).contains(f)) && noteFilter.matches(n)
         })
+    }
+
+    /// やることボードを開く
+    private var boardButton: some View {
+        let b = Heuristics.board(store.notes)
+        let today = b[.today]?.count ?? 0, week = b[.week]?.count ?? 0
+        return Button { showBoard = true } label: {
+            HStack {
+                Label(L("やることボード", "To-do board"), systemImage: "rectangle.split.3x1").font(.subheadline.weight(.semibold))
+                Spacer()
+                Text(L("今日 \(today)・今週 \(week)", "Today \(today) · Week \(week)")).font(.caption).foregroundStyle(palette.muted)
+                Image(systemName: "chevron.right").font(.caption).foregroundStyle(palette.muted)
+            }
+            .foregroundStyle(palette.text)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .card(padding: 14)
+    }
+
+    /// 月に 1 回、使っていないメモの片づけをすすめる
+    private var tidyCard: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Label(L("使っていないメモの片づけ", "Tidy unused notes"), systemImage: "archivebox").font(.subheadline.weight(.bold)).foregroundStyle(palette.text)
+            Text(L("半年見ていないメモが \(Heuristics.unused(store.notes).count) 件あります。残す・しまい込む・消すを選べます。", "\(Heuristics.unused(store.notes).count) notes haven't been opened in six months. Keep, archive or delete them."))
+                .font(.footnote).foregroundStyle(palette.muted)
+            HStack {
+                Button(L("見る", "Review")) { showTidy = true }.buttonStyle(.borderedProminent)
+                Button(L("今月は出さない", "Not this month")) { UserDefaults.standard.set(Date(), forKey: "tidyShown"); mergeRefresh += 1 }.buttonStyle(.bordered)
+            }
+            .font(.footnote)
+        }
+        .card()
     }
 
     private var listHeader: some View {
