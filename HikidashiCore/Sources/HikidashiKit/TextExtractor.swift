@@ -35,8 +35,7 @@ public enum TextExtractor {
 
     /// 画像の文字認識
     public static func ocr(imageData: Data) async -> String? {
-        guard let image = cgImage(imageData) else { return nil }
-        return await ocr(cgImage: image)
+        cgImage(imageData).flatMap(recognize)
     }
 
     /// 読める画像なら CGImage にする（壊れたデータを Vision に渡さない）
@@ -46,6 +45,11 @@ public enum TextExtractor {
     }
 
     public static func ocr(cgImage: CGImage) async -> String? {
+        recognize(cgImage)
+    }
+
+    /// 文字認識の本体（待ち合わせのない同期の処理にしておく。async の入れ子を減らし、実行時の不具合を避ける）
+    static func recognize(_ cgImage: CGImage) -> String? {
         #if canImport(Vision)
         // 小さい画像は 2 倍にしてから読む（細かい字の読み違いを減らす）
         let image = cgImage.width < 1100 ? (upscale(cgImage, by: 2) ?? cgImage) : cgImage
@@ -187,7 +191,7 @@ public enum TextExtractor {
     public static func text(fromFile data: Data, extension ext: String) async -> String? {
         switch kind(ofExtension: ext) {
         case .image:
-            return await ocr(imageData: data)
+            return cgImage(data).flatMap(recognize)
         case .text:
             let s = (String(data: data, encoding: .utf8) ?? String(decoding: data, as: UTF8.self))
                 .trimmingCharacters(in: .whitespacesAndNewlines)
@@ -208,7 +212,7 @@ public enum TextExtractor {
         var pages: [String] = []
         for i in 0..<min(3, doc.pageCount) {
             guard let page = doc.page(at: i), let image = render(page) else { continue }
-            if let t = await ocr(cgImage: image) { pages.append(t) }
+            if let t = recognize(image) { pages.append(t) }
         }
         let joined = pages.joined(separator: "\n\n")
         return joined.isEmpty ? nil : String(joined.prefix(maxLength))
