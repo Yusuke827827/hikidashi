@@ -179,9 +179,15 @@ public final class Librarian {
 
     /// 1 件を AI で整理する（再整理にも使う）
     public func file(_ id: String) async {
-        guard var note = store.note(id), !filing.contains(id) else { return }
+        guard store.note(id) != nil, !filing.contains(id) else { return }
         filing.insert(id)
-        defer { filing.remove(id) }
+        // defer は使わない（大きな値を持つ async 関数で、Swift の実行時に落ちることがあるため）
+        await fileNow(id)
+        filing.remove(id)
+    }
+
+    private func fileNow(_ id: String) async {
+        guard var note = store.note(id) else { return }
         if !note.enriched {
             await enrich(id)
             if let updated = store.note(id) { note = updated }
