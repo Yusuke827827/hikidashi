@@ -35,9 +35,14 @@ public enum TextExtractor {
 
     /// 画像の文字認識
     public static func ocr(imageData: Data) async -> String? {
-        guard let src = CGImageSourceCreateWithData(imageData as CFData, nil),
-              let image = CGImageSourceCreateImageAtIndex(src, 0, nil) else { return nil }
+        guard let image = cgImage(imageData) else { return nil }
         return await ocr(cgImage: image)
+    }
+
+    /// 読める画像なら CGImage にする（壊れたデータを Vision に渡さない）
+    static func cgImage(_ data: Data) -> CGImage? {
+        guard data.count > 64, let src = CGImageSourceCreateWithData(data as CFData, nil), CGImageSourceGetCount(src) > 0 else { return nil }
+        return CGImageSourceCreateImageAtIndex(src, 0, nil)
     }
 
     public static func ocr(cgImage: CGImage) async -> String? {
@@ -135,9 +140,10 @@ public enum TextExtractor {
     /// 写真に写った QR コード・バーコードの中身
     public static func barcodes(_ data: Data) async -> [String] {
         #if canImport(Vision)
+        guard let img = cgImage(data) else { return [] }
         return await Task.detached(priority: .userInitiated) { () -> [String] in
             let req = VNDetectBarcodesRequest()
-            guard (try? VNImageRequestHandler(data: data).perform([req])) != nil else { return [] }
+            guard (try? VNImageRequestHandler(cgImage: img).perform([req])) != nil else { return [] }
             var seen: [String] = []
             for r in req.results ?? [] { if let s = r.payloadStringValue, !s.isEmpty, !seen.contains(s) { seen.append(s) } }
             return seen
@@ -151,9 +157,10 @@ public enum TextExtractor {
     /// 写真に写っているもの（Vision の分類。自信が高いものを 6 つまで、よく使うものは日本語に）
     public static func imageLabels(_ data: Data) async -> [String] {
         #if canImport(Vision)
+        guard let img = cgImage(data) else { return [] }
         return await Task.detached(priority: .utility) { () -> [String] in
             let req = VNClassifyImageRequest()
-            let handler = VNImageRequestHandler(data: data)
+            let handler = VNImageRequestHandler(cgImage: img)
             guard (try? handler.perform([req])) != nil, let results = req.results else { return [] }
             return results.filter { $0.confidence > 0.35 }.prefix(6).map { labelName($0.identifier) }
         }.value
