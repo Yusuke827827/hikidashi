@@ -1250,7 +1250,7 @@ final class PlannerTests: XCTestCase {
     }
 
     func testCodes() {
-        let w = Heuristics.describeCode("WIFI:T:WPA;S:my\;home;P:pa ss;;")
+        let w = Heuristics.describeCode(#"WIFI:T:WPA;S:my\;home;P:pa ss;;"#)
         XCTAssertEqual(w.title, "Wi-Fi my;home")
         XCTAssertTrue(w.text.contains("pa ss"))
         XCTAssertEqual(Heuristics.describeCode("https://e.com/x").url, "https://e.com/x")

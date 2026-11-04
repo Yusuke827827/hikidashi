@@ -91,8 +91,14 @@ public enum Importer {
                 if quads.count >= 4 {
                     // 1 行ごとの四角から、その下の文を読む
                     for q in stride(from: 0, to: quads.count - 3, by: 4) {
-                        let pts = (0..<4).map { quads[q + $0].pointValue }
-                        let xs = pts.map(\.x), ys = pts.map(\.y)
+                        let pts: [CGPoint] = (0..<4).map { i in
+                            #if os(macOS)
+                            return quads[q + i].pointValue
+                            #else
+                            return quads[q + i].cgPointValue
+                            #endif
+                        }
+                        let xs = pts.map { $0.x }, ys = pts.map { $0.y }
                         let r = CGRect(x: a.bounds.minX + xs.min()!, y: a.bounds.minY + ys.min()!, width: xs.max()! - xs.min()!, height: ys.max()! - ys.min()!)
                         if let s = page.selection(for: r)?.string { text += s }
                     }
