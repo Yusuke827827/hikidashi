@@ -71,6 +71,9 @@ struct ChatView: View {
     @State private var input = ""
     @State private var thinking = false
     @FocusState private var focused: Bool
+    @State private var speech = SpeechInput()
+    /// 答えを声で読み上げる
+    @AppStorage("chatVoice") private var voice = false
 
     private var examples: [String] {
         L("先月しまった節約の話って何だっけ？|旅行の前に見ておくメモは？|最近しまったものを 3 つ教えて", "What was that money-saving tip from last month?|What should I check before a trip?|Show me 3 things I saved recently")
@@ -106,6 +109,14 @@ struct ChatView: View {
                         .padding(10)
                         .background(RoundedRectangle(cornerRadius: 12).fill(p.surface2))
                         .onSubmit { send(input) }
+                    Button {
+                        Speaker.shared.stop()
+                        speech.toggle(base: "") { input = $0 }
+                    } label: {
+                        Image(systemName: speech.isRecording ? "stop.circle.fill" : "mic.circle").font(.title)
+                    }
+                    .foregroundStyle(speech.isRecording ? Color.red : p.muted)
+                    .accessibilityLabel(speech.isRecording ? L("話し終わった", "Done speaking") : L("声で聞く", "Ask by voice"))
                     Button { send(input) } label: { Image(systemName: "arrow.up.circle.fill").font(.title) }
                         .disabled(input.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || thinking)
                         .accessibilityLabel(L("送る", "Send"))
@@ -117,7 +128,20 @@ struct ChatView: View {
             .navigationTitle(L("メモに聞く", "Ask your notes"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .confirmationAction) { Button(L("閉じる", "Close")) { dismiss() } }
+                ToolbarItem(placement: .topBarLeading) {
+                    Button { voice.toggle(); if !voice { Speaker.shared.stop() } } label: {
+                        Image(systemName: voice ? "speaker.wave.2.fill" : "speaker.slash")
+                    }
+                    .accessibilityLabel(voice ? L("声で答える: オン", "Speak answers: on") : L("声で答える: オフ", "Speak answers: off"))
+                }
+                ToolbarItem(placement: .confirmationAction) { Button(L("閉じる", "Close")) { Speaker.shared.stop(); dismiss() } }
+            }
+            // 話し終わったら、そのまま聞く
+            .onChange(of: speech.isRecording) { _, rec in
+                if !rec, !input.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { voice = true; send(input) }
+            }
+            .alert(speech.error ?? "", isPresented: Binding(get: { speech.error != nil }, set: { if !$0 { speech.error = nil } })) {
+                Button("OK") { speech.error = nil }
             }
         }
     }
@@ -152,6 +176,7 @@ struct ChatView: View {
             let reply = await librarian.chat(messages)
             messages.append(reply)
             thinking = false
+            if voice { Speaker.shared.speak(reply.text) }
         }
     }
 }

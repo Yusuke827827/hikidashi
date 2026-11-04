@@ -98,6 +98,33 @@ struct NoteCard: View {
         if !note.summary.isEmpty {
             Text(note.summary).font(.subheadline).foregroundStyle(p.text.opacity(0.88))
         }
+        let items = Heuristics.checkItems(note.text)
+        if !items.isEmpty {
+            VStack(alignment: .leading, spacing: 2) {
+                ForEach(items, id: \.line) { it in
+                    Button {
+                        store.update(note.id) { $0.text = Heuristics.toggleCheck($0.text, line: it.line) }
+                        UsageLog.record(note.id)
+                    } label: {
+                        HStack(alignment: .firstTextBaseline, spacing: 8) {
+                            Image(systemName: it.done ? "checkmark.square.fill" : "square")
+                                .foregroundStyle(it.done ? p.accent : p.muted)
+                            Text(it.text)
+                                .font(.subheadline)
+                                .strikethrough(it.done)
+                                .foregroundStyle(it.done ? p.muted : p.text)
+                                .multilineTextAlignment(.leading)
+                            Spacer(minLength: 0)
+                        }
+                        .frame(minHeight: 30)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(it.text)
+                    .accessibilityValue(it.done ? L("済み", "Done") : L("まだ", "Not done"))
+                }
+            }
+        }
         if let name = note.imageFile, let ui = UIImage(contentsOfFile: store.imageURL(name).path) {
             Image(uiImage: ui)
                 .resizable()
@@ -120,10 +147,11 @@ struct NoteCard: View {
     }
 
     @ViewBuilder private var chips: some View {
-        let hasChips = note.expiresAt != nil || note.remindAt != nil || note.alarm != nil || note.review != nil || note.linkBroken == true || !note.situations.isEmpty || !note.tags.isEmpty
+        let hasChips = note.savedPlace != nil || note.expiresAt != nil || note.remindAt != nil || note.alarm != nil || note.review != nil || note.linkBroken == true || !note.situations.isEmpty || !note.tags.isEmpty
         if hasChips {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 6) {
+                    if let pl = note.savedPlace, !pl.name.isEmpty { Chip(text: pl.name, kind: .situation, symbol: "mappin") }
                     if let d = note.daysLeft() {
                         Chip(text: d == 0 ? L("今日まで", "Ends today") : L("あと \(d) 日", "\(d) days left"), kind: .remind, symbol: "hourglass")
                     }
@@ -168,6 +196,19 @@ struct NoteCard: View {
             }
             if let s = note.url, let url = URL(string: s) {
                 Link(s, destination: url).font(.footnote).lineLimit(2)
+            }
+            if let a = note.archive {
+                DisclosureGroup {
+                    Text(String(a.text.prefix(6000)) + (a.text.count > 6000 ? "…" : ""))
+                        .font(.footnote)
+                        .foregroundStyle(p.muted)
+                        .textSelection(.enabled)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                } label: {
+                    Label(L("保存したページ（\(a.at.formatted(date: .abbreviated, time: .omitted))）", "Saved page (\(a.at.formatted(date: .abbreviated, time: .omitted)))"), systemImage: "doc.text.magnifyingglass")
+                        .font(.footnote).foregroundStyle(p.muted)
+                }
+                .tint(p.accent)
             }
             if let src = note.sources?.compactMap({ store.note($0) }), !src.isEmpty {
                 Text(L("まとめた元のメモ", "Combined from").uppercased()).font(.caption2.weight(.semibold)).foregroundStyle(p.muted).tracking(1)
@@ -217,6 +258,15 @@ struct NoteCard: View {
                 } label: { Label(L("編集", "Edit"), systemImage: "pencil") }
                 if !hidden {
                     Button { Speaker.shared.toggle(note) } label: { Label(L("読み上げる", "Read aloud"), systemImage: "speaker.wave.2") }
+                    if Heuristics.checkItems(note.text).isEmpty {
+                        Button { store.update(note.id) { $0.text = Heuristics.toChecklist($0.text) } } label: {
+                            Label(L("チェックリストにする", "Make it a checklist"), systemImage: "checklist")
+                        }
+                    } else if Heuristics.checkItems(note.text).contains(where: \.done) {
+                        Button { store.update(note.id) { $0.text = Heuristics.clearChecked($0.text) } } label: {
+                            Label(L("済んだ項目を消す", "Clear checked items"), systemImage: "checklist.checked")
+                        }
+                    }
                 }
                 if !(note.history ?? []).isEmpty, !hidden {
                     Button { showHistory = true } label: { Label(L("編集の履歴", "Edit history"), systemImage: "clock.arrow.circlepath") }

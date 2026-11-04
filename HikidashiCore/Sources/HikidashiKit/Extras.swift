@@ -285,10 +285,29 @@ public enum PublicLinks {
 extension Librarian {
     /// メール・LINE の受け取り箱にたまったメモを取り込む。取り込んだ数を返す
     @discardableResult
+    /// メールで届いたメルマガを、要点だけのメモにするか（設定。最初はオン）
+    public static var newsletterTips: Bool {
+        get { UserDefaults.standard.object(forKey: "newsletterTips") as? Bool ?? true }
+        set { UserDefaults.standard.set(newValue, forKey: "newsletterTips") }
+    }
+
     public func pullInbox() async -> Int {
         guard let c = InboxClient.load(), let items = try? await InboxClient.fetch(c), !items.isEmpty else { return 0 }
-        let notes = items.map { i in
-            Note(text: i.text, url: i.url, createdAt: Date(timeIntervalSince1970: i.at / 1000), filed: false)
+        var notes: [Note] = []
+        for i in items {
+            let at = Date(timeIntervalSince1970: i.at / 1000)
+            // メルマガは、AI で要点だけにして 1 つずつメモにする
+            if Self.newsletterTips, Heuristics.looksLikeNewsletter(i.text),
+               let points = await condense(String(i.text.prefix(20_000))) {
+                let tips = Heuristics.splitTips(points)
+                if !tips.isEmpty {
+                    notes += tips.map { Note(text: $0, url: i.url, createdAt: at, filed: false) }
+                    continue
+                }
+                notes.append(Note(text: points, url: i.url, createdAt: at, filed: false, original: i.text))
+                continue
+            }
+            notes.append(Note(text: i.text, url: i.url, createdAt: at, filed: false))
         }
         return importNotes(notes)
     }

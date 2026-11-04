@@ -8,6 +8,7 @@ name: Hikidashi
 options:
   deploymentTarget:
     iOS: "17.0"
+    macOS: "14.0"
   developmentLanguage: ja
 settings:
   base:
@@ -83,7 +84,7 @@ targets:
         NSFaceIDUsageDescription: メモを開くときのロックに Face ID を使います。
         UIFileSharingEnabled: true
         LSSupportsOpeningDocumentsInPlace: true
-        NSLocationWhenInUseUsageDescription: メモに付けた場所に着いたときに知らせるために使います。位置は iPhone が見張るだけで、アプリは記録しません。
+        NSLocationWhenInUseUsageDescription: メモに付けた場所に着いたときに知らせるためと、設定でオンにしたときにしまった場所をメモに付けるために使います。場所はこの端末の中にだけ残ります。
         NSCalendarsWriteOnlyAccessUsageDescription: メモの日付を、カレンダーの予定として入れるために使います。
         NSRemindersFullAccessUsageDescription: メモをリマインダー App に入れるために使います。
         NSCalendarsUsageDescription: 予定の前に、関係するメモを知らせるために予定を読みます。予定はこの iPhone の中だけで使います。
@@ -178,3 +179,30 @@ targets:
         TARGETED_DEVICE_FAMILY: "4"
         # iPhone の中の AI（FoundationModels）は Watch では使わない
         OTHER_LDFLAGS: ""
+
+  # Mac のメニューバーのアプリ。すぐしまう・探す・同期コードでほかの端末とそろえる
+  MindrawerMac:
+    type: application
+    platform: macOS
+    sources:
+      - Mac
+    dependencies:
+      - package: HikidashiCore
+        product: HikidashiKit
+    entitlements:
+      path: Mac/MindrawerMac.entitlements
+      properties:
+        com.apple.security.app-sandbox: true
+        com.apple.security.network.client: true
+    info:
+      path: Mac/Info.plist
+      properties:
+        CFBundleDisplayName: Mindrawer
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        LSUIElement: true
+        LSApplicationCategoryType: public.app-category.productivity
+        MindrawerServerURL: $(SERVER_URL)
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(BUNDLE_PREFIX).mac

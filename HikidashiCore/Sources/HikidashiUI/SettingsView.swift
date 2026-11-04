@@ -18,6 +18,10 @@ struct SettingsView: View {
     @State private var importing = false
     @State private var importingOther = false
     @State private var exportURL: URL?
+    @State private var markdownURL: URL?
+    @State private var archiveOn = PageArchive.isOn
+    @State private var newsletterOn = Librarian.newsletterTips
+    @AppStorage("savePlace") private var savePlace = false
     @State private var calendarOn = EventReminders.isOn
     @State private var cloudOn = CloudSync.isOn
     @State private var placeKindsOn = PlaceKindAlerts.isOn
@@ -181,6 +185,23 @@ struct SettingsView: View {
 
                 SyncSection(librarian: librarian, message: $message)
 
+                Section {
+                    Toggle(isOn: Binding(get: { archiveOn }, set: { archiveOn = $0; PageArchive.isOn = $0 })) {
+                        Label(L("リンク先のページを丸ごと残す", "Keep a copy of linked pages"), systemImage: "doc.text.magnifyingglass")
+                    }
+                    Toggle(isOn: Binding(get: { newsletterOn }, set: { newsletterOn = $0; Librarian.newsletterTips = $0 })) {
+                        Label(L("メルマガは要点だけをメモにする", "Turn newsletters into key points"), systemImage: "envelope.open")
+                    }
+                    Toggle(isOn: Binding(get: { savePlace }, set: { on in savePlace = on; if on { PlaceRecorder.shared.requestPermission() } })) {
+                        Label(L("しまった場所を覚える", "Remember where I saved"), systemImage: "mappin.and.ellipse")
+                    }
+                } header: {
+                    Text(L("しまうとき", "When saving"))
+                } footer: {
+                    Text(L("リンクを付けてしまうと、そのページの本文も残し、リンクが切れても読めます。YouTube は字幕から要点を足します（AI を使うとき）。メールで届いたメルマガは、AI で役立つところだけを 1 つずつのメモにします。しまった場所はこの端末の中にだけ残り、メモ一覧の地図から見られます。",
+                           "With a link, Mindrawer keeps the page text so it stays readable even if the link breaks. YouTube links get key points from the captions (with AI). Newsletters you email in become one note per useful tip. Places stay on this device and show on the map above your notes."))
+                }
+
                 if CloudSync.containerID != nil {
                     Section {
                         Toggle(isOn: Binding(get: { cloudOn }, set: { on in
@@ -270,6 +291,9 @@ struct SettingsView: View {
                     if let exportURL {
                         ShareLink(item: exportURL) { Label(L("書き出す（JSON）", "Export (JSON)"), systemImage: "square.and.arrow.up") }
                     }
+                    if let markdownURL {
+                        ShareLink(item: markdownURL) { Label(L("Obsidian・Notion 用に書き出す（Markdown）", "Export for Obsidian or Notion (Markdown)"), systemImage: "doc.richtext") }
+                    }
                     Button { importing = true } label: { Label(L("読み込む（JSON）", "Import (JSON)"), systemImage: "square.and.arrow.down") }
                     Button { importingOther = true } label: {
                         Label(L("他のアプリから取り込む", "Import from other apps"), systemImage: "tray.and.arrow.down.fill")
@@ -328,7 +352,7 @@ struct SettingsView: View {
                     message = L("Mindrawer の書き出しファイルではないようです。", "That file isn't a Mindrawer export.")
                 }
             }
-            .task { exportURL = writeExport() }
+            .task { exportURL = writeExport(); markdownURL = writeMarkdown() }
         }
     }
 
@@ -433,6 +457,11 @@ struct SettingsView: View {
                 }
             }
         }
+    }
+
+    private func writeMarkdown() -> URL? {
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("mindrawer-markdown-\(Heuristics.dayFormatter.string(from: Date())).zip")
+        return (try? MarkdownExport.zip(librarian.store.notes).write(to: url, options: .atomic)) != nil ? url : nil
     }
 
     private func writeExport() -> URL? {

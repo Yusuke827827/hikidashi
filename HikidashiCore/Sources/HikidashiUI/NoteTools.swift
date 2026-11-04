@@ -34,6 +34,18 @@ final class Speaker {
     private let synth = AVSpeechSynthesizer()
     private(set) var speakingID: String?
 
+    /// 文を読み上げる（メモに聞くの答え）
+    func speak(_ text: String) {
+        synth.stopSpeaking(at: .immediate)
+        let u = AVSpeechUtterance(string: text)
+        let ja = text.range(of: #"[\p{Hiragana}\p{Katakana}\p{Han}]"#, options: .regularExpression) != nil
+        u.voice = AVSpeechSynthesisVoice(language: ja ? "ja-JP" : "en-US")
+        speakingID = nil
+        synth.speak(u)
+    }
+
+    func stop() { synth.stopSpeaking(at: .immediate) }
+
     func toggle(_ note: Note) {
         if synth.isSpeaking {
             let same = speakingID == note.id
@@ -256,6 +268,118 @@ enum PlaceKindAlerts {
                                                             trigger: UNLocationNotificationTrigger(region: region, repeats: true)))
                 budget -= 1
             }
+        }
+    }
+}
+
+// MARK: しまった場所
+
+/// しまった場所を覚える（設定でオンにしたときだけ。おおまかな場所と、その辺りの名前）
+@MainActor
+final class PlaceRecorder: NSObject, CLLocationManagerDelegate {
+    static let shared = PlaceRecorder()
+    static let settingKey = "savePlace"
+    static var isOn: Bool { UserDefaults.standard.bool(forKey: settingKey) }
+
+    private let manager = CLLocationManager()
+    private var waiting: [CheckedContinuation<CLLocation?, Never>] = []
+
+    override init() {
+        super.init()
+        manager.delegate = self
+        manager.desiredAccuracy = kCLLocationAccuracyHundredMeters
+    }
+
+    func requestPermission() {
+        if manager.authorizationStatus == .notDetermined { manager.requestWhenInUseAuthorization() }
+    }
+
+    /// 今いる場所（許可が無い・取れなければ nil）
+    func current() async -> Place? {
+        let s = manager.authorizationStatus
+        guard s == .authorizedWhenInUse || s == .authorizedAlways else { return nil }
+        let loc: CLLocation?
+        if let l = manager.location, l.timestamp.timeIntervalSinceNow > -120 { loc = l } else {
+            loc = await withCheckedContinuation { c in
+                waiting.append(c)
+                manager.requestLocation()
+            }
+        }
+        guard let loc else { return nil }
+        let name = (try? await CLGeocoder().reverseGeocodeLocation(loc))?.first.map { p in
+            p.areasOfInterest?.first ?? p.name ?? [p.locality, p.subLocality].compactMap { $0 }.joined(separator: " ")
+        } ?? ""
+        return Place(name: name, latitude: loc.coordinate.latitude, longitude: loc.coordinate.longitude, radius: loc.horizontalAccuracy)
+    }
+
+    /// しまったメモに場所を付ける
+    func record(_ note: Note, in store: NoteStore) {
+        guard Self.isOn else { return }
+        Task {
+            if let p = await current() { store.update(note.id) { $0.savedPlace = p } }
+        }
+    }
+
+    nonisolated func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        let l = locations.last
+        Task { @MainActor in self.finish(l) }
+    }
+
+    nonisolated func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        Task { @MainActor in self.finish(nil) }
+    }
+
+    private func finish(_ l: CLLocation?) {
+        let w = waiting
+        waiting = []
+        for c in w { c.resume(returning: l) }
+    }
+}
+
+struct Pin: Identifiable {
+    var note: Note
+    var place: Place
+    var id: String { note.id }
+}
+
+/// しまった場所の地図
+struct NotesMapSheet: View {
+    let store: NoteStore
+    var onOpen: (Note) -> Void
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.palette) private var p
+
+    var body: some View {
+        let notes = store.notes.filter { $0.savedPlace != nil && !$0.isLocked }
+        let pins: [Pin] = notes.compactMap { n in n.savedPlace.map { Pin(note: n, place: $0) } }
+        NavigationStack {
+            Map {
+                ForEach(pins) { pin in
+                    Annotation(pin.note.title, coordinate: CLLocationCoordinate2D(latitude: pin.place.latitude, longitude: pin.place.longitude)) {
+                        Button {
+                            dismiss()
+                            onOpen(pin.note)
+                        } label: {
+                            Image(systemName: "note.text")
+                                .font(.footnote.weight(.bold))
+                                .foregroundStyle(.white)
+                                .padding(7)
+                                .background(Circle().fill(Looks.color(store.folderLook(pin.note.category.isEmpty ? Heuristics.otherFolder : pin.note.category).color)))
+                        }
+                        .accessibilityLabel(pin.note.title)
+                    }
+                }
+            }
+            .overlay(alignment: .bottom) {
+                if notes.isEmpty {
+                    Text(L("まだ場所の付いたメモはありません。設定の「しまった場所を覚える」をオンにすると、これからしまうメモに付きます。",
+                           "No notes with a place yet. Turn on Remember where I saved in Settings."))
+                        .font(.footnote).padding(12).background(RoundedRectangle(cornerRadius: 12).fill(.regularMaterial)).padding()
+                }
+            }
+            .navigationTitle(L("しまった場所", "Where I saved"))
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar { ToolbarItem(placement: .confirmationAction) { Button(L("閉じる", "Done")) { dismiss() } } }
         }
     }
 }

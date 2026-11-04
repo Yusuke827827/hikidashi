@@ -79,6 +79,8 @@ public final class Librarian {
     private let onDevice: (any NoteAI)?
     private let linkFetcher: @Sendable (String) async -> LinkPreview?
     private let textExtractor: @Sendable (Data, String) async -> String?
+    /// リンク先のページを読む（テストで差し替える）
+    public var pageReader: @Sendable (String) async -> PageArchive? = { await PageReader.fetch($0) }
 
     /// credentialProvider: Claude の呼び方を返す（無ければ nil）
     /// onDevice: iPhone の中の AI（使えない端末では nil）
@@ -155,8 +157,12 @@ public final class Librarian {
             }
         }
         store.add(note)
+        onSaved?(note)
         return note
     }
+
+    /// しまったあとに呼ぶ（しまった場所を覚えるため）
+    public var onSaved: (@MainActor (Note) -> Void)?
 
     // MARK: 整理
 
@@ -386,6 +392,15 @@ public final class Librarian {
         var text = note.text
         if let url = note.url, !text.contains(LinkFetcher.marker), let preview = await linkFetcher(url) {
             text = LinkFetcher.merge(text, preview)
+        }
+        // リンク先のページを丸ごと残す。YouTube は字幕から要点を本文に足す
+        if let url = note.url, note.archive == nil, PageArchive.isOn, let page = await pageReader(url) {
+            store.update(id) { $0.archive = page }
+            if PageReader.youtubeID(url) != nil, !text.contains(PageArchive.videoMarker), page.text.count >= 200, !note.isLocked,
+               let ai = ai, let points = try? await ai.condense(String(page.text.prefix(20_000)), language: .current),
+               !points.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                text = text.trimmingCharacters(in: .whitespacesAndNewlines) + "\n\n" + PageArchive.videoMarker + L("動画の要点", "Key points") + "\n" + points
+            }
         }
         if let img = note.imageFile, !text.contains(TextExtractor.imageMarker),
            let data = try? Data(contentsOf: store.imageURL(img)), let t = await textExtractor(data, "jpg") {

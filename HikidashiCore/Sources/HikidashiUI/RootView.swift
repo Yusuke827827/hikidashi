@@ -46,6 +46,7 @@ public struct HikidashiRootView: View {
     @State private var calDay = Heuristics.dayFormatter.string(from: Date())
     @State private var calText = ""
     @State private var showGraph = false
+    @State private var showMap = false
     @State private var usageTick = 0
     @AppStorage("simpleMode") private var simpleMode = false
     @AppStorage("textSize") private var textSizeRaw = TextSize.system.rawValue
@@ -133,13 +134,22 @@ public struct HikidashiRootView: View {
         .sheet(isPresented: $managingFolders, onDismiss: { mergeRefresh += 1 }) {
             FolderManagerView(store: store, librarian: librarian).environment(\.palette, palette).tint(palette.accent)
         }
+        .sheet(isPresented: $showMap) {
+            NotesMapSheet(store: store, onOpen: jump).environment(\.palette, palette).tint(palette.accent)
+        }
         .sheet(isPresented: $showGraph) {
             GraphSheet(store: store, onOpen: jump).environment(\.palette, palette).tint(palette.accent)
         }
         .sheet(isPresented: $showSettings) {
             SettingsView(librarian: librarian, wallpaperRaw: $wallpaperRaw).environment(\.palette, palette).tint(palette.accent)
         }
-        .task { await refresh() }
+        .task {
+            if !DemoMode.isOn {
+                let s = store
+                librarian.onSaved = { n in PlaceRecorder.shared.record(n, in: s) }
+            }
+            await refresh()
+        }
         .task { if !DemoMode.isOn { await librarian.checkLinksIfNeeded() } }
         .task { if !DemoMode.isOn { await Subscription.shared.start() } }
         .task { if !DemoMode.isOn, CloudSync.isOn { CloudSync.shared.start(store: store) } }
@@ -842,6 +852,13 @@ public struct HikidashiRootView: View {
             }
             .foregroundStyle(palette.muted)
             .accessibilityLabel(L("つながりの図", "Connections"))
+            if store.notes.contains(where: { $0.savedPlace != nil }) {
+                Button { showMap = true } label: {
+                    Image(systemName: "map").font(.title3).frame(width: 36, height: 36)
+                }
+                .foregroundStyle(palette.muted)
+                .accessibilityLabel(L("しまった場所", "Where I saved"))
+            }
         }
     }
 

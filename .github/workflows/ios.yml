@@ -70,3 +70,8 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A && git commit -q -m "画面写真（main $SHA）"
           git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" screenshots
+      # Mac のメニューバーのアプリもビルドできるか確かめる
+      - name: Build Mac menu bar app
+        run: |
+          (cd App && xcodegen generate)
+          xcodebuild build -quiet -project App/Hikidashi.xcodeproj -scheme MindrawerMac -destination 'platform=macOS' -derivedDataPath build-mac CODE_SIGNING_ALLOWED=NO

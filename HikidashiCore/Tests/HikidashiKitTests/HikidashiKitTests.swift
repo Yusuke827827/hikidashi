@@ -1155,3 +1155,47 @@ final class SyncAndVaultTests: XCTestCase {
         XCTAssertEqual(NoteStore(root: dir).note("s")?.text, "暗証番号は 1234")
     }
 }
+
+final class PageAndChecklistTests: XCTestCase {
+    func testPageReader() {
+        let r = PageReader.htmlToText("<html><head><title>T &amp; X</title><script>bad()</script></head><body><nav>menu</nav><article><h1>見出し</h1><p>一つ目</p><p>二つ目 &lt;ok&gt;</p></article></body></html>")
+        XCTAssertEqual(r.title, "T & X")
+        XCTAssertEqual(r.text, "見出し\n一つ目\n二つ目 <ok>")
+        XCTAssertEqual(PageReader.youtubeID("https://youtu.be/abcdefghijk"), "abcdefghijk")
+        XCTAssertEqual(PageReader.youtubeID("https://www.youtube.com/watch?v=abcdefghijk&t=1"), "abcdefghijk")
+        XCTAssertEqual(PageReader.youtubeID("https://m.youtube.com/shorts/abcdefghijk"), "abcdefghijk")
+        XCTAssertNil(PageReader.youtubeID("https://example.com/watch?v=x"))
+        XCTAssertEqual(PageReader.transcript(#"<transcript><text start="0">こんにちは</text><text start="1">今日は &amp;amp; 晴れ</text></transcript>"#), "こんにちは 今日は & 晴れ")
+        XCTAssertEqual(Heuristics.splitTips("今週のコツ\n・換気は朝に 5 分\n・冷凍ご飯は平らに\n以上"), ["換気は朝に 5 分", "冷凍ご飯は平らに"])
+        XCTAssertTrue(Heuristics.splitTips("ひとつだけ").isEmpty)
+    }
+
+    func testChecklist() {
+        let t = Heuristics.toChecklist("買うもの\n・牛乳\n卵、パン\nhttps://e.com/x")
+        XCTAssertEqual(t, "☐ 買うもの\n☐ 牛乳\n☐ 卵\n☐ パン\nhttps://e.com/x")
+        let items = Heuristics.checkItems(t)
+        XCTAssertEqual(items.count, 4)
+        let t2 = Heuristics.toggleCheck(t, line: 1)
+        XCTAssertEqual(Heuristics.checkItems(t2)[1].done, true)
+        XCTAssertEqual(Heuristics.toggleCheck(t2, line: 1), t)
+        XCTAssertFalse(Heuristics.clearChecked(t2).contains("牛乳"))
+    }
+
+    func testMarkdownZip() {
+        XCTAssertEqual(Zip.crc32(Data("123456789".utf8)), 0xCBF4_3926)
+        var n = Note(id: "a", text: "☐ 牛乳\n☑ 卵", title: "買い物 / 週末", category: "買い物", tags: ["食品 店"])
+        n.url = "https://e.com"
+        let md = MarkdownExport.markdown(n)
+        XCTAssertTrue(md.hasPrefix("---\ntitle: \"買い物 / 週末\""))
+        XCTAssertTrue(md.contains("- [ ] 牛乳\n- [x] 卵"))
+        XCTAssertTrue(md.contains("tags: [\"食品_店\"]"))
+        var secret = Note(id: "s", text: "x", title: "秘密")
+        secret.locked = true
+        let z = MarkdownExport.zip([n, n, secret])
+        XCTAssertEqual(z.prefix(4), Data([0x50, 0x4B, 0x03, 0x04]))
+        let s = String(decoding: z, as: UTF8.self)
+        XCTAssertTrue(s.contains("買い物/買い物 週末.md"))
+        XCTAssertTrue(s.contains("買い物/買い物 週末 2.md"))
+        XCTAssertFalse(s.contains("秘密"))
+    }
+}
