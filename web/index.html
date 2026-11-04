@@ -64,6 +64,31 @@ body.simple #nowBox, body.simple #reviewBox, body.simple #upkeepBox, body.simple
 .checks .ck.done .box { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
 .map-box { height: min(70vh, 520px); border-radius: 12px; overflow: hidden; margin-top: 8px; }
 .ib.rec { color: #d33; }
+#planBox { display: grid; gap: 10px; }
+#planBox:empty { display: none; }
+.plan-board { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; border: 1px solid var(--line); border-radius: 16px; background: linear-gradient(var(--surface), var(--surface)), var(--bg); color: var(--ink); font: inherit; min-height: 52px; padding: 0 16px; cursor: pointer; }
+.plan-board span { margin-left: auto; color: var(--muted); font-size: 13px; }
+.plan-next { border: 1px solid var(--line); border-radius: 16px; background: linear-gradient(var(--surface), var(--surface)), var(--bg); padding: 14px 16px; display: grid; gap: 6px; }
+.plan-next p { margin: 0; }
+.plan-h { display: flex; align-items: center; gap: 8px; justify-content: space-between; }
+.muted { color: var(--muted); font-size: 13.5px; }
+.series { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); margin-top: 6px; }
+.step-bar { width: 100%; accent-color: var(--accent); }
+.help .step-n, dialog .step-n { margin: 6px 0 0; color: var(--muted); font-weight: 600; text-align: center; }
+.help .step-big, dialog .step-big { font-size: clamp(22px, 6vw, 32px); color: var(--ink); font-weight: 650; line-height: 1.45; text-align: center; margin: 18px 4px 22px; min-height: 30vh; display: grid; place-items: center; }
+.step-acts { display: grid; grid-template-columns: 1fr 1.4fr; gap: 10px; }
+.step-btn { min-height: 60px; font-size: 18px; font-weight: 700; border-radius: 14px; border: 1px solid var(--line); background: var(--surface2, var(--surface)); color: var(--ink); }
+.step-btn:not(.ghost) { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+.step-btn:disabled { opacity: .4; }
+.board-seg { display: flex; margin: 8px 0 10px; }
+.board-seg button { flex: 1; }
+.board-list { display: grid; gap: 8px; }
+.board-row { display: flex; align-items: center; gap: 8px; border: 1px solid var(--line); border-radius: 12px; padding: 6px 10px; }
+.board-row .ck { border: 0; background: none; padding: 4px; cursor: pointer; }
+.board-row .ck .box { width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid var(--muted); display: grid; place-items: center; font-size: 13px; }
+.board-row .ck.done .box { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+.board-t { flex: 1; text-align: left; border: 0; background: none; color: var(--ink); font: inherit; font-weight: 600; cursor: pointer; padding: 6px 0; }
+.board-t small { color: var(--muted); font-weight: 400; }
 .more-btn { display: block; margin: 8px auto 0; min-height: 44px; padding: 0 22px; border-radius: 12px; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
@@ -659,6 +684,7 @@ body[data-tab="cal"] .hero, body[data-tab="cal"] .main { display: none !importan
   <section class="cal" id="calBox"></section>
   <div class="main">
     <aside class="rail">
+      <div id="planBox"></div>
       <div id="todayBox" hidden><h2><span id="todayH"></span><span class="today-n" id="todayN"></span></h2><div class="today" id="todayList"></div><button class="mini" id="notifBtn" hidden></button></div>
       <div id="nowBox" hidden></div>
       <div id="pickBox" hidden><h2 id="pickH"></h2><div class="pick" id="pick"></div></div>
@@ -931,6 +957,24 @@ body[data-tab="cal"] .hero, body[data-tab="cal"] .main { display: none !importan
     savingNote: "リンクを付けてしまうと、そのページの本文も残します（中継サーバーが必要）。YouTube は AI で字幕から要点を足します。メールで届いたメルマガは、役立つところを 1 つずつのメモにします。場所はこのブラウザの中にだけ残ります。", mdExport: "Markdown（Obsidian・Notion）", mdDone: (n) => `${n} 件を Markdown で書き出しました。`, whenL: "使う場面" });
   Object.assign(I18N.en, { propRaw: "Use the text as read", propPolishing: "AI is tidying it into a note… you can already edit it.", propPolished: "AI fixed OCR slips, removed screen clutter and kept the essentials. Edit if you like, then save." });
   Object.assign(I18N.ja, { propRaw: "読み取ったままの文に戻す", propPolishing: "AI が読みやすいメモに整えています…（このまま直すこともできます）", propPolished: "AI が読み違いを直し、画面の飾りを外して要点にまとめました。直してからしまえます。" });
+  Object.assign(I18N.en, { readLaterF: "Read later", readDone: "Read", archivedF: "Archived", archive: "Archive", unarchive: "Unarchive", boardIn: "Add to to-do board", boardOut: "Remove from board",
+    stepsBtn: "Step-by-step mode", stepSpeakOn: "🔊 Read aloud", stepSpeakOff: "🔇 Silent", stepN: (i, n) => `Step ${i} of ${n}`, stepPrev: "‹ Back", stepNext: "Next ›", stepDone: "Done", stepVoice: "🎤 Control by voice", stepListening: "🎤 Listening (say “next” / “back”)",
+    boardH: "To-do board", cols: { today: "Today", week: "This week", someday: "Someday", done: "Done" }, boardSum: (a, b) => `Today ${a} · Week ${b}`, boardDone: "Mark done", boardUndo: "Mark not done", boardMove: "Move", boardEmpty: "Nothing here. Add notes from … → Add to to-do board.",
+    seriesL: (i, n) => `Series ${i} of ${n}`, prevS: "← Prev", nextS: "Next →",
+    tidyH: "Tidy unused notes", tidyNote: "Notes you haven't opened in six months. Keep, archive or delete each.", tidyKeep: "Keep", tidyNone: "Nothing to tidy.", tidyAll: "Archive all", tidyCount: (n) => `${n} notes haven't been opened in six months.`, tidyOpen: "Review", tidyLater: "Not this month",
+    nextH: "Up next", nextBtn: "Suggest", nextAgain: "Again", nextIntro: "Picks what's worth doing this week from due dates, unfinished items and the season.", nextQ: "What would be good to do this week? Pick from things due soon, unfinished items, and what fits the season or plans. Suggest briefly.", nextHeur: "Things due soon and unfinished items.", nextNone: "Nothing urgent right now.",
+    codeNet: "Network: ", codePass: "Password: ", codeSec: "Security: ", codeContact: "Contact", codePhone: "Phone", codeMail: "Email", codeProduct: "Product code ", codeProductL: "Product code: ",
+    shareNameH: "Your name in shared folders", shareNameL: "Name", shareNamePh: "e.g. Mom, Taro", shareNameNote: "Shown on notes you add, so family can see who added what.",
+    extFolder: "Also save to", extNone: "none", extPick: "Choose a folder", extStop: "Stop", extSaved: (n) => `Backups will also go to “${n}”.` });
+  Object.assign(I18N.ja, { readLaterF: "あとで読む", readDone: "読んだ", archivedF: "しまい込んだ", archive: "しまい込む", unarchive: "しまい込みから戻す", boardIn: "やることボードへ", boardOut: "ボードから外す",
+    stepsBtn: "手順モードで見る", stepSpeakOn: "🔊 読み上げる", stepSpeakOff: "🔇 読み上げない", stepN: (i, n) => `手順 ${i} / ${n}`, stepPrev: "‹ 戻る", stepNext: "次へ ›", stepDone: "おわり", stepVoice: "🎤 声で進める", stepListening: "🎤 聞いています（「次」「戻る」）",
+    boardH: "やることボード", cols: { today: "今日", week: "今週", someday: "いつか", done: "済み" }, boardSum: (a, b) => `今日 ${a}・今週 ${b}`, boardDone: "済みにする", boardUndo: "済みを戻す", boardMove: "列を動かす", boardEmpty: "ここには何もありません。メモの「…」→「やることボードへ」で入れられます。",
+    seriesL: (i, n) => `シリーズ ${i} / ${n}`, prevS: "← 前", nextS: "次 →",
+    tidyH: "使っていないメモの片づけ", tidyNote: "半年見ていないメモです。残す・しまい込む・消すを選べます。", tidyKeep: "残す", tidyNone: "片づけるメモはありません。", tidyAll: "全部しまい込む", tidyCount: (n) => `半年見ていないメモが ${n} 件あります。`, tidyOpen: "見る", tidyLater: "今月は出さない",
+    nextH: "次にやること", nextBtn: "提案を見る", nextAgain: "もう一度", nextIntro: "期限が近いもの・やり残し・季節に合うものから、今週やっておくと良さそうなことを選びます。", nextQ: "今週やっておくと良さそうなことは？期限が近いもの・やり残し・季節や予定に合うものから選んで、短く提案して", nextHeur: "期限が近いものと、やり残しです。", nextNone: "今すぐやることは見つかりませんでした。",
+    codeNet: "ネットワーク: ", codePass: "パスワード: ", codeSec: "方式: ", codeContact: "連絡先", codePhone: "電話番号", codeMail: "メール", codeProduct: "商品コード ", codeProductL: "商品コード（JAN）: ",
+    shareNameH: "共有で使う名前", shareNameL: "名前", shareNamePh: "例: ママ・たろう", shareNameNote: "家族と共有しているフォルダで、誰が足したメモかがわかるように付けます。",
+    extFolder: "外の保存先", extNone: "なし", extPick: "フォルダを選ぶ", extStop: "やめる", extSaved: (n) => `「${n}」にもバックアップします。` });
   // ---------- storage ----------
   function localStore() {
     const read = () => { try { return JSON.parse(localStorage.getItem(KEY) || "[]"); } catch { return []; } };
@@ -1265,6 +1309,7 @@ Return JSON only:
       const dup = similarNote(rest.text, url || null, state.notes);
       rest.tags = withHashtags(rest.tags, rest.text);
       const newId = "n" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+      if (getJSON(PREF.shareName, "")) extra.addedBy = getJSON(PREF.shareName, "");
       await state.store.add({ ...rest, ...extra, id: newId, url: url || null, createdAt, helpful: 0, pinned: false });
       afterSaved(newId, url || null);
       $("noteText").value = ""; $("noteUrl").value = ""; $("srcRow").hidden = true; clearImage(); clearFile(); renderKw("");
@@ -1347,7 +1392,7 @@ Return JSON only:
 
 
   // ---------- この端末の設定 ----------
-  const PREF = { memo: "mindrawer.memoMode", memoPreview: "mindrawer.memoPreview", checks: "mindrawer.checks", folders: "mindrawer.folders", dismissed: "mindrawer.mergeDismissed", notified: "mindrawer.notified", trash: "mindrawer.trash", usage: "mindrawer.usage", sort: "mindrawer.sort", templates: "mindrawer.templates", pubLinks: "mindrawer.publicLinks", translate: "mindrawer.translate", inbox: "mindrawer.inbox", shares: "mindrawer.shares", shareServer: "mindrawer.shareServer", archive: "mindrawer.archivePages", newsletter: "mindrawer.newsletterTips", savePlace: "mindrawer.savePlace", sync: "mindrawer.sync", syncDeleted: "mindrawer.syncDeleted", syncLast: "mindrawer.syncLast", smart: "mindrawer.smartFolders", dupDismissed: "mindrawer.dupDismissed", pin: "mindrawer.pinHash", backups: "mindrawer.backups", onboarded: "mindrawer.onboarded", reviewSeen: "mindrawer.reviewSeen", fprefs: "mindrawer.folderPrefs", choices: "mindrawer.folderChoices" };
+  const PREF = { memo: "mindrawer.memoMode", memoPreview: "mindrawer.memoPreview", checks: "mindrawer.checks", folders: "mindrawer.folders", dismissed: "mindrawer.mergeDismissed", notified: "mindrawer.notified", trash: "mindrawer.trash", usage: "mindrawer.usage", sort: "mindrawer.sort", templates: "mindrawer.templates", pubLinks: "mindrawer.publicLinks", translate: "mindrawer.translate", inbox: "mindrawer.inbox", shares: "mindrawer.shares", shareServer: "mindrawer.shareServer", shareName: "mindrawer.shareName", tidyShown: "mindrawer.tidyShown", archive: "mindrawer.archivePages", newsletter: "mindrawer.newsletterTips", savePlace: "mindrawer.savePlace", sync: "mindrawer.sync", syncDeleted: "mindrawer.syncDeleted", syncLast: "mindrawer.syncLast", smart: "mindrawer.smartFolders", dupDismissed: "mindrawer.dupDismissed", pin: "mindrawer.pinHash", backups: "mindrawer.backups", onboarded: "mindrawer.onboarded", reviewSeen: "mindrawer.reviewSeen", fprefs: "mindrawer.folderPrefs", choices: "mindrawer.folderChoices" };
   const getJSON = (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch { return d; } };
   const setJSON = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
   state.memoMode = getJSON(PREF.memo, false);
@@ -1706,6 +1751,7 @@ ${text}`;
     const list = backups(), notes = state.notes.filter((n) => !n.example);
     if (!notes.length) return false;
     if (!force && list[0] && Date.now() - list[0].at < 7 * 864e5) return false;
+    writeBackupDir(notes);
     let next = [{ at: Date.now(), notes }, ...list].slice(0, 4);
     while (next.length) {
       try { localStorage.setItem(PREF.backups, JSON.stringify(next)); return true; } catch { next = next.slice(0, -1); }
@@ -1787,6 +1833,9 @@ ${text}`;
         "geolocation" in navigator ? check(getJSON(PREF.savePlace, false), t.savePlaceL, (v) => { setJSON(PREF.savePlace, v); if (v) navigator.geolocation.getCurrentPosition(() => {}, () => {}); }) : null,
         state.notes.some((n) => n.savedPlace) ? el("div", { class: "set-row" }, el("button", { class: "mini", onclick: () => { $("setDlg").close(); openMap(); } }, t.mapBtn)) : null,
         el("p", { class: "set-note" }, t.savingNote)),
+      el("div", { class: "set-sec" }, el("h3", {}, t.shareNameH),
+        (() => { const i = el("input", { type: "text", placeholder: t.shareNamePh, value: getJSON(PREF.shareName, "") }); i.onchange = () => setJSON(PREF.shareName, i.value.trim().slice(0, 40)); return el("label", { class: "ef" }, el("span", {}, t.shareNameL), i); })(),
+        el("p", { class: "set-note" }, t.shareNameNote)),
       el("div", { class: "set-sec" }, el("h3", {}, t.secShare),
         (() => { const i = el("input", { type: "text", placeholder: "https://….workers.dev", value: getJSON(PREF.shareServer, "") }); i.onchange = () => setJSON(PREF.shareServer, i.value.trim().replace(/\/+$/, "")); return el("label", { class: "ef" }, el("span", {}, t.shareServerL), i); })(),
         el("div", { class: "set-row" }, el("button", { class: "mini", onclick: () => { $("setDlg").close(); openJoin(""); } }, t.joinBtn)),
@@ -1796,6 +1845,8 @@ ${text}`;
           hasPin() ? el("span", {}, el("button", { class: "mini", onclick: setPin }, t.pinChange), " ", el("button", { class: "mini", onclick: clearPin }, t.pinOff)) : el("button", { class: "mini", onclick: setPin }, t.pinSet)),
         el("p", { class: "set-note" }, t.pinNote)),
       el("div", { class: "set-sec" }, el("h3", {}, t.backupH), el("p", { class: "set-note" }, t.backupNote),
+        "showDirectoryPicker" in window ? el("div", { class: "set-row" }, el("span", {}, t.extFolder + ": " + (backupDirName || t.extNone)),
+          el("button", { class: "mini", onclick: pickBackupDir }, t.extPick), backupDirName ? el("button", { class: "mini", onclick: () => { setBackupDir(null); openSettings(); } }, t.extStop) : null) : null,
         ...(bk.length ? bk.map((b) => el("div", { class: "trow2" },
           el("span", {}, new Date(b.at).toLocaleString(loc, { month: "short", day: "numeric", weekday: "short", hour: "numeric", minute: "2-digit" }), el("small", {}, t.listH(b.notes.length))),
           el("button", { class: "mini", onclick: () => downloadJSON(b.notes, `hikidashi-${new Date(b.at).toISOString().slice(0, 10)}.json`) }, t.backupSave),
@@ -2301,11 +2352,32 @@ Return JSON only: {"answer":"","ids":["ids of the notes you used, max 5"]}`;
     }
     return out.filter((n) => n && n.text.trim());
   }
+  /** Kindle の My Clippings.txt（本ごとに 1 つのメモ）と、Kindle アプリの「ノートブックを書き出す」の HTML */
+  function parseKindle(text, name) {
+    if (text.includes("==========") && /^- .*(?:Highlight|ハイライト|Your Note|メモ)/m.test(text)) {
+      const books = new Map();
+      for (const block of text.replace(/\r\n/g, "\n").split("==========")) {
+        const lines = block.split("\n").map((l) => l.trim()).filter(Boolean);
+        if (lines.length < 3 || /ブックマーク|Bookmark/.test(lines[1])) continue;
+        const book = lines[0].replace(/^\uFEFF/, ""), entry = (/Your Note|メモ/.test(lines[1]) ? "📝 " : "") + lines.slice(2).join(" ");
+        if (!books.has(book)) books.set(book, []);
+        if (!books.get(book).includes(entry)) books.get(book).push(entry);
+      }
+      return [...books].map(([book, items]) => ({ ...plainNote(items.map((x) => "・" + x).join("\n"), book), title: book.slice(0, 80), tags: ["Kindle"] }));
+    }
+    if (/\.html?$/i.test(name) && text.includes("noteText") && text.includes("bookTitle")) {
+      const grab = (cls) => [...text.matchAll(new RegExp(`<(?:div|h3|span)[^>]*class=["'][^"']*\\b${cls}\\b[^"']*["'][^>]*>([\\s\\S]*?)</(?:div|h3|span)>`, "g"))].map((m) => decodeEnt(stripHTML(m[1])).trim()).filter(Boolean);
+      const book = grab("bookTitle")[0] || "Kindle", items = grab("noteText");
+      return items.length ? [{ ...plainNote(items.map((x) => "・" + x).join("\n"), book), title: book.slice(0, 80), tags: ["Kindle"] }] : [];
+    }
+    return null;
+  }
   async function importOther(files) {
     const t = T(), have = new Set(state.notes.map((n) => n.title + "|" + String(n.text).slice(0, 200)));
     const folders = folderMeta().map((f) => f.name), added = [];
     for (const f of files) {
-      for (const n of parseImport(await f.text(), f.name)) {
+      const raw = await f.text();
+      for (const n of (parseKindle(raw, f.name) || parseImport(raw, f.name))) {
         const key = n.title + "|" + n.text.slice(0, 200);
         if (have.has(key)) continue;
         have.add(key);
@@ -2566,6 +2638,10 @@ Return JSON only: {"answer":"","ids":["ids of the notes you used, max 5"]}`;
         item("today", today ? t.fromToday : t.toToday, () => { dlg.close(); state.store.update(n.id, { plannedDay: today ? null : todayISO() }); }),
         item("brain", n.review ? t.learnStop : t.learn, () => { dlg.close(); state.store.update(n.id, { review: n.review ? null : reviewStart() }); }),
         "speechSynthesis" in window && !(n.locked && !unlocked.has(n.id)) ? item("speaker", t.readAloud, () => { dlg.close(); readAloud(n); }) : null,
+        !(n.locked && !unlocked.has(n.id)) && stepsOf(n.text).length >= 2 ? item("check", t.stepsBtn, () => { dlg.close(); recordUse(n.id); openSteps(n); }) : null,
+        n.url ? item("today", n.readLater && !n.readAt ? t.readDone : t.readLaterF, () => { dlg.close(); state.store.update(n.id, n.readLater && !n.readAt ? { readAt: Date.now() } : { readLater: true, readAt: null }); }) : null,
+        item("today", n.board ? t.boardOut : t.boardIn, () => { dlg.close(); state.store.update(n.id, { board: n.board ? null : "week" }); }),
+        item("folder", n.archived ? t.unarchive : t.archive, () => { dlg.close(); state.store.update(n.id, { archived: !n.archived || null }); }),
         !(n.locked && !unlocked.has(n.id)) ? (checkItems(n.text).length
           ? (checkItems(n.text).some((x) => x.done) ? item("check", t.clearChecked, () => { dlg.close(); state.store.update(n.id, { text: clearChecked(n.text) }); }) : null)
           : item("check", t.makeChecklist, () => { dlg.close(); state.store.update(n.id, { text: toChecklist(n.text) }); })) : null,
@@ -2957,6 +3033,10 @@ ${text || "(none — read the image)"}`;
     dlg.onclose = null;
     dlg.showModal();
     let proposal = "", raw = "";
+    // 写真に QR コード・バーコードがあれば、その中身も入れる
+    const codes = (await readCodes(file)).map(describeCode);
+    const codeText = codes.map((c) => [c.title, c.text].join("\n")).join("\n\n");
+    if (codes.find((c) => c.url) && !$("noteUrl").value) { $("noteUrl").value = codes.find((c) => c.url).url; $("srcRow").hidden = false; }
     const revert = el("button", { type: "button", class: "mini", hidden: "" }, t.propRaw);
     ta.after(revert);
     try {
@@ -2980,6 +3060,7 @@ ${text || "(none — read the image)"}`;
       }
     } catch { proposal = proposal || ""; }
     if (!dlg.open) return;
+    if (codeText) proposal = codeText + (proposal ? "\n\n" + proposal : "");
     ta.disabled = false; ta.value = proposal; saveBtn.disabled = !proposal;
     note.textContent = proposal ? (revert.hidden ? t.propNote : t.propPolished) : t.propFail;
     ta.oninput = () => { saveBtn.disabled = !ta.value.trim(); };
@@ -3287,6 +3368,188 @@ ${text || "(none — read the image)"}`;
     toast(T().mdDone(files.length));
   }
 
+  // ---------- 手順モード（スマホ版と同じ分け方） ----------
+  const BULLET = /^\s*(?:[・•\-*●◆■□☐☑]|\d+[.)、．]|[①-⑳]|STEP\s*\d+[:：.]?|手順\s*\d+[:：.]?)\s*/i;
+  function stepsOf(text) {
+    const lines = String(text || "").split("\n").map((l) => l.trim()).filter((l) => l && !/^(🔗|📷|📄) /.test(l));
+    const marked = lines.filter((l) => BULLET.test(l));
+    const picked = marked.length >= 2 ? marked : lines.length >= 2 ? lines : (lines[0] || "").split("。").map((x) => x.trim()).filter(Boolean).map((x) => x + "。");
+    return picked.map((l) => l.replace(BULLET, "")).filter(Boolean);
+  }
+  const stepCmd = (said) => /(次|つぎ|ネクスト|進んで|すすんで|next)/i.test(said) ? 1 : /(戻|もど|前へ|まえ|back|previous)/i.test(said) ? -1 : 0;
+  let wakeLock = null;
+  function openSteps(n) {
+    const t = T(), dlg = $("xDlg"), steps = stepsOf(n.text);
+    let i = 0, rec = null, heard = 0, speak = getJSON("mindrawer.stepsSpeak", true);
+    const num = el("p", { class: "step-n" }), big = el("p", { class: "step-big", "aria-live": "polite" }), bar = el("progress", { max: String(steps.length), class: "step-bar" });
+    const say = () => { if (!speak || !("speechSynthesis" in window)) return; try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(steps[i]); u.lang = /[぀-ヿ一-鿿]/.test(steps[i]) ? "ja-JP" : "en-US"; speechSynthesis.speak(u); } catch {} };
+    const draw = () => { num.textContent = t.stepN(i + 1, steps.length); big.textContent = steps[i] || ""; bar.value = i + 1; prev.disabled = i === 0; next.textContent = i + 1 >= steps.length ? t.stepDone : t.stepNext; };
+    const go = (d) => { if (d > 0 && i + 1 >= steps.length) { dlg.close(); return; } i = Math.min(Math.max(0, i + d), steps.length - 1); draw(); say(); };
+    const prev = el("button", { type: "button", class: "ghost step-btn", onclick: () => go(-1) }, t.stepPrev), next = el("button", { type: "button", class: "step-btn", onclick: () => go(1) }, t.stepNext);
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const mic = SR ? el("button", { type: "button", class: "mini", onclick: () => {
+      if (rec) { rec.onend = null; rec.stop(); rec = null; mic.textContent = t.stepVoice; return; }
+      rec = new SR(); rec.lang = state.lang === "ja" ? "ja-JP" : "en-US"; rec.continuous = true; rec.interimResults = true; heard = 0;
+      rec.onresult = (e) => { const said = [...e.results].map((r) => r[0].transcript).join(" "); const cmds = said.split(/[\s、。,.]+/).map(stepCmd).filter(Boolean); for (const c of cmds.slice(heard)) go(c); heard = Math.max(heard, cmds.length); };
+      rec.onend = () => { if (rec) try { heard = 0; rec.start(); } catch {} };
+      rec.start(); mic.textContent = t.stepListening;
+    } }, t.stepVoice) : null;
+    const spk = el("button", { type: "button", class: "mini", onclick: () => { speak = !speak; setJSON("mindrawer.stepsSpeak", speak); spk.textContent = speak ? t.stepSpeakOn : t.stepSpeakOff; if (!speak) try { speechSynthesis.cancel(); } catch {} } }, speak ? t.stepSpeakOn : t.stepSpeakOff);
+    fill(dlg, el("div", { class: "help-head" }, el("h2", {}, n.title), el("button", { type: "button", class: "help-x", "aria-label": t.close, onclick: () => dlg.close() }, "×")),
+      bar, num, big, el("div", { class: "step-acts" }, prev, next), el("div", { class: "set-row" }, mic, spk));
+    dlg.onclose = () => { if (rec) { rec.onend = null; rec.stop(); rec = null; } try { speechSynthesis.cancel(); } catch {} try { wakeLock?.release(); } catch {} dlg.onclose = null; };
+    if (!dlg.open) dlg.showModal();
+    navigator.wakeLock?.request("screen").then((w) => { wakeLock = w; }).catch(() => {});
+    draw(); say();
+  }
+  // ---------- やることボード ----------
+  const COLS = ["today", "week", "someday", "done"];
+  function boardOf(notes, now = Date.now()) {
+    const today = todayISO(), wk = new Date(now + 7 * 864e5), week = `${wk.getFullYear()}-${String(wk.getMonth() + 1).padStart(2, "0")}-${String(wk.getDate()).padStart(2, "0")}`;
+    const out = { today: [], week: [], someday: [], done: [] };
+    for (const n of notes) {
+      if (n.example || n.archived) continue;
+      let c = null;
+      if (COLS.includes(n.board)) { if (n.board === "done" && now - (n.updatedAt || n.createdAt) > 14 * 864e5) continue; c = n.board; }
+      else if (n.plannedDay === today || (n.remindAt && n.remindAt <= today)) c = "today";
+      else if (n.remindAt && n.remindAt <= week) c = "week";
+      else if (checkItems(n.text).some((x) => !x.done)) c = "someday";
+      if (c) out[c].push(n);
+    }
+    return out;
+  }
+  function openBoard(col = "today") {
+    const t = T(), dlg = $("xDlg"), b = boardOf(state.notes);
+    const move = async (n, c) => { await state.store.update(n.id, { board: c, ...(c === "today" ? { plannedDay: todayISO() } : {}) }); openBoard(col); };
+    fill(dlg, el("div", { class: "help-head" }, el("h2", {}, t.boardH), el("button", { type: "button", class: "help-x", "aria-label": t.close, onclick: () => dlg.close() }, "×")),
+      el("div", { class: "seg board-seg", role: "tablist" }, ...COLS.map((c) => el("button", { type: "button", "aria-pressed": String(c === col), onclick: () => openBoard(c) }, `${t.cols[c]} ${b[c].length}`))),
+      el("div", { class: "board-list" }, ...(b[col].length ? b[col].map((n) => el("div", { class: "board-row" },
+        el("button", { type: "button", class: "ck" + (col === "done" ? " done" : ""), "aria-label": col === "done" ? t.boardUndo : t.boardDone, onclick: () => move(n, col === "done" ? "today" : "done") }, el("span", { class: "box" }, col === "done" ? "✓" : "")),
+        el("button", { type: "button", class: "board-t", onclick: () => { dlg.close(); jumpTo(n); } }, n.title, checkItems(n.text).length ? el("small", {}, ` ${checkItems(n.text).filter((x) => x.done).length}/${checkItems(n.text).length}`) : null),
+        (() => { const sel = el("select", { "aria-label": t.boardMove }, el("option", { value: "" }, "→"), ...COLS.filter((c) => c !== col).map((c) => el("option", { value: c }, t.cols[c])), el("option", { value: "x" }, t.boardOut));
+          sel.onchange = async () => { if (sel.value === "x") { await state.store.update(n.id, { board: null, plannedDay: null }); openBoard(col); } else if (sel.value) move(n, sel.value); }; return sel; })()))
+        : [el("p", { class: "none" }, t.boardEmpty)])));
+    if (!dlg.open) dlg.showModal();
+  }
+  // ---------- シリーズ ----------
+  const CIRC = "①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳";
+  function seriesKey(title) {
+    const t2 = String(title || "").trim(), last = t2.slice(-1), ci = CIRC.indexOf(last);
+    if (ci >= 0) { const stem = t2.slice(0, -1).trim(); return stem.length >= 2 ? { stem, index: ci + 1 } : null; }
+    const m = t2.match(/^(.*?)[\s　:：\-ー]*[（(]?(?:その|第|part\s*|#|no\.?\s*|vol\.?\s*)?(\d{1,3})[)）]?(?:回|話|部|章|日目)?$/i);
+    if (!m) return null; const stem = m[1].trim(); return stem.length >= 2 ? { stem, index: Number(m[2]) } : null;
+  }
+  function seriesOf(n, notes) {
+    const k = seriesKey(n.title); if (!k) return [];
+    const same = notes.map((x) => ({ x, k: seriesKey(x.title) })).filter((o) => !o.x.example && o.k && o.k.stem.toLowerCase() === k.stem.toLowerCase());
+    return same.length >= 2 ? same.sort((a, b) => a.k.index - b.k.index).map((o) => o.x) : [];
+  }
+  // ---------- 使っていないメモの片づけ・次にやること ----------
+  function unusedNotes(notes, now = Date.now()) {
+    const cut = now - 180 * 864e5;
+    return notes.filter((n) => !n.example && !n.pinned && !n.locked && !n.archived && (n.helpful || 0) < 3 && (n.lastSeen || n.updatedAt || n.createdAt) < cut && (n.checkedAt || 0) < cut)
+      .sort((a, b) => (a.lastSeen || a.updatedAt || a.createdAt) - (b.lastSeen || b.updatedAt || b.createdAt)).slice(0, 20);
+  }
+  function tidyDue(now = new Date()) {
+    if (now.getDate() > 7) return false;
+    const last = getJSON(PREF.tidyShown, 0); if (!last) return true;
+    const d = new Date(last); return d.getFullYear() !== now.getFullYear() || d.getMonth() !== now.getMonth();
+  }
+  function openTidy() {
+    const t = T(), dlg = $("xDlg"); setJSON(PREF.tidyShown, Date.now());
+    const list = unusedNotes(state.notes);
+    const act = async (n, p) => { await (p ? state.store.update(n.id, p) : trashNote(n)); openTidy(); };
+    fill(dlg, el("div", { class: "help-head" }, el("h2", {}, t.tidyH), el("button", { type: "button", class: "help-x", "aria-label": t.close, onclick: () => dlg.close() }, "×")),
+      el("p", { class: "set-note" }, t.tidyNote),
+      ...(list.length ? list.map((n) => el("div", { class: "trow2" }, el("span", {}, n.title, el("small", {}, new Date(n.lastSeen || n.updatedAt || n.createdAt).toLocaleDateString(state.lang === "ja" ? "ja-JP" : "en"))),
+        el("span", {}, el("button", { class: "mini", onclick: () => act(n, { checkedAt: Date.now() }) }, t.tidyKeep), " ", el("button", { class: "mini", onclick: () => act(n, { archived: true }) }, t.archive), " ", el("button", { class: "mini", onclick: () => act(n, null) }, t.del))))
+        : [el("p", { class: "none" }, t.tidyNone)]),
+      list.length > 1 ? el("div", { class: "set-row" }, el("button", { class: "mini", onclick: async () => { for (const n of list) await state.store.update(n.id, { archived: true }); openTidy(); } }, t.tidyAll)) : null);
+    if (!dlg.open) dlg.showModal(); renderRail();
+  }
+  function nextActions(notes, now = Date.now()) {
+    const b = boardOf(notes, now), out = [...b.today, ...b.week];
+    for (const n of notes) if (!n.example && !n.locked && checkItems(n.text).some((x) => !x.done) && !out.includes(n)) out.push(n);
+    for (const n of notes) if (n.readLater && !n.readAt && now - n.createdAt > 3 * 864e5 && !out.includes(n)) out.push(n);
+    return out.filter((n) => !n.locked).slice(0, 5);
+  }
+  state.nextAns = null;
+  async function suggestNext() {
+    const t = T();
+    state.nextAns = { busy: true }; renderPlan();
+    let ans;
+    if (state.sample) { try { const r = await retrieve(t.nextQ); ans = { text: r.answer, ids: r.ids }; } catch {} }
+    if (!ans) { const p = nextActions(state.notes.filter((n) => !n.archived)); ans = { text: p.length ? t.nextHeur : t.nextNone, ids: p.map((n) => n.id) }; }
+    state.nextAns = ans; renderPlan();
+  }
+  function renderPlan() {
+    const t = T(), box = $("planBox"); if (!box) return;
+    if (!state.notes.length) { box.replaceChildren(); return; }
+    const b = boardOf(state.notes), simple = document.body.classList.contains("simple");
+    const a = state.nextAns, unused = !simple && tidyDue() ? unusedNotes(state.notes) : [];
+    box.replaceChildren(
+      el("button", { type: "button", class: "plan-board", onclick: () => openBoard() }, el("b", {}, t.boardH), el("span", {}, t.boardSum(b.today.length, b.week.length)), "›"),
+      simple ? null : el("div", { class: "plan-next" }, el("div", { class: "plan-h" }, el("b", {}, "💡 " + t.nextH),
+        a?.busy ? el("span", { class: "muted" }, t.chatThinking) : el("button", { type: "button", class: "mini", onclick: suggestNext }, a ? t.nextAgain : t.nextBtn)),
+        a && !a.busy ? el("p", {}, a.text) : el("p", { class: "muted" }, t.nextIntro),
+        ...(a && !a.busy ? a.ids.map((id) => state.notes.find((n) => n.id === id)).filter(Boolean).slice(0, 5).map((n) => el("button", { type: "button", class: "fitem", onclick: () => jumpTo(n) }, el("span", {}, n.title))) : [])),
+      unused.length ? el("div", { class: "plan-next" }, el("b", {}, "🗃 " + t.tidyH), el("p", { class: "muted" }, t.tidyCount(unused.length)),
+        el("div", { class: "set-row" }, el("button", { type: "button", class: "mini", onclick: openTidy }, t.tidyOpen), el("button", { type: "button", class: "mini", onclick: () => { setJSON(PREF.tidyShown, Date.now()); renderPlan(); } }, t.tidyLater))) : null);
+  }
+  // ---------- QR コード・バーコード（写真から読む） ----------
+  let jsQR = null;
+  async function readCodes(file) {
+    try {
+      if ("BarcodeDetector" in window) {
+        const d = new window.BarcodeDetector(); const bmp = await createImageBitmap(file);
+        const r = await d.detect(bmp); if (r.length) return [...new Set(r.map((x) => x.rawValue).filter(Boolean))];
+      }
+      if (!jsQR) { await new Promise((ok, ng) => { const sc = document.createElement("script"); sc.src = "https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"; sc.onload = ok; sc.onerror = ng; document.head.append(sc); }); jsQR = window.jsQR; }
+      const bmp = await createImageBitmap(file), sc = Math.min(1, 1600 / Math.max(bmp.width, bmp.height));
+      const c = document.createElement("canvas"); c.width = Math.round(bmp.width * sc); c.height = Math.round(bmp.height * sc);
+      const g = c.getContext("2d"); g.drawImage(bmp, 0, 0, c.width, c.height);
+      const r = jsQR(g.getImageData(0, 0, c.width, c.height).data, c.width, c.height);
+      return r?.data ? [r.data] : [];
+    } catch { return []; }
+  }
+  /** 読み取ったコードを、メモにしやすい形にする（スマホ版と同じ） */
+  function describeCode(raw) {
+    const t = T(), p = String(raw).trim();
+    const field = (k) => { const i = p.indexOf(k + ":"); if (i < 0) return null; let v = "", esc = false; for (const ch of p.slice(i + k.length + 1)) { if (esc) { v += ch; esc = false; continue; } if (ch === "\\") { esc = true; continue; } if (ch === ";") break; v += ch; } return v || null; };
+    if (/^WIFI:/i.test(p)) { const ss = field("S") || "", pw = field("P") || "", ty = field("T") || ""; return { title: "Wi-Fi " + ss, text: [t.codeNet + ss, pw ? t.codePass + pw : null, ty ? t.codeSec + ty : null].filter(Boolean).join("\n") }; }
+    if (/^https?:\/\/\S+$/i.test(p)) { let h = p; try { h = new URL(p).host; } catch {} return { title: h, text: p, url: p }; }
+    if (/^MECARD:/i.test(p)) { const nm = (field("N") || "").replace(/,/g, " "); return { title: nm || t.codeContact, text: [nm, field("TEL") && "TEL: " + field("TEL"), field("EMAIL") && "Mail: " + field("EMAIL"), field("ADR")].filter(Boolean).join("\n"), url: field("URL") }; }
+    if (/^BEGIN:VCARD/i.test(p)) { const get = (k) => (p.split(/\r?\n/).find((l) => l.toUpperCase().startsWith(k)) || "").split(":").slice(1).join(":") || null; const nm = (get("FN") || (get("N") || "").replace(/;/g, " ")).trim();
+      return { title: nm || t.codeContact, text: [nm, get("TEL") && "TEL: " + get("TEL"), get("EMAIL") && "Mail: " + get("EMAIL"), get("ORG")].filter(Boolean).join("\n"), url: get("URL") }; }
+    if (/^tel:/i.test(p)) return { title: t.codePhone, text: p.slice(4) };
+    if (/^mailto:/i.test(p)) return { title: t.codeMail, text: p.slice(7) };
+    if (/^\d{8}$|^\d{12,14}$/.test(p)) return { title: t.codeProduct + p, text: t.codeProductL + p, url: "https://www.google.com/search?q=" + p };
+    return { title: (p.split("\n")[0] || p).slice(0, 40), text: p };
+  }
+  // ---------- 外の保存先（iCloud Drive・Google Drive などのフォルダ。Chrome・Edge） ----------
+  let backupDir = null, backupDirName = "";
+  const idb = () => new Promise((ok, ng) => { const r = indexedDB.open("mindrawer", 1); r.onupgradeneeded = () => r.result.createObjectStore("kv"); r.onsuccess = () => ok(r.result); r.onerror = () => ng(r.error); });
+  async function idbSet(k, v) { const db = await idb(); return new Promise((ok) => { const tx = db.transaction("kv", "readwrite"); v == null ? tx.objectStore("kv").delete(k) : tx.objectStore("kv").put(v, k); tx.oncomplete = ok; tx.onerror = ok; }); }
+  async function idbGet(k) { const db = await idb(); return new Promise((ok) => { const r = db.transaction("kv").objectStore("kv").get(k); r.onsuccess = () => ok(r.result); r.onerror = () => ok(null); }); }
+  (async () => { try { backupDir = await idbGet("backupDir"); backupDirName = backupDir?.name || ""; } catch {} })();
+  async function setBackupDir(h) { backupDir = h; backupDirName = h?.name || ""; try { await idbSet("backupDir", h); } catch {} }
+  async function pickBackupDir() {
+    try { const h = await window.showDirectoryPicker({ mode: "readwrite" }); await setBackupDir(h); await writeBackupDir(state.notes.filter((n) => !n.example), true); toast(T().extSaved(h.name)); openSettings(); } catch {}
+  }
+  async function writeBackupDir(notes, ask) {
+    if (!backupDir) return;
+    try {
+      let perm = await backupDir.queryPermission?.({ mode: "readwrite" });
+      if (perm !== "granted" && ask) perm = await backupDir.requestPermission?.({ mode: "readwrite" });
+      if (perm !== "granted") return;
+      const name = `mindrawer-${new Date().toISOString().slice(0, 16).replace(/[T:]/g, "-")}.json`;
+      const fh = await backupDir.getFileHandle(name, { create: true }), w = await fh.createWritable();
+      await w.write(JSON.stringify({ app: "hikidashi", version: 1, exportedAt: new Date().toISOString(), notes }, null, 2)); await w.close();
+      const names = []; for await (const [n] of backupDir.entries()) if (/^mindrawer-.*\.json$/.test(n)) names.push(n);
+      for (const n of names.sort().slice(0, -8)) await backupDir.removeEntry(n).catch(() => {});
+    } catch {}
+  }
+
   // ---------- 読み上げ ----------
   function readAloud(n) {
     try {
@@ -3430,6 +3693,14 @@ ${text || "(none — read the image)"}`;
     if (items.length) s.append(el("ul", { class: "checks" }, ...items.map((it) => el("li", {}, el("button", { type: "button", class: "ck" + (it.done ? " done" : ""), "aria-pressed": String(it.done),
       onclick: () => { recordUse(n.id); state.store.update(n.id, { text: toggleCheckLine(n.text, it.line) }); } }, el("span", { class: "box", "aria-hidden": "true" }, it.done ? "✓" : ""), it.text)))));
     if (n.savedPlace?.name) s.querySelector(".chips")?.prepend(el("span", { class: "chip sit" }, ico("pin", 12), n.savedPlace.name));
+    const chips = s.querySelector(".chips") || (() => { const c = el("div", { class: "chips" }); s.append(c); return c; })();
+    if (n.addedBy) chips.prepend(el("span", { class: "chip sit" }, "👤 " + n.addedBy));
+    if (n.archived) chips.prepend(el("span", { class: "chip sit" }, t.archivedF));
+    if (n.readLater) chips.prepend(el("span", { class: "chip rem" }, n.readAt ? "✓ " + t.readDone : "🔖 " + t.readLaterF));
+    const ser = seriesOf(n, state.notes), si = ser.findIndex((x) => x.id === n.id);
+    if (si >= 0) s.append(el("div", { class: "series" }, el("span", {}, "📚 " + t.seriesL(si + 1, ser.length)),
+      si > 0 ? el("button", { type: "button", class: "mini", onclick: () => jumpTo(ser[si - 1]) }, t.prevS) : null,
+      si + 1 < ser.length ? el("button", { type: "button", class: "mini", onclick: () => jumpTo(ser[si + 1]) }, t.nextS) : null));
     const rel = related(n);
     s.append(el("details", { class: "more", ontoggle: (e) => { if (e.currentTarget.open) recordUse(n.id); } }, el("summary", {}, t.original),
       el("p", { class: "raw" }, n.text),
@@ -3573,6 +3844,7 @@ ${text || "(none — read the image)"}`;
     const t = T(), notes = state.notes;
     renderNow();
     renderToday();
+    renderPlan();
     // Today's pick: least recently seen older notes, rotated daily
     const old = notes.filter((n) => Date.now() - n.createdAt > 2 * 864e5).sort((a, b) => (a.lastSeen || a.createdAt) - (b.lastSeen || b.createdAt));
     const pool = old.slice(0, 7);
@@ -3600,7 +3872,9 @@ ${text || "(none — read the image)"}`;
     const keys = [...counts.keys()].sort(state.view === "cat" ? (a, b) => (isFavFolder(b) - isFavFolder(a)) || counts.get(b) - counts.get(a) || a.localeCompare(b) : (a, b) => Number(b) - Number(a));
     const pinnedN = notes.filter((n) => n.pinned).length;
     const smarts = getJSON(PREF.smart, []);
-    if (!["__all", "__pin"].includes(state.folder) && !state.folder.startsWith("smart:") && !counts.has(state.folder)) state.folder = "__all";
+    const laterN = notes.filter((n) => n.readLater && !n.readAt).length, archN = notes.filter((n) => n.archived).length;
+    if (!["__all", "__pin", "__later", "__archive"].includes(state.folder) && !state.folder.startsWith("smart:") && !counts.has(state.folder)) state.folder = "__all";
+    if ((state.folder === "__later" && !laterN) || (state.folder === "__archive" && !archN)) state.folder = "__all";
     if (state.folder.startsWith("smart:") && !smarts.some((x) => "smart:" + x.id === state.folder)) state.folder = "__all";
     if (state.folder === "__pin" && !pinnedN) state.folder = "__all";
     const item = (key, label, n, dot) => el("button", { class: "fitem", "aria-pressed": String(state.folder === key), onclick: () => { state.folder = key; renderRail(); renderList(); } }, dot ? folderBadge(key, "fdot") : null, label, el("span", { class: "n" }, n));
@@ -3609,7 +3883,7 @@ ${text || "(none — read the image)"}`;
       b.append(el("span", { class: "x", role: "button", "aria-label": t.smartDel, title: t.smartDel, onclick: (e) => { e.stopPropagation(); if (confirm(t.smartDelQ(sf.name))) { setJSON(PREF.smart, getJSON(PREF.smart, []).filter((x) => x.id !== sf.id)); renderRail(); renderList(); } } }, "×"));
       return b;
     });
-    $("folders").replaceChildren(...(notes.length ? [item("__all", t.all, notes.length), pinnedN ? item("__pin", t.pinned, pinnedN) : null, ...smartItems, ...keys.map((k) => item(k, (state.view === "cat" && isFavFolder(k) ? "★ " : "") + (state.view === "cat" && isSharedFolder(k) ? "" : "") + folderLabel(k), counts.get(k), state.view === "cat"))].filter(Boolean) : []));
+    $("folders").replaceChildren(...(notes.length ? [item("__all", t.all, notes.length), pinnedN ? item("__pin", t.pinned, pinnedN) : null, laterN ? item("__later", t.readLaterF, laterN) : null, archN ? item("__archive", t.archivedF, archN) : null, ...smartItems, ...keys.map((k) => item(k, (state.view === "cat" && isFavFolder(k) ? "★ " : "") + (state.view === "cat" && isSharedFolder(k) ? "" : "") + folderLabel(k), counts.get(k), state.view === "cat"))].filter(Boolean) : []));
     let dl = $("folderNames");
     if (!dl) { dl = el("datalist", { id: "folderNames" }); document.body.append(dl); }
     dl.replaceChildren(...[...new Set(notes.map((n) => n.category))].map((c) => el("option", { value: c })));
@@ -3629,8 +3903,8 @@ ${text || "(none — read the image)"}`;
     const f = state.filter.toLowerCase();
     renderReview(); renderUpkeep();
     const smart = state.folder.startsWith("smart:") ? getJSON(PREF.smart, []).find((x) => "smart:" + x.id === state.folder) : null;
-    const shown = state.notes.filter((n) =>
-      (smart ? smartMatch(smart, n) : state.folder === "__all" || (state.folder === "__pin" ? n.pinned : folderOf(n) === state.folder)) && (!f || hay(n).includes(f)) && advMatch(n));
+    const shown = state.notes.filter((n) => (!n.archived || state.folder === "__archive" || f) &&
+      (smart ? smartMatch(smart, n) : state.folder === "__all" || (state.folder === "__pin" ? n.pinned : state.folder === "__later" ? n.readLater && !n.readAt : state.folder === "__archive" ? n.archived : folderOf(n) === state.folder)) && (!f || hay(n).includes(f)) && advMatch(n));
     $("filtBtn").dataset.n = String(advCount());
     $("filtBtn").textContent = T().filters + (advCount() ? ` · ${advCount()}` : "");
     $("listH").textContent = t.listH(shown.length);
