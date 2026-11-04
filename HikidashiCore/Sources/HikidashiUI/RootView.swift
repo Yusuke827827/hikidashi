@@ -156,6 +156,7 @@ public struct HikidashiRootView: View {
         .task {
             if !DemoMode.isOn {
                 let s = store
+                librarian.addedBy = Librarian.shareName
                 librarian.onSaved = { n in PlaceRecorder.shared.record(n, in: s) }
             }
             await refresh()

@@ -191,7 +191,7 @@ struct SettingsView: View {
                 Section {
                     TextField(L("例: ママ・たろう", "e.g. Mom, Taro"), text: $shareName)
                         .onSubmit { Librarian.shareName = shareName }
-                        .onChange(of: shareName) { _, v in Librarian.shareName = v }
+                        .onChange(of: shareName) { _, v in Librarian.shareName = v; librarian.addedBy = Librarian.shareName }
                 } header: {
                     Text(L("共有で使う名前", "Your name in shared folders"))
                 } footer: {
