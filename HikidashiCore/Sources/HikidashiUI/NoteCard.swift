@@ -22,6 +22,7 @@ struct NoteCard: View {
     @State private var publishing = false
     @State private var exportMessage: String?
     @State private var showHistory = false
+    @AppStorage("simpleMode") private var simpleMode = false
     private var secrets: SecretNotes { SecretNotes.shared }
     private var hidden: Bool { secrets.isHidden(note) }
 
@@ -75,6 +76,7 @@ struct NoteCard: View {
             actions
         }
         .card()
+        .accessibilityElement(children: .contain)
         .overlay(alignment: .leading) {
             // フォルダの色の線
             Capsule().fill(folderColor.opacity(0.85)).frame(width: 3).padding(.vertical, 14)
@@ -89,6 +91,10 @@ struct NoteCard: View {
     }
 
     @ViewBuilder private var content: some View {
+        if Vault.cannotOpen(note) {
+            Text(L("別の端末（Web 版など）で鍵をかけたメモです。この iPhone では開けません。", "Locked on another device (like the web version). It can't be opened on this iPhone."))
+                .font(.footnote).foregroundStyle(p.muted)
+        }
         if !note.summary.isEmpty {
             Text(note.summary).font(.subheadline).foregroundStyle(p.text.opacity(0.88))
         }
@@ -237,6 +243,7 @@ struct NoteCard: View {
                     Label(note.plannedDay == today ? L("今日のリストから外す", "Remove from today's list") : L("今日のリストに入れる", "Add to today's list"),
                           systemImage: "checklist")
                 }
+                if !simpleMode {
                 Button {
                     store.update(note.id) { $0.review = $0.review == nil ? .start() : nil }
                 } label: {
@@ -257,6 +264,7 @@ struct NoteCard: View {
                 }
                 Button { Task { exportMessage = await CalendarExport.addReminder(note) } } label: {
                     Label(L("リマインダーに入れる", "Add to Reminders"), systemImage: "checklist.checked")
+                }
                 }
                 Button(role: .destructive) { confirmDelete = true } label: { Label(L("削除", "Delete"), systemImage: "trash") }
             } label: {

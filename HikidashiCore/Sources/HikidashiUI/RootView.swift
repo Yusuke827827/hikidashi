@@ -47,6 +47,8 @@ public struct HikidashiRootView: View {
     @State private var calText = ""
     @State private var showGraph = false
     @State private var usageTick = 0
+    @AppStorage("simpleMode") private var simpleMode = false
+    @AppStorage("textSize") private var textSizeRaw = TextSize.system.rawValue
     @AppStorage("noteSort") private var sortRaw = NoteSort.new.rawValue
     private var sort: NoteSort { NoteSort(rawValue: sortRaw) ?? .new }
 
@@ -209,10 +211,14 @@ public struct HikidashiRootView: View {
             if let id = Spotlight.noteID(from: activity) { AppRouter.open(noteID: id) }
         }
         // メモが変わったら、ウィジェットと iPhone の検索を新しくする
-        .onChange(of: store.notes) { _, notes in
+        // （続けて変わったときは、落ち着いてから 1 回だけ）
+        .task(id: store.notes) {
             guard !DemoMode.isOn else { return }
+            try? await Task.sleep(for: .seconds(1.5))
+            guard !Task.isCancelled else { return }
             AppRouter.reloadWidgets()
-            Spotlight.index(notes)
+            Spotlight.index(store.notes)
+            if SyncSettings.code != nil { _ = try? await librarian.sync(serverURL: Subscription.serverURL) }
         }
         // 初めて開いたときの案内（見本モードでは出さない）
         .fullScreenCover(isPresented: Binding(get: { !onboarded && !DemoMode.isOn }, set: { _ in })) {
@@ -232,6 +238,7 @@ public struct HikidashiRootView: View {
             if phase == .background { AppLock.shared.lockIfNeeded(); SecretNotes.shared.closeAll(); usageTick += 1 }
             if phase == .active { Task { await refresh() } }
         }
+        .dynamicTypeSize((TextSize(rawValue: textSizeRaw) ?? .system).range)
     }
 
     private func refresh() async {
@@ -242,6 +249,7 @@ public struct HikidashiRootView: View {
                 recall = r
             }
             if DemoMode.opensSettings { showSettings = true }
+            if DemoMode.tab == "notes" { tab = .notes } else if DemoMode.tab == "calendar" { tab = .calendar }
             return
         }
         // アプリが閉じた状態から通知を押して起動したとき
@@ -265,6 +273,10 @@ public struct HikidashiRootView: View {
         }
         if let c = NotificationRouter.shared.joinCode { NotificationRouter.shared.joinCode = nil; joinCode = c }
         store.purgeTrash()
+        if SyncSettings.code != nil {
+            let n = (try? await librarian.sync(serverURL: Subscription.serverURL)) ?? 0
+            if n > 0 { show(L("ほかの端末から \(n) 件そろえました。", "Synced \(n) changes from your other devices.")) }
+        }
         let expired = store.purgeExpired()
         if expired > 0 { show(L("期限が過ぎたメモ \(expired) 件をゴミ箱へ移しました。", "Moved \(expired) expired notes to the trash.")) }
         await PlaceKindAlerts.sync(store.notes)
@@ -667,18 +679,20 @@ public struct HikidashiRootView: View {
         if let e = librarian.lastError { errorBanner(e) }
         if let recall { recallCard(recall) }
         todayListCard
-        let now = usageTick >= 0 ? Heuristics.forNow(store.notes, log: UsageLog.load()) : []
-        if !now.isEmpty { NowCard(notes: now, onOpen: jump) }
-        let due = Heuristics.dueReviews(store.notes)
-        if !due.isEmpty { ReviewCard(notes: due, store: store) }
-        weeklyReviewCard
-        upkeepCards
+        if !simpleMode {
+            let now = usageTick >= 0 ? Heuristics.forNow(store.notes, log: UsageLog.load()) : []
+            if !now.isEmpty { NowCard(notes: now, onOpen: jump) }
+            let due = Heuristics.dueReviews(store.notes)
+            if !due.isEmpty { ReviewCard(notes: due, store: store) }
+            weeklyReviewCard
+            upkeepCards
+        }
         if let pick = Heuristics.todaysPick(store.notes, skip: pickSkip) { pickCard(pick) }
         upcoming
-        if let s = mergeSuggestion {
+        if !simpleMode, let s = mergeSuggestion {
             MergeSuggestionCard(suggestion: s, store: store) { withAnimation { mergeRefresh += 1 } }
         }
-        if let moves = resortMoves {
+        if !simpleMode, let moves = resortMoves {
             ResortCard(moves: moves, store: store) { withAnimation { mergeRefresh += 1 } }
         }
     }
@@ -783,7 +797,7 @@ public struct HikidashiRootView: View {
         return sort.sorted(store.notes.filter { n in
             if let smart, !smart.matches(n) { return false }
             let inFolder = smart != nil || folder == Self.allKey || (folder == Self.pinKey ? n.pinned : folderKey(n) == folder)
-            return inFolder && (f.isEmpty || n.haystack.contains(f)) && noteFilter.matches(n)
+            return inFolder && (f.isEmpty || store.haystack(n).contains(f)) && noteFilter.matches(n)
         })
     }
 

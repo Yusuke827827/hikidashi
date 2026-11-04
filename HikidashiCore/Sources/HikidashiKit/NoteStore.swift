@@ -122,17 +122,32 @@ public final class NoteStore {
             notes = []
             return
         }
-        notes = file.notes.sorted { $0.createdAt > $1.createdAt }
+        notes = file.notes.map(Vault.open).sorted { $0.createdAt > $1.createdAt }
     }
 
+    /// 保存する。秘密のメモは暗号文にし、iPhone ではロック中に読めないようにする（ウィジェットのため、起動後の最初のロック解除までは読める形）
     private func persist() {
         let enc = JSONEncoder()
-        enc.outputFormatting = [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes]
-        guard let data = try? enc.encode(ExportFile(notes: notes)) else { return }
+        enc.outputFormatting = [.withoutEscapingSlashes]
+        guard let data = try? enc.encode(ExportFile(notes: notes.map(Vault.seal))) else { return }
+        #if os(iOS)
+        try? data.write(to: fileURL, options: [.atomic, .completeFileProtectionUntilFirstUserAuthentication])
+        #else
         try? data.write(to: fileURL, options: .atomic)
+        #endif
     }
 
     public func note(_ id: String) -> Note? { notes.first { $0.id == id } }
+
+    /// 検索用の文字（メモが多くても速いよう、変わったメモだけ作り直す）
+    @ObservationIgnored private var hayCache: [String: (Date, Bool, String)] = [:]
+
+    public func haystack(_ n: Note) -> String {
+        if let c = hayCache[n.id], c.0 == n.modifiedAt, c.1 == n.isLocked { return c.2 }
+        let h = n.haystack
+        hayCache[n.id] = (n.modifiedAt, n.isLocked, h)
+        return h
+    }
 
     public func add(_ note: Note) {
         notes.insert(note, at: 0)
@@ -152,6 +167,18 @@ public final class NoteStore {
         onChange?([id], [])
     }
 
+    /// 同期で届いた内容に置き換える。無くなったメモはゴミ箱へ（30 日は戻せる）
+    func replaceAll(_ next: [Note]) {
+        let keep = Set(next.map(\.id))
+        let gone = notes.filter { !keep.contains($0.id) }
+        if !gone.isEmpty {
+            trash.insert(contentsOf: gone.map { TrashedNote(note: $0, deletedAt: Date()) }, at: 0)
+            saveTrash()
+        }
+        notes = next.sorted { $0.createdAt > $1.createdAt }
+        persist()
+    }
+
     /// ゴミ箱へ移す（30 日は元に戻せる。画像やファイルも残す）
     public func remove(_ id: String) {
         guard let n = note(id) else { return }
@@ -159,6 +186,7 @@ public final class NoteStore {
         saveTrash()
         notes.removeAll { $0.id == id }
         persist()
+        SyncSettings.noteDeleted([id])
         onChange?([], [id])
     }
 

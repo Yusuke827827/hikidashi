@@ -13,6 +13,11 @@ enum DemoMode {
 
     static var isOn: Bool { arguments.contains("-HikidashiDemo") }
     static var opensSettings: Bool { arguments.contains("-HikidashiDemoSettings") }
+    /// -HikidashiDemoTab notes|calendar で、その画面を開いて起動する
+    static var tab: String? {
+        guard let i = arguments.firstIndex(of: "-HikidashiDemoTab"), i + 1 < arguments.count else { return nil }
+        return arguments[i + 1]
+    }
 
     static var recallQuery: String? {
         guard let i = arguments.firstIndex(of: "-HikidashiDemoRecall"), i + 1 < arguments.count else { return nil }

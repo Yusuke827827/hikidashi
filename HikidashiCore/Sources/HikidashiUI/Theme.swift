@@ -110,7 +110,30 @@ extension EnvironmentValues {
 
 enum Fonts {
     /// アプリ名・見出し用の明朝（ヒラギノ明朝）
-    static func mincho(_ size: CGFloat) -> Font { .custom("HiraMinProN-W6", size: size) }
+    static func mincho(_ size: CGFloat) -> Font { .custom("HiraMinProN-W6", size: size, relativeTo: .title) }
+}
+
+/// 文字の大きさ（設定）。iPhone の設定の大きさに、さらに上乗せする
+enum TextSize: String, CaseIterable {
+    case system, large, xLarge, huge
+
+    var label: String {
+        switch self {
+        case .system: return L("iPhone に合わせる", "Match iPhone")
+        case .large: return L("大きめ", "Large")
+        case .xLarge: return L("もっと大きく", "Larger")
+        case .huge: return L("いちばん大きく", "Largest")
+        }
+    }
+
+    var range: ClosedRange<DynamicTypeSize> {
+        switch self {
+        case .system: return .xSmall ... .accessibility5
+        case .large: return .xLarge ... .accessibility5
+        case .xLarge: return .xxxLarge ... .accessibility5
+        case .huge: return .accessibility2 ... .accessibility5
+        }
+    }
 }
 
 // MARK: カード

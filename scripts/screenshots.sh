@@ -74,6 +74,8 @@ shot 07-night         light ja -wallpaper night
 shot 08-dusk          light ja -wallpaper dusk
 shot 09-settings      light ja -wallpaper plain -HikidashiDemoSettings
 shot 10-english       light en -wallpaper dawn
+shot 16-notes         light ja -wallpaper plain -HikidashiDemoTab notes
+shot 17-calendar      light ja -wallpaper plain -HikidashiDemoTab calendar
 # 英語版の App Store 用（scripts/store_shots.py が使う）
 shot 11-en-light      light en -wallpaper plain
 shot 12-en-recall     light en -wallpaper plain -HikidashiDemoRecall "Packing for a trip"

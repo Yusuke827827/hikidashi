@@ -24,6 +24,8 @@ struct SettingsView: View {
     @State private var managingFolders = false
     @AppStorage("memoPreview") private var memoPreview = true
     @AppStorage("autoBackup") private var autoBackup = true
+    @AppStorage("simpleMode") private var simpleMode = false
+    @AppStorage("textSize") private var textSize = TextSize.system.rawValue
     @State private var lockOn = AppLock.shared.isOn
     @State private var lastBackup = UserDefaults.standard.object(forKey: "lastBackup") as? Date
 
@@ -41,6 +43,22 @@ struct SettingsView: View {
                     } label: {
                         Label(L("使われ方のまとめ", "Your stats"), systemImage: "chart.bar")
                     }
+                }
+
+                Section {
+                    Toggle(isOn: $simpleMode) {
+                        Label(L("シンプルモード", "Simple mode"), systemImage: "square.grid.2x2")
+                    }
+                    Picker(selection: $textSize) {
+                        ForEach(TextSize.allCases, id: \.rawValue) { Text($0.label).tag($0.rawValue) }
+                    } label: {
+                        Label(L("文字の大きさ", "Text size"), systemImage: "textformat.size")
+                    }
+                } header: {
+                    Text(L("見やすさ", "Display"))
+                } footer: {
+                    Text(L("シンプルモードでは、しまう・今日の確認リスト・今日のひとつ・メモの一覧だけを出し、ふりかえりや整理の提案などを隠します。",
+                           "Simple mode shows only Save, Today's checklist, Today's pick and your notes, and hides reviews and tidy-up suggestions."))
                 }
 
                 if Subscription.isAvailable { plusSection }
@@ -160,6 +178,8 @@ struct SettingsView: View {
                     Text(L("カレンダーの 3 日先までの予定を見て、関係するメモがあれば前の日の夜 8 時に知らせます（例: 予定「出張」→ 荷造りのメモ）。予定はこの iPhone の中で読むだけで、どこにも送りません。\n場所の種類: 近くのスーパーに着いたら買い物のメモ、駅なら電車・旅行のメモ、のように知らせます。場所は iPhone が見張るだけで、アプリは記録しません。",
                            "Looks at your calendar for the next 3 days and, when a note fits an event, reminds you at 8 PM the day before (e.g. a trip → packing tips). Events are read on this iPhone only and never sent anywhere.\nPlace types: arrive at a nearby supermarket and get your shopping notes, a station and get train or travel notes. iOS watches the location; the app doesn't record it."))
                 }
+
+                SyncSection(librarian: librarian, message: $message)
 
                 if CloudSync.containerID != nil {
                     Section {

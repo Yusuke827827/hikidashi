@@ -7,6 +7,8 @@ import { PRIVACY_HTML, SUPPORT_HTML } from "./pages.generated";
 import { VerificationError, verifyTransaction } from "./verify";
 import { handleShare } from "./share";
 import { handleEmail, handleExtras } from "./extras";
+import { handleSync } from "./sync";
+import { handleTools } from "./tools";
 
 export interface Env {
   ANTHROPIC_API_KEY: string;
@@ -83,6 +85,12 @@ export async function handle(request: Request, env: Env, deps: Deps): Promise<Re
   // 共有フォルダ（共有コードを知っている人だけが読み書きできる）
   const shared = await handleShare(request, env.USAGE, deps.now().getTime());
   if (shared) return shared;
+  // 自分の端末どうしの同期（暗号文だけを預かる）
+  const synced = await handleSync(request, env.USAGE, deps.now().getTime());
+  if (synced) return synced;
+  // Web 版のためのページ・動画の読み取り
+  const tool = await handleTools(request, deps.fetch);
+  if (tool) return tool;
   // 公開リンク・メールと LINE の受け取り箱
   const extra = await handleExtras(request, env, deps.now().getTime(), deps.fetch);
   if (extra) return extra;

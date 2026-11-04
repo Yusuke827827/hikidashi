@@ -54,6 +54,12 @@
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
 html { -webkit-text-size-adjust: 100%; }
+body { zoom: var(--zoom, 1); }
+body.simple #nowBox, body.simple #reviewBox, body.simple #upkeepBox, body.simple #mergeBox, body.simple #resortBox, body.simple .weekly { display: none !important; }
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .04em; overflow-wrap: anywhere; }
+.more-btn { display: block; margin: 8px auto 0; min-height: 44px; padding: 0 22px; border-radius: 12px; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
 body { margin: 0; }
 body {
   background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.6;
@@ -770,7 +776,7 @@ body[data-tab="cal"] .hero, body[data-tab="cal"] .main { display: none !importan
     secMemo: "Memo mode", memoMode: "Condense long text into a memo", memoPreviewL: "Let me edit the memo before saving",
     secSafe: "Safety", pinOn: "Lock with a PIN", pinSet: "Set a PIN", pinChange: "Change", pinOff: "Turn off",
     pinAsk: "Choose a PIN (4–8 digits)", pinAgain: "Enter it again", pinMismatch: "The PINs didn't match.", pinBad: "Use 4–8 digits.", pinSaved: "PIN lock is on.", pinRemoved: "PIN lock is off.",
-    pinCurrent: "Enter your current PIN", pinNote: "The lock keeps people from peeking on a shared device. Notes in the browser are not encrypted.",
+    pinCurrent: "Enter your current PIN", pinNote: "The lock keeps people from peeking on a shared device. Secret notes are encrypted with a key made from your PIN; other notes are not.",
     lockH: "Mindrawer is locked", lockGo: "Unlock", lockWrong: "Wrong PIN.", lockForgot: "Forgot it? Clearing this site's data removes the lock, and the notes with it.",
     backupH: "Weekly backups", backupNote: "Once a week a copy of your notes is kept in this browser (latest 4). Export one to keep it safe elsewhere.",
     backupNow: "Make a copy now", backupMade: "Copy made.", backupNone: "No copies yet.", backupSave: "Export", backupRestore: "Restore", backupRestored: (n) => `Restored ${n} notes.`,
@@ -858,7 +864,7 @@ body[data-tab="cal"] .hero, body[data-tab="cal"] .main { display: none !importan
     secMemo: "メモ風", memoMode: "長い文はメモ風にまとめる", memoPreviewL: "しまう前に、まとめた文を直す",
     secSafe: "安心", pinOn: "暗証番号（PIN）でロック", pinSet: "PIN を決める", pinChange: "変える", pinOff: "やめる",
     pinAsk: "PIN を決めてください（数字 4〜8 桁）", pinAgain: "もう一度入れてください", pinMismatch: "PIN が一致しませんでした。", pinBad: "数字 4〜8 桁にしてください。", pinSaved: "PIN でロックします。", pinRemoved: "PIN のロックをやめました。",
-    pinCurrent: "今の PIN を入れてください", pinNote: "共有の端末でのぞき見されないためのロックです。ブラウザの中のメモは暗号化されません。",
+    pinCurrent: "今の PIN を入れてください", pinNote: "共有の端末でのぞき見されないためのロックです。秘密のメモは PIN から作った鍵で暗号にして保存します（ほかのメモは暗号にしません）。",
     lockH: "ロック中", lockGo: "開く", lockWrong: "PIN が違います。", lockForgot: "忘れたときは、このサイトのデータを消すと解除されます（メモも消えます）。",
     backupH: "毎週の控え", backupNote: "週に 1 回、メモの控えをこのブラウザに残します（新しい 4 つ）。大事なものは「書き出す」で外に保存してください。",
     backupNow: "今すぐ控えを作る", backupMade: "控えを作りました。", backupNone: "まだ控えはありません。", backupSave: "書き出す", backupRestore: "戻す", backupRestored: (n) => `${n} 件を戻しました。`,
@@ -896,6 +902,20 @@ body[data-tab="cal"] .hero, body[data-tab="cal"] .main { display: none !importan
   try { const l = localStorage.getItem(LANG_KEY); state.lang = l || (/^ja/i.test(navigator.language || "") ? "ja" : "en"); } catch { state.lang = /^ja/i.test(navigator.language || "") ? "ja" : "en"; }
   const T = () => I18N[state.lang];
 
+  Object.assign(I18N.en, { sealedElsewhere: "This secret note was locked in another browser or device and can't be opened here.", lockedNoPin: "It's a secret note now. Set a PIN in Settings to encrypt it.", showMore: (n) => `Show ${n} more`,
+    secLook: "Display", simpleMode: "Simple mode", simpleNote: "Simple mode shows only Save, Today's checklist, Today's pick and your notes, and hides reviews and tidy-up suggestions.", textSize: "Text size", textSizes: { "1": "Standard", "1.12": "Large", "1.25": "Larger", "1.4": "Largest" } });
+  Object.assign(I18N.ja, { sealedElsewhere: "別のブラウザや端末で鍵をかけた秘密のメモです。ここでは開けません。", lockedNoPin: "秘密のメモにしました。設定で PIN を決めると、本文を暗号にして保存します。", showMore: (n) => `あと ${n} 件を見る`,
+    secLook: "見やすさ", simpleMode: "シンプルモード", simpleNote: "シンプルモードでは、しまう・今日の確認リスト・今日のひとつ・メモの一覧だけを出し、ふりかえりや整理の提案などを隠します。", textSize: "文字の大きさ", textSizes: { "1": "ふつう", "1.12": "大きめ", "1.25": "もっと大きく", "1.4": "いちばん大きく" } });
+  // 見やすさ（シンプルモード・文字の大きさ）はこのブラウザだけの設定
+  function applyLook() {
+    document.body.classList.toggle("simple", !!getJSON("mindrawer.simple", false));
+    document.documentElement.style.setProperty("--zoom", String(getJSON("mindrawer.zoom", "1")));
+  }
+
+  Object.assign(I18N.en, { secSync: "Sync with your other devices", syncStart: "Start syncing (new code)", syncCodePh: "Sync code from another device", syncJoin: "Join", syncNow: "Sync now", syncStop: "Stop syncing here", syncLastL: "Last synced: ", syncBad: "That sync code isn't valid.", syncNoServer: "Set the relay server address under Shared folders first.", syncFail: "Couldn't sync. Check the connection and try again.", syncDone: (n) => n ? `Synced (${n} changes).` : "Synced.", syncGot: (n) => `Synced ${n} changes from your other devices.`,
+    syncNote: "Enter the same code on your iPhone, iPad, Mac and here to keep notes in step. Notes are encrypted in this browser with a key made from the code, so even the relay server can't read them. Keep the code private. Photos and files stay on each device." });
+  Object.assign(I18N.ja, { secSync: "ほかの端末と同期", syncStart: "同期を始める（新しいコードを作る）", syncCodePh: "ほかの端末の同期コード", syncJoin: "つなぐ", syncNow: "今すぐ同期", syncStop: "ここでの同期をやめる", syncLastL: "最後に同期: ", syncBad: "同期コードが正しくありません。", syncNoServer: "先に「共有フォルダ」で中継サーバーの住所を入れてください。", syncFail: "同期できませんでした。つながりを確かめて、もう一度試してください。", syncDone: (n) => n ? `同期しました（${n} 件）。` : "同期しました。", syncGot: (n) => `ほかの端末から ${n} 件そろえました。`,
+    syncNote: "iPhone・iPad・Mac とここで同じ同期コードを入れると、メモがそろいます。中身はこのブラウザで同期コードから作った鍵で暗号にしてから送るので、中継サーバーでも読めません。コードは人に教えないでください。写真やファイルの中身は送りません。" });
   // ---------- storage ----------
   function localStore() {
     const read = () => { try { return JSON.parse(localStorage.getItem(KEY) || "[]"); } catch { return []; } };
@@ -913,7 +933,7 @@ body[data-tab="cal"] .hero, body[data-tab="cal"] .main { display: none !importan
           if (x.id !== id) return x;
           const next = { ...x, ...p, updatedAt: p.updatedAt || Date.now() };
           // 本文かタイトルが変わったら、前の内容を履歴に 10 件まで残す（スマホ版と同じ）
-          if (("text" in p && p.text !== x.text) || ("title" in p && p.title !== x.title)) next.history = [{ at: x.updatedAt || x.createdAt, title: x.title, text: x.text }, ...(x.history || [])].slice(0, 10);
+          if (!("sealed" in p) && (("text" in p && p.text !== x.text) || ("title" in p && p.title !== x.title))) next.history = [{ at: x.updatedAt || x.createdAt, title: x.title, text: x.text }, ...(x.history || [])].slice(0, 10);
           return next;
         });
         write(a); cb(a);
@@ -1029,9 +1049,14 @@ body[data-tab="cal"] .hero, body[data-tab="cal"] .main { display: none !importan
     return state.notes.filter((n) => n.category === other && !n.example).map((n) => ({ id: n.id, folder: autoFolder([n.title, n.text, n.summary].join("\n"), filed, folders, prof).folder })).filter((m) => m.folder !== other);
   }
   function words(q) { return q.toLowerCase().split(/[\s、。,.!?？！「」“”"']+/).filter((w) => w.length >= 2); }
+  const hayCache = new Map();
   function hay(n) {
-    if (n.locked) return [n.title, n.category].join(" ").toLowerCase();
-    return [n.title, n.summary, n.text, n.category, ...(n.tags || []), ...(n.situations || []), ...(n.imageLabels || [])].join(" ").toLowerCase();
+    const k = (n.updatedAt || n.createdAt) + (n.locked ? "L" : ""), c = hayCache.get(n.id);
+    if (c && c[0] === k) return c[1];
+    const h = n.locked ? [n.title, n.category].join(" ").toLowerCase()
+      : [n.title, n.summary, n.text, n.category, n.savedPlace?.name || "", String(n.archive?.text || "").slice(0, 3000), ...(n.tags || []), ...(n.situations || []), ...(n.imageLabels || [])].join(" ").toLowerCase();
+    hayCache.set(n.id, [k, h]);
+    return h;
   }
   function localScore(n, q) {
     const h = hay(n); let s = 0;
@@ -1305,7 +1330,7 @@ Return JSON only:
 
 
   // ---------- この端末の設定 ----------
-  const PREF = { memo: "mindrawer.memoMode", memoPreview: "mindrawer.memoPreview", checks: "mindrawer.checks", folders: "mindrawer.folders", dismissed: "mindrawer.mergeDismissed", notified: "mindrawer.notified", trash: "mindrawer.trash", usage: "mindrawer.usage", sort: "mindrawer.sort", templates: "mindrawer.templates", pubLinks: "mindrawer.publicLinks", translate: "mindrawer.translate", inbox: "mindrawer.inbox", shares: "mindrawer.shares", shareServer: "mindrawer.shareServer", smart: "mindrawer.smartFolders", dupDismissed: "mindrawer.dupDismissed", pin: "mindrawer.pinHash", backups: "mindrawer.backups", onboarded: "mindrawer.onboarded", reviewSeen: "mindrawer.reviewSeen", fprefs: "mindrawer.folderPrefs", choices: "mindrawer.folderChoices" };
+  const PREF = { memo: "mindrawer.memoMode", memoPreview: "mindrawer.memoPreview", checks: "mindrawer.checks", folders: "mindrawer.folders", dismissed: "mindrawer.mergeDismissed", notified: "mindrawer.notified", trash: "mindrawer.trash", usage: "mindrawer.usage", sort: "mindrawer.sort", templates: "mindrawer.templates", pubLinks: "mindrawer.publicLinks", translate: "mindrawer.translate", inbox: "mindrawer.inbox", shares: "mindrawer.shares", shareServer: "mindrawer.shareServer", sync: "mindrawer.sync", syncDeleted: "mindrawer.syncDeleted", syncLast: "mindrawer.syncLast", smart: "mindrawer.smartFolders", dupDismissed: "mindrawer.dupDismissed", pin: "mindrawer.pinHash", backups: "mindrawer.backups", onboarded: "mindrawer.onboarded", reviewSeen: "mindrawer.reviewSeen", fprefs: "mindrawer.folderPrefs", choices: "mindrawer.folderChoices" };
   const getJSON = (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch { return d; } };
   const setJSON = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
   state.memoMode = getJSON(PREF.memo, false);
@@ -1631,7 +1656,7 @@ ${text}`;
     const err = el("p", { class: "err", role: "alert" });
     const form = el("form", { onsubmit: async (e) => {
       e.preventDefault();
-      if (await pinHash(input.value) === getJSON(PREF.pin, null)) { box.hidden = true; box.replaceChildren(); document.body.classList.remove("locked"); afterUnlock(); }
+      if (await pinHash(input.value) === getJSON(PREF.pin, null)) { deriveVaultKey(input.value).then((k) => { vaultKey = k; }).catch(() => {}); box.hidden = true; box.replaceChildren(); document.body.classList.remove("locked"); afterUnlock(); }
       else { err.textContent = t.lockWrong; input.value = ""; input.focus(); }
     } }, el("div", { class: "onb-big" }, "🔒"), el("h2", {}, t.lockH), input, err, el("button", { type: "submit" }, t.lockGo), el("p", {}, t.lockForgot));
     for (const d of document.querySelectorAll("dialog[open]")) d.close();
@@ -1645,13 +1670,16 @@ ${text}`;
     if (!a) return;
     if (!/^\d{4,8}$/.test(a)) { toast(t.pinBad); return; }
     if ((prompt(t.pinAgain) || "").trim() !== a) { toast(t.pinMismatch); return; }
-    setJSON(PREF.pin, await pinHash(a)); toast(t.pinSaved); openSettings();
+    setJSON(PREF.pin, await pinHash(a));
+    vaultKey = await deriveVaultKey(a).catch(() => null); await resealAll();
+    toast(t.pinSaved); openSettings();
   }
   async function clearPin() {
     const t = T(), cur = (prompt(t.pinCurrent) || "").trim();
     if (!cur) return;
     if (await pinHash(cur) !== getJSON(PREF.pin, null)) { toast(t.lockWrong); return; }
-    try { localStorage.removeItem(PREF.pin); } catch {}
+    await reopenAll(await deriveVaultKey(cur).catch(() => null)); vaultKey = null;
+    try { localStorage.removeItem(PREF.pin); localStorage.removeItem("mindrawer.vaultSalt"); } catch {}
     toast(t.pinRemoved); openSettings();
   }
 
@@ -1697,6 +1725,10 @@ ${text}`;
         el("div", { class: "set-row" },
           el("button", { class: "mini", onclick: () => { dlg.close(); $("wpBtn").click(); } }, t.wp),
           el("button", { class: "mini", onclick: () => { dlg.close(); $("helpBtn").click(); } }, t.help))),
+      el("div", { class: "set-sec" }, el("h3", {}, t.secLook),
+        check(getJSON("mindrawer.simple", false), t.simpleMode, (v) => { setJSON("mindrawer.simple", v); applyLook(); renderAll(); }),
+        (() => { const x = el("select", { "aria-label": t.textSize }, ...Object.entries(t.textSizes).map(([k, v]) => el("option", { value: k }, v))); x.value = String(getJSON("mindrawer.zoom", "1")); x.onchange = () => { setJSON("mindrawer.zoom", x.value); applyLook(); }; return el("label", { class: "set-row" }, el("span", {}, t.textSize), x); })(),
+        el("p", { class: "set-note" }, t.simpleNote)),
       el("div", { class: "set-sec" }, el("h3", {}, t.secData),
         el("div", { class: "set-row" },
           el("button", { class: "mini", onclick: () => exportNotes() }, t.exportBtn),
@@ -1730,6 +1762,7 @@ ${text}`;
           el("button", { class: "mini", onclick: () => downloadICS(state.notes, "mindrawer-calendar.ics") }, t.icsAll)),
         el("p", { class: "set-note" }, t.moreNote)),
       inboxSection(t),
+      syncSection(t),
       el("div", { class: "set-sec" }, el("h3", {}, t.secShare),
         (() => { const i = el("input", { type: "text", placeholder: "https://….workers.dev", value: getJSON(PREF.shareServer, "") }); i.onchange = () => setJSON(PREF.shareServer, i.value.trim().replace(/\/+$/, "")); return el("label", { class: "ef" }, el("span", {}, t.shareServerL), i); })(),
         el("div", { class: "set-row" }, el("button", { class: "mini", onclick: () => { $("setDlg").close(); openJoin(""); } }, t.joinBtn)),
@@ -2841,28 +2874,172 @@ Return JSON only: {"text":"","labels":[]}`, { modelTier: "default", images: [fil
     setTimeout(() => ta.focus(), 0);
   }
 
-  // ---------- 秘密のメモ（開くときに暗証番号） ----------
+  // ---------- 秘密のメモ（開くときに暗証番号。暗証番号から作った鍵で本文を暗号にして保存） ----------
   const unlocked = new Set();
+  /** 開いた秘密のメモの中身（このページを開いている間だけ） */
+  const opened = new Map();
+  /** 暗証番号から作った鍵（暗証番号を入れたあと、このページを開いている間だけ） */
+  let vaultKey = null;
+  const b64 = (u8) => { let s = ""; for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode(...u8.subarray(i, i + 0x8000)); return btoa(s); };
+  const unb64 = (s) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
+  async function deriveVaultKey(pin) {
+    if (!crypto.subtle) return null;
+    let salt = getJSON("mindrawer.vaultSalt", null);
+    if (!salt) { salt = b64(crypto.getRandomValues(new Uint8Array(16))); setJSON("mindrawer.vaultSalt", salt); }
+    const base = await crypto.subtle.importKey("raw", new TextEncoder().encode("mindrawer:" + pin), "PBKDF2", false, ["deriveKey"]);
+    return crypto.subtle.deriveKey({ name: "PBKDF2", salt: unb64(salt), iterations: 200000, hash: "SHA-256" }, base, { name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]);
+  }
+  /** 保存する形（本文・要約・元の文・履歴を暗号文に） */
+  async function sealPatch(n, key) {
+    const secret = { text: n.text || "", summary: n.summary || "", original: n.original || null, history: n.history || null };
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const ct = new Uint8Array(await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, new TextEncoder().encode(JSON.stringify(secret))));
+    const all = new Uint8Array(12 + ct.length); all.set(iv); all.set(ct, 12);
+    opened.set(n.id, secret);
+    return { sealed: "p1:" + b64(all), text: "", summary: "", original: null, history: null };
+  }
+  async function openSealed(n, key) {
+    if (!n.sealed || !n.sealed.startsWith("p1:") || !key) return null;
+    try {
+      const all = unb64(n.sealed.slice(3));
+      const pt = await crypto.subtle.decrypt({ name: "AES-GCM", iv: all.slice(0, 12) }, key, all.slice(12));
+      return JSON.parse(new TextDecoder().decode(pt));
+    } catch { return null; }
+  }
+  /** 保存のたびに、秘密のメモは暗号文にする */
+  function secureStore(base) {
+    const prep = async (id, p) => {
+      const cur = state.notes.find((x) => x.id === id) || {};
+      const next = { ...cur, ...p, id };
+      if (next.locked && vaultKey && (next.text || next.summary)) return { ...p, ...(await sealPatch(next, vaultKey)) };
+      return p;
+    };
+    return { ...base, async update(id, p) { return base.update(id, await prep(id, p)); }, async remove(id) { noteSyncDeleted(id); return base.remove(id); } };
+  }
   async function askPin(t) {
     if (!hasPin()) return confirm(t.lockNoPin);
     const v = (prompt(t.pinCurrent) || "").trim();
     if (!v) return false;
     if (await pinHash(v) !== getJSON(PREF.pin, null)) { toast(t.lockWrong); return false; }
+    vaultKey = await deriveVaultKey(v).catch(() => null);
     return true;
   }
   async function unlockNote(n) {
     if (!(await askPin(T()))) return;
+    if (n.sealed) { const sec = await openSealed(n, vaultKey); if (sec) opened.set(n.id, sec); }
+    else if (vaultKey && (n.text || n.summary)) await state.store.update(n.id, {}); // 前の版でしまった秘密のメモも暗号にする
     unlocked.add(n.id); recordUse(n.id); renderList(); if (document.body.dataset.tab === "cal") renderCal();
   }
   async function toggleLock(n) {
     const t = T();
     if (n.locked) {
       if (!(await askPin(t))) return;
-      unlocked.delete(n.id); await state.store.update(n.id, { locked: false }); toast(t.unlocked);
+      const sec = n.sealed ? await openSealed(n, vaultKey) : null;
+      if (n.sealed && !sec) { toast(t.sealedElsewhere); return; }
+      unlocked.delete(n.id); opened.delete(n.id);
+      await state.store.update(n.id, { locked: false, ...(sec ? { ...sec, sealed: null } : {}) }); toast(t.unlocked);
     } else {
       if (!hasPin() && confirm(t.lockSetPinQ)) { await setPin(); if (!hasPin()) return; $("setDlg").close(); }
-      unlocked.delete(n.id); await state.store.update(n.id, { locked: true }); toast(t.lockedDone);
+      if (hasPin() && !vaultKey && !(await askPin(t))) return;
+      unlocked.delete(n.id); await state.store.update(n.id, { locked: true }); opened.delete(n.id); toast(hasPin() ? t.lockedDone : t.lockedNoPin);
     }
+  }
+  /** 暗証番号を変える・やめるときは、いったん全部開いて、新しい鍵でかけ直す */
+  async function reopenAll(oldKey) {
+    const was = vaultKey; vaultKey = null;
+    for (const n of state.notes.filter((x) => x.sealed)) { const sec = await openSealed(n, oldKey); if (sec) await state.store.update(n.id, { ...sec, sealed: null }); }
+    vaultKey = was;
+  }
+  async function resealAll() {
+    if (!vaultKey) return;
+    for (const n of state.notes.filter((x) => x.locked && !x.sealed && (x.text || x.summary))) await state.store.update(n.id, {});
+  }
+
+  // ---------- 端末どうしの同期（スマホ版と同じ規則。中身は同期コードから作った鍵で暗号にしてから送る） ----------
+  const SYNC_ALPHA = "ABCDEFGHJKMNPQRSTVWXYZ23456789";
+  function makeSyncCode() { const r = crypto.getRandomValues(new Uint32Array(25)); return [...r].map((x) => SYNC_ALPHA[x % SYNC_ALPHA.length]).join("").match(/.{5}/g).join("-"); }
+  const normCode = (s) => String(s || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+  const sha256u8 = async (str) => new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(str)));
+  async function syncId(code) { return [...await sha256u8("mindrawer-sync:" + normCode(code))].map((b) => b.toString(16).padStart(2, "0")).join(""); }
+  async function syncKey(code) { return crypto.subtle.importKey("raw", await sha256u8("mindrawer-sync-key:" + normCode(code)), "AES-GCM", false, ["encrypt", "decrypt"]); }
+  async function sealSync(obj, key) {
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const ct = new Uint8Array(await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, new TextEncoder().encode(JSON.stringify(obj))));
+    const all = new Uint8Array(12 + ct.length); all.set(iv); all.set(ct, 12); return b64(all);
+  }
+  async function openSync(str, key) {
+    const all = unb64(str);
+    return JSON.parse(new TextDecoder().decode(await crypto.subtle.decrypt({ name: "AES-GCM", iv: all.slice(0, 12) }, key, all.slice(12))));
+  }
+  const modAt = (n) => n.updatedAt || n.createdAt || 0;
+  /** 両方をまとめる: 同じメモは新しい方、消したものは消す（消したあとに直したものは残す） */
+  function mergeSync(local, remote, now = Date.now()) {
+    const deleted = { ...local.deleted };
+    for (const [k, v] of Object.entries(remote.deleted || {})) deleted[k] = Math.max(v, deleted[k] || 0);
+    for (const k of Object.keys(deleted)) if (deleted[k] < now - 60 * 864e5) delete deleted[k];
+    const by = new Map();
+    for (const n of remote.notes || []) by.set(n.id, n);
+    for (const n of local.notes) { const r = by.get(n.id); if (r && modAt(r) > modAt(n)) continue; by.set(n.id, n); }
+    const notes = [...by.values()].filter((n) => !(deleted[n.id] >= modAt(n))).sort((a, b) => b.createdAt - a.createdAt);
+    return { v: 1, notes, deleted };
+  }
+  const syncOut = (notes) => notes.filter((n) => !n.example).map((n) => { const x = { ...n }; delete x.imageFile; delete x.file; return x; });
+  const sameSync = (a, b) => JSON.stringify(a.notes.map((n) => [n.id, modAt(n)]).sort()) === JSON.stringify(b.notes.map((n) => [n.id, modAt(n)]).sort()) && JSON.stringify(Object.entries(a.deleted).sort()) === JSON.stringify(Object.entries(b.deleted || {}).sort());
+  function noteSyncDeleted(id) { if (!getJSON(PREF.sync, null)) return; const d = getJSON(PREF.syncDeleted, {}); d[id] = Date.now(); setJSON(PREF.syncDeleted, d); }
+  let devSyncing = null;
+  async function runSync(manual) {
+    const cfg = getJSON(PREF.sync, null), server = getJSON(PREF.shareServer, "");
+    if (!cfg || !state.store || !crypto.subtle) return;
+    if (!server) { if (manual) toast(T().syncNoServer); return; }
+    if (devSyncing) return devSyncing;
+    devSyncing = (async () => {
+      const id = await syncId(cfg.code), key = await syncKey(cfg.code), url = `${server}/sync/${id}`;
+      for (let i = 0; i < 3; i++) {
+        const res = await fetch(url, { cache: "no-store" });
+        if (!res.ok) throw new Error("sync " + res.status);
+        const box = await res.json();
+        const remote = box.data ? await openSync(box.data, key) : { notes: [], deleted: {} };
+        const before = state.notes.filter((n) => !n.example);
+        const merged = mergeSync({ notes: syncOut(before), deleted: getJSON(PREF.syncDeleted, {}) }, remote);
+        setJSON(PREF.syncDeleted, merged.deleted);
+        // この端末に当てる
+        const mine = new Map(before.map((n) => [n.id, n])), keep = new Set(merged.notes.map((n) => n.id));
+        let changed = 0;
+        for (const n of merged.notes) {
+          const m = mine.get(n.id);
+          if (!m) { await state.store.add({ ...n }); changed++; }
+          else if (modAt(n) > modAt(m)) { const { id: _i, ...rest } = n; await state.store.update(n.id, { ...rest, updatedAt: modAt(n) }); changed++; }
+        }
+        for (const m of before) if (!keep.has(m.id)) { setJSON(PREF.trash, [{ ...m, deletedAt: Date.now() }, ...trashList()]); await state.store.remove(m.id); changed++; }
+        if (box.data && sameSync(merged, remote)) { setJSON(PREF.syncLast, Date.now()); return changed; }
+        const put = await fetch(url, { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify({ ver: box.ver, data: await sealSync(merged, key) }) });
+        if (put.status === 409) continue;
+        if (!put.ok) throw new Error("sync " + put.status);
+        setJSON(PREF.syncLast, Date.now()); return changed;
+      }
+      throw new Error("sync conflict");
+    })();
+    try {
+      const n = await devSyncing;
+      if (manual) toast(T().syncDone(n)); else if (n > 0) toast(T().syncGot(n));
+    } catch { if (manual) toast(T().syncFail); }
+    finally { devSyncing = null; }
+  }
+  let syncTimer = 0;
+  const scheduleSync = () => { if (!getJSON(PREF.sync, null)) return; clearTimeout(syncTimer); syncTimer = setTimeout(() => runSync(false), 4000); };
+  function syncSection(t) {
+    const cfg = getJSON(PREF.sync, null), last = getJSON(PREF.syncLast, 0);
+    const input = el("input", { type: "text", placeholder: t.syncCodePh, "aria-label": t.syncCodePh, autocapitalize: "characters", autocomplete: "off" });
+    return el("div", { class: "set-sec" }, el("h3", {}, t.secSync),
+      cfg ? el("div", {},
+        el("div", { class: "set-row" }, el("b", { class: "mono" }, cfg.code), el("button", { class: "mini", onclick: () => navigator.clipboard?.writeText(cfg.code).then(() => toast(t.shareCopied)) }, t.shareCopy)),
+        el("div", { class: "set-row" }, el("button", { class: "mini", onclick: () => runSync(true).then(() => openSettings()) }, t.syncNow),
+          el("button", { class: "mini", onclick: () => { setJSON(PREF.sync, null); openSettings(); } }, t.syncStop)),
+        last ? el("p", { class: "set-note" }, t.syncLastL + new Date(last).toLocaleString(state.lang === "ja" ? "ja-JP" : "en")) : null)
+      : el("div", {},
+        el("div", { class: "set-row" }, el("button", { class: "mini", onclick: () => { setJSON(PREF.sync, { code: makeSyncCode() }); setJSON(PREF.syncDeleted, {}); runSync(true).then(() => openSettings()); openSettings(); } }, t.syncStart)),
+        el("div", { class: "choice-in" }, input, el("button", { type: "button", onclick: () => { if (normCode(input.value).length < 20) { toast(t.syncBad); return; } setJSON(PREF.sync, { code: input.value.trim().toUpperCase() }); setJSON(PREF.syncDeleted, {}); runSync(true).then(() => openSettings()); } }, t.syncJoin))),
+      el("p", { class: "set-note" }, t.syncNote));
   }
 
   // ---------- 読み上げ ----------
@@ -2978,6 +3155,7 @@ Return JSON only: {"text":"","labels":[]}`, { modelTier: "default", images: [fil
   function folderOf(n) { return state.view === "cat" ? n.category || T().other : String(monthKey(n.createdAt)); }
   function folderLabel(k) { return state.view === "cat" ? k : monthLabel(Number(k)); }
   function slip(n, isExample) {
+    if (n.sealed && opened.has(n.id)) n = { ...n, ...opened.get(n.id) };
     const t = T();
     const s = el("article", { class: "slip" + (state.hits && state.hits.has(n.id) ? " hit" : "") + (isExample ? " example" : "") + (n.pinned ? " pinned" : ""), style: `--fc:${folderLook(n.category || t.other).color}` },
       el("div", { class: "slip-meta" }, folderBadge(n.category || t.other), el("span", { class: "f", style: `color:${folderLook(n.category || t.other).color}` }, n.category || t.other),
@@ -3002,6 +3180,7 @@ Return JSON only: {"text":"","labels":[]}`, { modelTier: "default", images: [fil
         el("button", { class: "ib", "aria-label": t.more, title: t.more, onclick: () => openMore(n) }, ico("more"))));
       return s;
     }
+    if (n.sealed && !opened.has(n.id)) s.append(el("p", { class: "set-note" }, t.sealedElsewhere));
     const rel = related(n);
     s.append(el("details", { class: "more", ontoggle: (e) => { if (e.currentTarget.open) recordUse(n.id); } }, el("summary", {}, t.original),
       el("p", { class: "raw" }, n.text),
@@ -3215,7 +3394,12 @@ Return JSON only: {"text":"","labels":[]}`, { modelTier: "default", images: [fil
       const groups = new Map();
       for (const n of sorted) { const k = n.category || t.other; if (!groups.has(k)) groups.set(k, []); groups.get(k).push(n); }
       box.replaceChildren(...[...groups].flatMap(([k, ns]) => [el("h3", { class: "group-h" }, folderBadge(k), k, el("span", { class: "n" }, String(ns.length))), ...ns.map((n) => slip(n))]));
-    } else box.replaceChildren(...sorted.map((n) => slip(n)));
+    } else {
+      // たくさんあるときは少しずつ出す（速く開くため）
+      const lim = state.listLimit || 60, rest = sorted.length - lim;
+      box.replaceChildren(...sorted.slice(0, lim).map((n) => slip(n)),
+        rest > 0 ? el("button", { type: "button", class: "ghost more-btn", onclick: () => { state.listLimit = lim + 100; renderList(); } }, t.showMore(rest)) : null);
+    }
   }
   function renderAll() { renderChrome(); renderWp(); renderRail(); renderList(); }
 
@@ -3339,9 +3523,10 @@ Return JSON only: {"text":"","labels":[]}`, { modelTier: "default", images: [fil
   window.addEventListener("hashchange", handleHash);
   document.addEventListener("visibilitychange", () => {
     if (document.hidden) hiddenAt = Date.now();
-    else { if (hiddenAt && Date.now() - hiddenAt > 60e3 && !isLocked()) lock(); syncShares(); pullInbox(); }
+    else { if (hiddenAt && Date.now() - hiddenAt > 60e3 && !isLocked()) lock(); syncShares(); pullInbox(); runSync(false); }
   });
   purgeTrash();
+  applyLook();
   if (hasPin()) lock();
 
   renderAll();
@@ -3361,11 +3546,11 @@ Return JSON only: {"text":"","labels":[]}`, { modelTier: "default", images: [fil
       const uid = user ? await user.id().catch(() => null) : null;
       if (db && uid) store = dbStore(db, uid);
     }
-    state.store = store || localStore();
+    state.store = secureStore(store || localStore());
     state.store.subscribe((arr) => {
       state.notes = arr.slice().sort((a, b) => b.createdAt - a.createdAt); renderAll();
       if (firstLoad) { firstLoad = false; purgeExpired(); setTimeout(handleAddHash, 0); makeBackup(false); if (!isLocked()) afterUnlock(); setTimeout(() => tidyFolders(), 0); setTimeout(syncShares, 0); setTimeout(pullInbox, 0); }
-      scheduleShareSync();
+      scheduleShareSync(); scheduleSync();
     });
   })();
 })();

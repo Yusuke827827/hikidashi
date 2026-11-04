@@ -19,6 +19,35 @@ public struct Place: Codable, Hashable, Sendable {
     }
 }
 
+/// 保存したページ
+public struct PageArchive: Codable, Hashable, Sendable {
+    public var at: Date
+    public var title: String
+    public var text: String
+
+    public init(at: Date = Date(), title: String, text: String) {
+        self.at = at
+        self.title = title
+        self.text = text
+    }
+
+    enum CodingKeys: String, CodingKey { case at, title, text }
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        at = Date(timeIntervalSince1970: ((try? c.decode(Double.self, forKey: .at)) ?? 0) / 1000)
+        title = (try? c.decode(String.self, forKey: .title)) ?? ""
+        text = (try? c.decode(String.self, forKey: .text)) ?? ""
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode((at.timeIntervalSince1970 * 1000).rounded(), forKey: .at)
+        try c.encode(title, forKey: .title)
+        try c.encode(text, forKey: .text)
+    }
+}
+
 public struct Note: Codable, Identifiable, Hashable, Sendable {
     public var id: String
     /// 本文（共有された文、スクショから読み取った文、自分で書いた備忘録）
@@ -75,6 +104,12 @@ public struct Note: Codable, Identifiable, Hashable, Sendable {
     public var history: [NoteVersion]?
     /// この日時を過ぎたら、自動でゴミ箱へ
     public var expiresAt: Date?
+    /// 秘密のメモの暗号文（保存するときだけ使う。"k1:" = この端末の鍵、"p1:" = Web 版の暗証番号）
+    public var sealed: String?
+    /// しまった場所（設定でオンにしたとき）
+    public var savedPlace: Place?
+    /// リンク先のページの本文（リンクが切れても読めるように）
+    public var archive: PageArchive?
     /// 最後に変えた日時（iCloud の同期で新しい方を残すため）
     public var updatedAt: Date?
 
@@ -134,7 +169,7 @@ public struct Note: Codable, Identifiable, Hashable, Sendable {
     }
 
     enum CodingKeys: String, CodingKey {
-        case id, text, url, title, summary, category, tags, situations, remindAt, createdAt, pinned, helpful, lastSeen, example, filed, imageFile, original, file, fileTitle, enriched, place, alarm, plannedDay, sources, folderChosen, checkedAt, linkBroken, review, imageLabels, locked, history, expiresAt, updatedAt
+        case id, text, url, title, summary, category, tags, situations, remindAt, createdAt, pinned, helpful, lastSeen, example, filed, imageFile, original, file, fileTitle, enriched, place, alarm, plannedDay, sources, folderChosen, checkedAt, linkBroken, review, imageLabels, locked, history, expiresAt, sealed, savedPlace, archive, updatedAt
     }
 
     public init(from decoder: Decoder) throws {
@@ -180,6 +215,9 @@ public struct Note: Codable, Identifiable, Hashable, Sendable {
         locked = try? c.decodeIfPresent(Bool.self, forKey: .locked)
         history = try? c.decodeIfPresent([NoteVersion].self, forKey: .history)
         expiresAt = Self.decodeDate(c, .expiresAt)
+        sealed = try? c.decodeIfPresent(String.self, forKey: .sealed)
+        savedPlace = try? c.decodeIfPresent(Place.self, forKey: .savedPlace)
+        archive = try? c.decodeIfPresent(PageArchive.self, forKey: .archive)
         updatedAt = Self.decodeDate(c, .updatedAt)
     }
 
@@ -217,6 +255,9 @@ public struct Note: Codable, Identifiable, Hashable, Sendable {
         try c.encodeIfPresent(locked, forKey: .locked)
         try c.encodeIfPresent(history, forKey: .history)
         try c.encodeIfPresent(expiresAt.map(Self.millis), forKey: .expiresAt)
+        try c.encodeIfPresent(sealed, forKey: .sealed)
+        try c.encodeIfPresent(savedPlace, forKey: .savedPlace)
+        try c.encodeIfPresent(archive, forKey: .archive)
         try c.encodeIfPresent(updatedAt.map(Self.millis), forKey: .updatedAt)
     }
 
@@ -243,6 +284,6 @@ public struct Note: Codable, Identifiable, Hashable, Sendable {
     public var haystack: String {
         // 秘密のメモは、タイトルとフォルダだけで探せる
         if locked == true { return [title, category].joined(separator: " ").lowercased() }
-        return ([title, summary, text, category] + tags + situations + (imageLabels ?? [])).joined(separator: " ").lowercased()
+        return ([title, summary, text, category, savedPlace?.name ?? "", String((archive?.text ?? "").prefix(3000))] + tags + situations + (imageLabels ?? [])).joined(separator: " ").lowercased()
     }
 }

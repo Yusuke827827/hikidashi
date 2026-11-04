@@ -1112,3 +1112,46 @@ final class NowAndPlaceTests: XCTestCase {
         XCTAssertEqual(g.links.count, 1)
     }
 }
+
+final class SyncAndVaultTests: XCTestCase {
+    func testSyncCodeAndCrypto() throws {
+        // Web 版と同じ id になること
+        XCTAssertEqual(SyncCode.id("abcde-23456-fghjk-789mn-pqrst"), "1d52d6d87635262d65c0545bc8c7c2ae07ab8f7f4f1c39a426cb8ffb4e9ec00a")
+        XCTAssertTrue(SyncCode.isValid(SyncCode.make()))
+        let p = SyncPayload(notes: [Note(id: "a", text: "本文", title: "T")], deleted: ["x": 5])
+        let s = try p.seal(code: "ABCDE23456FGHJK789MNPQRST")
+        XCTAssertEqual(try SyncPayload.open(s, code: "abcde-23456-fghjk-789mn-pqrst").notes.first?.text, "本文")
+        XCTAssertThrowsError(try SyncPayload.open(s, code: "ZZZZZ23456FGHJK789MNPQRST"))
+    }
+
+    func testMerge() {
+        let t0 = Date(timeIntervalSince1970: 1_800_000_000)
+        var a = Note(id: "a", text: "古い", title: "A", createdAt: t0)
+        a.updatedAt = t0.addingTimeInterval(10)
+        var a2 = a
+        a2.text = "新しい"
+        a2.updatedAt = t0.addingTimeInterval(20)
+        let b = Note(id: "b", text: "b", title: "B", createdAt: t0)
+        let c = Note(id: "c", text: "c", title: "C", createdAt: t0)
+        let local = SyncPayload(notes: [a, b], deleted: ["c": (t0.timeIntervalSince1970 + 5) * 1000])
+        let remote = SyncPayload(notes: [a2, c], deleted: [:])
+        let m = SyncPayload.merge(local: local, remote: remote, now: t0)
+        XCTAssertEqual(Set(m.notes.map(\.id)), ["a", "b"])
+        XCTAssertEqual(m.notes.first { $0.id == "a" }?.text, "新しい")
+        XCTAssertNotNil(m.deleted["c"])
+    }
+
+    @MainActor
+    func testVaultSealsLockedNotesOnDisk() throws {
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        let store = NoteStore(root: dir)
+        var n = Note(id: "s", text: "暗証番号は 1234", title: "秘密")
+        n.locked = true
+        store.add(n)
+        let raw = try String(contentsOf: store.fileURL, encoding: .utf8)
+        XCTAssertFalse(raw.contains("1234"))
+        XCTAssertTrue(raw.contains("k1:"))
+        XCTAssertEqual(NoteStore(root: dir).note("s")?.text, "暗証番号は 1234")
+    }
+}
