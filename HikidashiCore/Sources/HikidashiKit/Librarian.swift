@@ -77,23 +77,25 @@ public final class Librarian {
 
     private let credentialProvider: @MainActor () -> ClaudeClient.Credential?
     private let onDevice: (any NoteAI)?
-    private let linkFetcher: @Sendable (String) async -> LinkPreview?
-    private let textExtractor: @Sendable (Data, String) async -> String?
+    // 差し替え（テスト用）。nil ならふつうの処理を直接呼ぶ。
+    // 既定の値を async のクロージャにすると、Swift の実行時に落ちることがあるため（freed pointer was not the last allocation）
+    private let linkFetcherOverride: (@Sendable (String) async -> LinkPreview?)?
+    private let textExtractorOverride: (@Sendable (Data, String) async -> String?)?
     /// リンク先のページを読む（テストで差し替える）
-    public var pageReader: @Sendable (String) async -> PageArchive? = { await PageReader.fetch($0) }
+    public var pageReaderOverride: (@Sendable (String) async -> PageArchive?)?
 
     /// credentialProvider: Claude の呼び方を返す（無ければ nil）
     /// onDevice: iPhone の中の AI（使えない端末では nil）
     public init(store: NoteStore,
                 credentialProvider: @escaping @MainActor () -> ClaudeClient.Credential? = Librarian.apiKeyCredential,
                 onDevice: (any NoteAI)? = OnDeviceAI.make(),
-                linkFetcher: @escaping @Sendable (String) async -> LinkPreview? = { await LinkFetcher.fetch($0) },
-                textExtractor: @escaping @Sendable (Data, String) async -> String? = { await TextExtractor.text(fromFile: $0, extension: $1) }) {
+                linkFetcher: (@Sendable (String) async -> LinkPreview?)? = nil,
+                textExtractor: (@Sendable (Data, String) async -> String?)? = nil) {
         self.store = store
         self.credentialProvider = credentialProvider
         self.onDevice = onDevice
-        self.linkFetcher = linkFetcher
-        self.textExtractor = textExtractor
+        self.linkFetcherOverride = linkFetcher
+        self.textExtractorOverride = textExtractor
     }
 
     /// 端末に保存した自分の API キーを使う
@@ -458,6 +460,21 @@ public final class Librarian {
                 n.category = Heuristics.folder(for: text, notes: others, folders: folders)
             }
         }
+    }
+
+    private func linkFetcher(_ url: String) async -> LinkPreview? {
+        if let f = linkFetcherOverride { return await f(url) }
+        return await LinkFetcher.fetch(url)
+    }
+
+    private func textExtractor(_ data: Data, _ ext: String) async -> String? {
+        if let f = textExtractorOverride { return await f(data, ext) }
+        return await TextExtractor.text(fromFile: data, extension: ext)
+    }
+
+    private func pageReader(_ url: String) async -> PageArchive? {
+        if let f = pageReaderOverride { return await f(url) }
+        return await PageReader.fetch(url)
     }
 
     // MARK: 取り出し
