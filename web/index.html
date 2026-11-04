@@ -57,6 +57,13 @@ html { -webkit-text-size-adjust: 100%; }
 body { zoom: var(--zoom, 1); }
 body.simple #nowBox, body.simple #reviewBox, body.simple #upkeepBox, body.simple #mergeBox, body.simple #resortBox, body.simple .weekly { display: none !important; }
 .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .04em; overflow-wrap: anywhere; }
+.checks { list-style: none; margin: 6px 0 2px; padding: 0; display: grid; gap: 2px; }
+.checks .ck { display: flex; gap: 10px; align-items: center; width: 100%; text-align: left; border: 0; background: none; color: var(--ink); font: inherit; min-height: 36px; padding: 2px 0; cursor: pointer; }
+.checks .ck .box { flex: none; width: 20px; height: 20px; border-radius: 6px; border: 1.5px solid var(--muted); display: grid; place-items: center; font-size: 13px; font-weight: 700; }
+.checks .ck.done { color: var(--muted); text-decoration: line-through; }
+.checks .ck.done .box { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+.map-box { height: min(70vh, 520px); border-radius: 12px; overflow: hidden; margin-top: 8px; }
+.ib.rec { color: #d33; }
 .more-btn { display: block; margin: 8px auto 0; min-height: 44px; padding: 0 22px; border-radius: 12px; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
@@ -916,6 +923,12 @@ body[data-tab="cal"] .hero, body[data-tab="cal"] .main { display: none !importan
     syncNote: "Enter the same code on your iPhone, iPad, Mac and here to keep notes in step. Notes are encrypted in this browser with a key made from the code, so even the relay server can't read them. Keep the code private. Photos and files stay on each device." });
   Object.assign(I18N.ja, { secSync: "ほかの端末と同期", syncStart: "同期を始める（新しいコードを作る）", syncCodePh: "ほかの端末の同期コード", syncJoin: "つなぐ", syncNow: "今すぐ同期", syncStop: "ここでの同期をやめる", syncLastL: "最後に同期: ", syncBad: "同期コードが正しくありません。", syncNoServer: "先に「共有フォルダ」で中継サーバーの住所を入れてください。", syncFail: "同期できませんでした。つながりを確かめて、もう一度試してください。", syncDone: (n) => n ? `同期しました（${n} 件）。` : "同期しました。", syncGot: (n) => `ほかの端末から ${n} 件そろえました。`,
     syncNote: "iPhone・iPad・Mac とここで同じ同期コードを入れると、メモがそろいます。中身はこのブラウザで同期コードから作った鍵で暗号にしてから送るので、中継サーバーでも読めません。コードは人に教えないでください。写真やファイルの中身は送りません。" });
+  Object.assign(I18N.en, { voiceOn: "🔊 Speak answers", voiceOff: "🔇 Silent", voiceAsk: "Ask by voice", archiveH: (d) => `Saved page (${d})`, makeChecklist: "Make it a checklist", clearChecked: "Clear checked items", videoPoints: "Key points",
+    secSaving: "When saving", archiveL: "Keep a copy of linked pages", newsletterL: "Turn emailed newsletters into key points", savePlaceL: "Remember where I saved", mapBtn: "Show on a map", mapH: "Where I saved", mapFail: "Couldn't load the map. Open each place below:",
+    savingNote: "Linked pages are kept in full (needs the relay server), and YouTube links get key points from the captions with AI. Emailed newsletters become one note per tip. Places stay in this browser.", mdExport: "Markdown (Obsidian, Notion)", mdDone: (n) => `Exported ${n} notes as Markdown.`, whenL: "When it helps" });
+  Object.assign(I18N.ja, { voiceOn: "🔊 声で答える", voiceOff: "🔇 声なし", voiceAsk: "声で聞く", archiveH: (d) => `保存したページ（${d}）`, makeChecklist: "チェックリストにする", clearChecked: "済んだ項目を消す", videoPoints: "動画の要点",
+    secSaving: "しまうとき", archiveL: "リンク先のページを丸ごと残す", newsletterL: "メールで届いたメルマガは要点だけにする", savePlaceL: "しまった場所を覚える", mapBtn: "地図で見る", mapH: "しまった場所", mapFail: "地図を読み込めませんでした。場所ごとに開けます:",
+    savingNote: "リンクを付けてしまうと、そのページの本文も残します（中継サーバーが必要）。YouTube は AI で字幕から要点を足します。メールで届いたメルマガは、役立つところを 1 つずつのメモにします。場所はこのブラウザの中にだけ残ります。", mdExport: "Markdown（Obsidian・Notion）", mdDone: (n) => `${n} 件を Markdown で書き出しました。`, whenL: "使う場面" });
   // ---------- storage ----------
   function localStore() {
     const read = () => { try { return JSON.parse(localStorage.getItem(KEY) || "[]"); } catch { return []; } };
@@ -1249,7 +1262,9 @@ Return JSON only:
       const createdAt = Date.now();
       const dup = similarNote(rest.text, url || null, state.notes);
       rest.tags = withHashtags(rest.tags, rest.text);
-      await state.store.add({ ...rest, ...extra, url: url || null, createdAt, helpful: 0, pinned: false });
+      const newId = "n" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+      await state.store.add({ ...rest, ...extra, id: newId, url: url || null, createdAt, helpful: 0, pinned: false });
+      afterSaved(newId, url || null);
       $("noteText").value = ""; $("noteUrl").value = ""; $("srcRow").hidden = true; clearImage(); clearFile(); renderKw("");
       toast(T().saved(rest.title, rest.category, rest.remindAt) + (dup ? " " + T().dupSaved(dup.title) : ""));
       if (fprefs().mode === "ask" && opts.length) { state.choice = { createdAt, title: rest.title, options: opts }; renderChoice(); }
@@ -1330,7 +1345,7 @@ Return JSON only:
 
 
   // ---------- この端末の設定 ----------
-  const PREF = { memo: "mindrawer.memoMode", memoPreview: "mindrawer.memoPreview", checks: "mindrawer.checks", folders: "mindrawer.folders", dismissed: "mindrawer.mergeDismissed", notified: "mindrawer.notified", trash: "mindrawer.trash", usage: "mindrawer.usage", sort: "mindrawer.sort", templates: "mindrawer.templates", pubLinks: "mindrawer.publicLinks", translate: "mindrawer.translate", inbox: "mindrawer.inbox", shares: "mindrawer.shares", shareServer: "mindrawer.shareServer", sync: "mindrawer.sync", syncDeleted: "mindrawer.syncDeleted", syncLast: "mindrawer.syncLast", smart: "mindrawer.smartFolders", dupDismissed: "mindrawer.dupDismissed", pin: "mindrawer.pinHash", backups: "mindrawer.backups", onboarded: "mindrawer.onboarded", reviewSeen: "mindrawer.reviewSeen", fprefs: "mindrawer.folderPrefs", choices: "mindrawer.folderChoices" };
+  const PREF = { memo: "mindrawer.memoMode", memoPreview: "mindrawer.memoPreview", checks: "mindrawer.checks", folders: "mindrawer.folders", dismissed: "mindrawer.mergeDismissed", notified: "mindrawer.notified", trash: "mindrawer.trash", usage: "mindrawer.usage", sort: "mindrawer.sort", templates: "mindrawer.templates", pubLinks: "mindrawer.publicLinks", translate: "mindrawer.translate", inbox: "mindrawer.inbox", shares: "mindrawer.shares", shareServer: "mindrawer.shareServer", archive: "mindrawer.archivePages", newsletter: "mindrawer.newsletterTips", savePlace: "mindrawer.savePlace", sync: "mindrawer.sync", syncDeleted: "mindrawer.syncDeleted", syncLast: "mindrawer.syncLast", smart: "mindrawer.smartFolders", dupDismissed: "mindrawer.dupDismissed", pin: "mindrawer.pinHash", backups: "mindrawer.backups", onboarded: "mindrawer.onboarded", reviewSeen: "mindrawer.reviewSeen", fprefs: "mindrawer.folderPrefs", choices: "mindrawer.folderChoices" };
   const getJSON = (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch { return d; } };
   const setJSON = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
   state.memoMode = getJSON(PREF.memo, false);
@@ -1732,6 +1747,7 @@ ${text}`;
       el("div", { class: "set-sec" }, el("h3", {}, t.secData),
         el("div", { class: "set-row" },
           el("button", { class: "mini", onclick: () => exportNotes() }, t.exportBtn),
+          el("button", { class: "mini", onclick: () => exportMarkdown() }, t.mdExport),
           el("button", { class: "mini", onclick: () => $("importInput").click() }, t.importText),
           el("button", { class: "mini", onclick: () => $("otherInput").click() }, t.importOther))),
       el("div", { class: "set-sec" }, el("h3", {}, t.secMemo),
@@ -1763,6 +1779,12 @@ ${text}`;
         el("p", { class: "set-note" }, t.moreNote)),
       inboxSection(t),
       syncSection(t),
+      el("div", { class: "set-sec" }, el("h3", {}, t.secSaving),
+        check(getJSON(PREF.archive, true), t.archiveL, (v) => setJSON(PREF.archive, v)),
+        check(getJSON(PREF.newsletter, true), t.newsletterL, (v) => setJSON(PREF.newsletter, v)),
+        "geolocation" in navigator ? check(getJSON(PREF.savePlace, false), t.savePlaceL, (v) => { setJSON(PREF.savePlace, v); if (v) navigator.geolocation.getCurrentPosition(() => {}, () => {}); }) : null,
+        state.notes.some((n) => n.savedPlace) ? el("div", { class: "set-row" }, el("button", { class: "mini", onclick: () => { $("setDlg").close(); openMap(); } }, t.mapBtn)) : null,
+        el("p", { class: "set-note" }, t.savingNote)),
       el("div", { class: "set-sec" }, el("h3", {}, t.secShare),
         (() => { const i = el("input", { type: "text", placeholder: "https://….workers.dev", value: getJSON(PREF.shareServer, "") }); i.onchange = () => setJSON(PREF.shareServer, i.value.trim().replace(/\/+$/, "")); return el("label", { class: "ef" }, el("span", {}, t.shareServerL), i); })(),
         el("div", { class: "set-row" }, el("button", { class: "mini", onclick: () => { $("setDlg").close(); openJoin(""); } }, t.joinBtn)),
@@ -1876,6 +1898,19 @@ Return JSON only: {"answer":"","ids":["ids of the notes you used, max 5"]}`;
     const t = T(), dlg = $("chatDlg");
     const log = el("div", { class: "chat-log", "aria-live": "polite" });
     const input = el("input", { type: "text", placeholder: t.chatPh, "aria-label": t.chat });
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    let voice = getJSON("mindrawer.chatVoice", false), rec = null;
+    const voiceBtn = el("button", { type: "button", class: "mini", "aria-pressed": String(voice), onclick: () => { voice = !voice; setJSON("mindrawer.chatVoice", voice); voiceBtn.setAttribute("aria-pressed", String(voice)); voiceBtn.textContent = voice ? t.voiceOn : t.voiceOff; if (!voice) try { speechSynthesis.cancel(); } catch {} } }, voice ? t.voiceOn : t.voiceOff);
+    const mic = SR ? el("button", { type: "button", class: "ib", "aria-label": t.voiceAsk, title: t.voiceAsk, onclick: () => {
+      if (rec) { rec.stop(); return; }
+      try { speechSynthesis.cancel(); } catch {}
+      rec = new SR(); rec.lang = state.lang === "ja" ? "ja-JP" : "en-US"; rec.interimResults = true;
+      rec.onresult = (e) => { input.value = [...e.results].map((r) => r[0].transcript).join(""); };
+      rec.onend = () => { rec = null; mic.classList.remove("rec"); if (input.value.trim()) { voice = true; setJSON("mindrawer.chatVoice", true); voiceBtn.setAttribute("aria-pressed", "true"); voiceBtn.textContent = t.voiceOn; send(new Event("submit")); } };
+      rec.onerror = () => { rec = null; mic.classList.remove("rec"); };
+      mic.classList.add("rec"); rec.start();
+    } }, ico("mic", 20)) : null;
+    const speak = (text) => { if (!voice || !("speechSynthesis" in window)) return; try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); u.lang = /[぀-ヿ一-鿿]/.test(text) ? "ja-JP" : "en-US"; speechSynthesis.speak(u); } catch {} };
     const draw = () => {
       log.replaceChildren(...(state.chat.length ? state.chat.map((m) => el("div", { class: "chat-msg " + (m.role === "user" ? "user" : "ai") }, m.text,
         (m.ids || []).length ? el("div", { class: "chat-cite" }, ...m.ids.map((id) => state.notes.find((n) => n.id === id)).filter(Boolean).map((n) => el("button", { onclick: () => { dlg.close(); jumpTo(n); } }, "→ " + n.title))) : null)) : [el("p", { class: "chat-empty" }, t.chatIntro)]));
@@ -1889,13 +1924,14 @@ Return JSON only: {"answer":"","ids":["ids of the notes you used, max 5"]}`;
       state.chat.push({ role: "ai", text: t.chatThinking, pending: true }); draw();
       const r = await chatAnswer(q);
       state.chat.pop(); state.chat.push({ role: "ai", text: r.text, ids: r.ids });
-      input.disabled = false; draw(); input.focus();
+      input.disabled = false; draw(); input.focus(); speak(r.text);
     };
     dlg.replaceChildren(
       el("div", { class: "help-head" }, el("h2", {}, t.chat),
-        el("span", {}, el("button", { type: "button", class: "mini", onclick: () => { state.chat = []; draw(); } }, t.chatClear), el("button", { type: "button", class: "help-x", "aria-label": t.close, onclick: () => dlg.close() }, "×"))),
+        el("span", {}, "speechSynthesis" in window ? voiceBtn : null, " ", el("button", { type: "button", class: "mini", onclick: () => { state.chat = []; draw(); } }, t.chatClear), el("button", { type: "button", class: "help-x", "aria-label": t.close, onclick: () => dlg.close() }, "×"))),
       log,
-      el("form", { class: "chat-form", onsubmit: send }, input, el("button", { type: "submit" }, t.chatSend)));
+      el("form", { class: "chat-form", onsubmit: send }, mic, input, el("button", { type: "submit" }, t.chatSend)));
+    dlg.onclose = () => { try { speechSynthesis.cancel(); } catch {} if (rec) rec.stop(); };
     draw();
     dlg.showModal();
     setTimeout(() => input.focus(), 0);
@@ -2528,6 +2564,9 @@ Return JSON only: {"answer":"","ids":["ids of the notes you used, max 5"]}`;
         item("today", today ? t.fromToday : t.toToday, () => { dlg.close(); state.store.update(n.id, { plannedDay: today ? null : todayISO() }); }),
         item("brain", n.review ? t.learnStop : t.learn, () => { dlg.close(); state.store.update(n.id, { review: n.review ? null : reviewStart() }); }),
         "speechSynthesis" in window && !(n.locked && !unlocked.has(n.id)) ? item("speaker", t.readAloud, () => { dlg.close(); readAloud(n); }) : null,
+        !(n.locked && !unlocked.has(n.id)) ? (checkItems(n.text).length
+          ? (checkItems(n.text).some((x) => x.done) ? item("check", t.clearChecked, () => { dlg.close(); state.store.update(n.id, { text: clearChecked(n.text) }); }) : null)
+          : item("check", t.makeChecklist, () => { dlg.close(); state.store.update(n.id, { text: toChecklist(n.text) }); })) : null,
         item("lock", n.locked ? t.unlockForever : t.lockNote, () => { dlg.close(); toggleLock(n); }),
         (n.history || []).length && !(n.locked && !unlocked.has(n.id)) ? item("history", t.historyH + ` (${n.history.length})`, () => openHistory(n)) : null,
         state.sample ? item("refresh", t.refile, async () => { dlg.close(); await refile(n); }) : null,
@@ -2630,6 +2669,18 @@ Return JSON only: {"answer":"","ids":["ids of the notes you used, max 5"]}`;
       if (!items.length) return;
       for (const i of items) {
         const text = String(i.text || "").trim(); if (!text) continue;
+        // メルマガは、AI で要点だけにして 1 つずつメモにする
+        if (getJSON(PREF.newsletter, true) && state.sample && looksLikeNewsletter(text)) {
+          const pts = await condense(text.slice(0, 20000)).catch(() => null);
+          if (pts) {
+            const tips = splitTips(pts);
+            for (const tip of tips.length ? tips : [pts]) {
+              const m = await classify(tip, i.url || "", null); const { folderOptions: _f, ...r } = m;
+              await state.store.add({ ...r, ...(tips.length ? {} : { original: text }), url: i.url || null, createdAt: Number(i.at) || Date.now(), helpful: 0, pinned: false });
+            }
+            continue;
+          }
+        }
         const meta = state.sample ? await classify(text, i.url || "", null) : { ...heuristic(text), text };
         const { folderOptions: _o, ...rest } = meta;
         await state.store.add({ ...rest, url: i.url || null, createdAt: Number(i.at) || Date.now(), helpful: 0, pinned: false });
@@ -2640,6 +2691,9 @@ Return JSON only: {"answer":"","ids":["ids of the notes you used, max 5"]}`;
 
   // ---------- アイコン・フォルダの色と印・ハッシュタグ・並べ替え・タブ ----------
   const ICONS = {
+    pin: '<path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.4"/>',
+    mic: '<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/>',
+    check: '<rect x="3.5" y="3.5" width="17" height="17" rx="4"/><path d="m8 12.5 2.8 2.8L16 9.5"/>',
     star: '<path d="m12 2.8 2.8 5.8 6.4.9-4.6 4.5 1.1 6.3L12 17.3l-5.7 3 1.1-6.3-4.6-4.5 6.4-.9z"/>',
     thumb: '<path d="M7 10v11M14.5 5.5 13.6 10h5.7a2 2 0 0 1 2 2.4l-1.4 7a2 2 0 0 1-2 1.6H7V10l4.2-7.4a2.4 2.4 0 0 1 3.3 2.9z"/>',
     today: '<rect x="3.5" y="3.5" width="17" height="17" rx="4"/><path d="m8 12.5 2.8 2.8L16 9.5"/>',
@@ -3042,6 +3096,137 @@ Return JSON only: {"text":"","labels":[]}`, { modelTier: "default", images: [fil
       el("p", { class: "set-note" }, t.syncNote));
   }
 
+  // ---------- しまったあと: 場所・ページの保存・動画の要点 ----------
+  async function afterSaved(id, url) {
+    if (getJSON(PREF.savePlace, false) && "geolocation" in navigator) recordPlace(id);
+    if (url && getJSON(PREF.archive, true)) archivePage(id, url);
+  }
+  function recordPlace(id) {
+    navigator.geolocation.getCurrentPosition(async (pos) => {
+      const { latitude, longitude, accuracy } = pos.coords;
+      let name = "";
+      try {
+        const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&zoom=17&lat=${latitude}&lon=${longitude}&accept-language=${state.lang}`);
+        const j = await r.json(), a = j.address || {};
+        name = a.amenity || a.shop || a.tourism || a.building || [a.suburb || a.neighbourhood || a.quarter, a.road].filter(Boolean).join(" ") || a.city || "";
+      } catch {}
+      await state.store.update(id, { savedPlace: { name, latitude, longitude, radius: Math.round(accuracy || 100) } });
+    }, () => {}, { maximumAge: 120000, timeout: 15000 });
+  }
+  const isYouTube = (u) => /^https?:\/\/((www|m)\.)?(youtube\.com\/(watch|shorts|live|embed)|youtu\.be\/)/i.test(u || "");
+  async function archivePage(id, url) {
+    const server = getJSON(PREF.shareServer, "");
+    if (!server) return;
+    try {
+      const res = await fetch(`${server}/page?url=${encodeURIComponent(url)}`);
+      if (!res.ok) return;
+      const page = await res.json();
+      if (!page.text || page.text.length < 40) return;
+      await state.store.update(id, { archive: { at: Date.now(), title: page.title || "", text: page.text } });
+      const n = state.notes.find((x) => x.id === id);
+      if (isYouTube(url) && state.sample && page.text.length >= 200 && n && !n.locked && !String(n.text).includes("▶ ")) {
+        const pts = await condense(page.text.slice(0, 20000)).catch(() => null);
+        if (pts) await state.store.update(id, { text: String(n.text || "").trim() + "\n\n▶ " + T().videoPoints + "\n" + pts });
+      }
+    } catch {}
+  }
+  // ---------- しまった場所の地図（Leaflet・OpenStreetMap） ----------
+  let leaflet = null;
+  async function openMap() {
+    const t = T(), dlg = $("xDlg");
+    if (!leaflet) {
+      const css = document.createElement("link"); css.rel = "stylesheet"; css.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"; document.head.append(css);
+      await new Promise((ok, ng) => { const sc = document.createElement("script"); sc.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"; sc.onload = ok; sc.onerror = ng; document.head.append(sc); }).catch(() => null);
+      leaflet = window.L || null;
+    }
+    const box = el("div", { class: "map-box" });
+    fill(dlg, el("div", { class: "help-head" }, el("h2", {}, t.mapH), el("button", { type: "button", class: "help-x", "aria-label": t.close, onclick: () => dlg.close() }, "×")), box);
+    if (!dlg.open) dlg.showModal();
+    const pins = state.notes.filter((n) => n.savedPlace && !n.locked);
+    if (!leaflet) { box.replaceChildren(el("p", {}, t.mapFail), ...pins.map((n) => el("p", {}, el("a", { href: `https://www.openstreetmap.org/?mlat=${n.savedPlace.latitude}&mlon=${n.savedPlace.longitude}#map=17/${n.savedPlace.latitude}/${n.savedPlace.longitude}`, target: "_blank", rel: "noopener" }, n.title)))); return; }
+    const map = leaflet.map(box);
+    leaflet.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: "© OpenStreetMap" }).addTo(map);
+    const pts = [];
+    for (const n of pins) {
+      const ll = [n.savedPlace.latitude, n.savedPlace.longitude]; pts.push(ll);
+      const b = el("button", { type: "button", class: "mini", onclick: () => { dlg.close(); jumpTo(n); } }, n.title);
+      leaflet.circleMarker(ll, { radius: 8, color: folderLook(n.category || t.other).color, fillOpacity: 0.85 }).addTo(map).bindPopup(b);
+    }
+    if (pts.length) map.fitBounds(pts, { maxZoom: 16, padding: [30, 30] }); else map.setView([35.68, 139.76], 11);
+    setTimeout(() => map.invalidateSize(), 50);
+  }
+  // ---------- チェックリスト（スマホ版と同じ規則: 行の頭が「☐ 」ならまだ、「☑ 」なら済み） ----------
+  function checkItems(text) {
+    return String(text || "").split("\n").map((l, line) => l.startsWith("☐ ") ? { done: false, text: l.slice(2), line } : l.startsWith("☑ ") ? { done: true, text: l.slice(2), line } : null).filter(Boolean);
+  }
+  function toggleCheckLine(text, line) {
+    const a = String(text).split("\n"); const l = a[line] || "";
+    a[line] = l.startsWith("☐ ") ? "☑ " + l.slice(2) : l.startsWith("☑ ") ? "☐ " + l.slice(2) : l; return a.join("\n");
+  }
+  function toChecklist(text) {
+    const out = [];
+    for (const raw of String(text).split("\n")) {
+      const l = raw.trim();
+      if (!l || l.startsWith("☐ ") || l.startsWith("☑ ")) { out.push(l); continue; }
+      if (l.includes("://") || l.length > 60) { out.push(l); continue; }
+      const st = l.replace(/^(?:[・•\-*●◆■]|\d+[.)、]|\[ ?\])\s*/, "");
+      const parts = st.length <= 40 && st.includes("、") ? st.split("、") : [st];
+      for (const p of parts.map((x) => x.trim()).filter(Boolean)) out.push("☐ " + p);
+    }
+    return out.join("\n");
+  }
+  const clearChecked = (text) => String(text).split("\n").filter((l) => !l.startsWith("☑ ")).join("\n");
+  function splitTips(text) {
+    const re = /^(?:[・•\-*●◆■]|\d+[.)、])\s*/;
+    const b = String(text).split("\n").map((l) => l.trim()).filter((l) => re.test(l)).map((l) => l.replace(re, "")).filter((l) => l.length >= 6);
+    return b.length >= 2 ? b : [];
+  }
+  const looksLikeNewsletter = (text) => text.length >= 1200 || /配信停止|unsubscribe|メールマガジン|メルマガ|newsletter/i.test(text);
+  // ---------- Markdown（Obsidian・Notion）に書き出す: フォルダごとの .md を入れた zip ----------
+  const CRC = (() => { const tb = new Uint32Array(256); for (let i = 0; i < 256; i++) { let c = i; for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; tb[i] = c >>> 0; } return tb; })();
+  const crc32 = (u8) => { let c = 0xffffffff; for (const b of u8) c = CRC[(c ^ b) & 0xff] ^ (c >>> 8); return (c ^ 0xffffffff) >>> 0; };
+  function makeZip(files) {
+    const enc = new TextEncoder(), parts = [], central = []; let off = 0;
+    const u16 = (v) => [v & 255, (v >>> 8) & 255], u32 = (v) => [v & 255, (v >>> 8) & 255, (v >>> 16) & 255, (v >>> 24) & 255];
+    for (const [name, text] of files) {
+      const nb = enc.encode(name), data = enc.encode(text), crc = crc32(data);
+      const head = new Uint8Array([...u32(0x04034b50), ...u16(20), ...u16(0x0800), ...u16(0), ...u16(0), ...u16(0x21), ...u32(crc), ...u32(data.length), ...u32(data.length), ...u16(nb.length), ...u16(0)]);
+      parts.push(head, nb, data);
+      central.push(new Uint8Array([...u32(0x02014b50), ...u16(20), ...u16(20), ...u16(0x0800), ...u16(0), ...u16(0), ...u16(0x21), ...u32(crc), ...u32(data.length), ...u32(data.length), ...u16(nb.length), ...u16(0), ...u16(0), ...u16(0), ...u16(0), ...u32(0), ...u32(off)]), nb);
+      off += head.length + nb.length + data.length;
+    }
+    const csize = central.reduce((a, x) => a + x.length, 0);
+    return new Blob([...parts, ...central, new Uint8Array([...u32(0x06054b50), ...u16(0), ...u16(0), ...u16(files.length), ...u16(files.length), ...u32(csize), ...u32(off), ...u16(0)])], { type: "application/zip" });
+  }
+  const yamlS = (x) => JSON.stringify(String(x));
+  function noteMarkdown(n) {
+    const fm = ["---", "title: " + yamlS(n.title), "created: " + new Date(n.createdAt).toISOString()];
+    if (n.updatedAt) fm.push("updated: " + new Date(n.updatedAt).toISOString());
+    if (n.category) fm.push("folder: " + yamlS(n.category));
+    if ((n.tags || []).length) fm.push("tags: [" + n.tags.map((x) => yamlS(String(x).replace(/ /g, "_"))).join(", ") + "]");
+    if (n.url) fm.push("source: " + yamlS(n.url));
+    if (n.pinned) fm.push("favorite: true");
+    fm.push("---");
+    const out = [fm.join("\n"), "# " + n.title];
+    if (n.summary) out.push("> " + n.summary.replace(/\n/g, "\n> "));
+    out.push(String(n.text || "").replace(/^☐ /gm, "- [ ] ").replace(/^☑ /gm, "- [x] "));
+    if ((n.situations || []).length) out.push("**" + T().whenL + "**: " + n.situations.join("、"));
+    return out.join("\n\n") + "\n";
+  }
+  function exportMarkdown() {
+    const safe = (x) => (String(x).replace(/[\\/:*?"<>|#\[\]\n\r\t]/g, " ").replace(/\s+/g, " ").trim() || "memo").slice(0, 60);
+    const used = new Set(), files = [];
+    for (const n of state.notes) {
+      if (n.example || n.locked) continue;
+      const dir = safe(n.category || T().other); let name = `${dir}/${safe(n.title)}.md`, i = 2;
+      while (used.has(name)) name = `${dir}/${safe(n.title)} ${i++}.md`;
+      used.add(name); files.push([name, noteMarkdown(n)]);
+    }
+    const a = el("a", { href: URL.createObjectURL(makeZip(files)), download: `mindrawer-markdown-${todayISO()}.zip` });
+    document.body.append(a); a.click(); a.remove();
+    toast(T().mdDone(files.length));
+  }
+
   // ---------- 読み上げ ----------
   function readAloud(n) {
     try {
@@ -3181,12 +3366,17 @@ Return JSON only: {"text":"","labels":[]}`, { modelTier: "default", images: [fil
       return s;
     }
     if (n.sealed && !opened.has(n.id)) s.append(el("p", { class: "set-note" }, t.sealedElsewhere));
+    const items = checkItems(n.text);
+    if (items.length) s.append(el("ul", { class: "checks" }, ...items.map((it) => el("li", {}, el("button", { type: "button", class: "ck" + (it.done ? " done" : ""), "aria-pressed": String(it.done),
+      onclick: () => { recordUse(n.id); state.store.update(n.id, { text: toggleCheckLine(n.text, it.line) }); } }, el("span", { class: "box", "aria-hidden": "true" }, it.done ? "✓" : ""), it.text)))));
+    if (n.savedPlace?.name) s.querySelector(".chips")?.prepend(el("span", { class: "chip sit" }, ico("pin", 12), n.savedPlace.name));
     const rel = related(n);
     s.append(el("details", { class: "more", ontoggle: (e) => { if (e.currentTarget.open) recordUse(n.id); } }, el("summary", {}, t.original),
       el("p", { class: "raw" }, n.text),
       n.original && n.original !== n.text ? el("div", { class: "orig" }, el("small", {}, t.memoBefore), el("p", { class: "raw" }, n.original),
         el("button", { onclick: () => state.store.update(n.id, { text: n.original, original: null }) }, t.memoRestore)) : null,
       n.url ? el("a", { class: "src", href: n.url, target: "_blank", rel: "noopener" }, n.url) : null,
+      n.archive?.text ? el("details", { class: "orig" }, el("summary", {}, t.archiveH(new Date(n.archive.at).toLocaleDateString(state.lang === "ja" ? "ja-JP" : "en"))), el("p", { class: "raw" }, String(n.archive.text).slice(0, 6000) + (n.archive.text.length > 6000 ? "…" : ""))) : null,
       (() => { const src = (n.sources || []).map((id) => state.notes.find((m) => m.id === id)).filter(Boolean); return src.length ? el("div", { class: "related" }, el("small", {}, t.sources), src.map((m) => el("button", { onclick: () => jumpTo(m) }, "→ " + m.title))) : null; })(),
       rel.length ? el("div", { class: "related" }, el("small", {}, t.related),
         rel.map((m) => el("button", { onclick: () => jumpTo(m) }, "→ " + m.title))) : null));
