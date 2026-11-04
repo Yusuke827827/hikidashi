@@ -42,18 +42,95 @@ public enum TextExtractor {
 
     public static func ocr(cgImage: CGImage) async -> String? {
         #if canImport(Vision)
+        // 小さい画像は 2 倍にしてから読む（細かい字の読み違いを減らす）
+        let image = cgImage.width < 1100 ? (upscale(cgImage, by: 2) ?? cgImage) : cgImage
         let request = VNRecognizeTextRequest()
         request.recognitionLevel = .accurate
         request.recognitionLanguages = ["ja-JP", "en-US"]
         request.usesLanguageCorrection = true
-        guard (try? VNImageRequestHandler(cgImage: cgImage).perform([request])) != nil else { return nil }
-        let lines = (request.results ?? []).compactMap { $0.topCandidates(1).first?.string }
-        let text = lines.joined(separator: "\n").trimmingCharacters(in: .whitespacesAndNewlines)
+        if #available(iOS 16.0, macOS 13.0, *) { request.automaticallyDetectsLanguage = true }
+        guard (try? VNImageRequestHandler(cgImage: image).perform([request])) != nil else { return nil }
+        let boxes: [OCRLine] = (request.results ?? []).compactMap { o in
+            guard let t = o.topCandidates(1).first?.string else { return nil }
+            let b = o.boundingBox
+            return OCRLine(text: t, minX: b.minX, maxX: b.maxX, minY: b.minY, maxY: b.maxY)
+        }
+        let text = arrange(boxes).trimmingCharacters(in: .whitespacesAndNewlines)
         return text.isEmpty ? nil : String(text.prefix(maxLength))
         #else
         return nil
         #endif
     }
+
+    static func upscale(_ img: CGImage, by f: Int) -> CGImage? {
+        let w = img.width * f, h = img.height * f
+        guard let ctx = CGContext(data: nil, width: w, height: h, bitsPerComponent: 8, bytesPerRow: 0,
+                                  space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { return nil }
+        ctx.interpolationQuality = .high
+        ctx.draw(img, in: CGRect(x: 0, y: 0, width: w, height: h))
+        return ctx.makeImage()
+    }
+
+    /// 読み取った 1 行（位置は 0〜1。Vision と同じく下が 0）
+    public struct OCRLine: Sendable, Equatable {
+        public var text: String
+        public var minX: Double, maxX: Double, minY: Double, maxY: Double
+        public init(text: String, minX: Double, maxX: Double, minY: Double, maxY: Double) {
+            self.text = text; self.minX = minX; self.maxX = maxX; self.minY = minY; self.maxY = maxY
+        }
+        var midY: Double { (minY + maxY) / 2 }
+        var height: Double { maxY - minY }
+    }
+
+    /// 読む順（上から下、同じ高さなら左から右）に並べ、折り返しでちぎれた文をつなぐ
+    public static func arrange(_ boxes: [OCRLine]) -> String {
+        guard !boxes.isEmpty else { return "" }
+        // 同じ高さの文字を 1 行にまとめる
+        var rows: [[OCRLine]] = []
+        for b in boxes.sorted(by: { $0.midY > $1.midY }) {
+            if let i = rows.indices.last, let ref = rows[i].first, abs(ref.midY - b.midY) < min(ref.height, b.height) * 0.5 {
+                rows[i].append(b)
+            } else {
+                rows.append([b])
+            }
+        }
+        struct Row { var text: String; var minX: Double; var maxX: Double; var top: Double; var bottom: Double; var height: Double }
+        let lines: [Row] = rows.map { r in
+            let sorted = r.sorted { $0.minX < $1.minX }
+            var t = ""
+            for (i, b) in sorted.enumerated() {
+                if i > 0 {
+                    let prev = sorted[i - 1].text, gap = b.minX - sorted[i - 1].maxX
+                    // 大きく離れていれば区切り、英数どうしなら空白、日本語どうしならそのまま
+                    if gap > 0.08 { t += "  " } else if prev.last.map(isWordChar) == true && b.text.first.map(isWordChar) == true { t += " " }
+                }
+                t += b.text
+            }
+            return Row(text: t, minX: sorted.map(\.minX).min() ?? 0, maxX: sorted.map(\.maxX).max() ?? 1,
+                       top: r.map(\.maxY).max() ?? 0, bottom: r.map(\.minY).min() ?? 0, height: r.map(\.height).max() ?? 0)
+        }
+        let right = lines.map(\.maxX).max() ?? 1
+        var out: [String] = []
+        for (i, l) in lines.enumerated() {
+            guard i > 0, let last = out.last else { out.append(l.text); continue }
+            let prev = lines[i - 1]
+            let gap = prev.bottom - l.top
+            // 前の行が右端近くまであり、文の終わりでなく、行の間が狭く、箇条書きで始まらなければ、折り返しとみなしてつなぐ
+            let wrapped = prev.maxX > right - 0.08 && gap < prev.height * 0.9
+                && !(last.last.map { "。．.!?！？」』）):：".contains($0) } ?? true)
+                && l.text.range(of: #"^\s*(?:[・•\-*●◆■□☐☑]|\d+[.)、])"#, options: .regularExpression) == nil
+            if wrapped {
+                out[out.count - 1] = last + ((last.last.map(isWordChar) == true && l.text.first.map(isWordChar) == true) ? " " : "") + l.text
+            } else {
+                // 段落の切れ目（行の間が広い）は空行にする
+                if gap > max(prev.height, l.height) * 1.6 { out.append("") }
+                out.append(l.text)
+            }
+        }
+        return out.joined(separator: "\n")
+    }
+
+    static func isWordChar(_ c: Character) -> Bool { c.isASCII && (c.isLetter || c.isNumber) }
 
     /// ファイルの文字（PDF・テキスト・画像）
     /// 写真に写っているもの（Vision の分類。自信が高いものを 6 つまで、よく使うものは日本語に）

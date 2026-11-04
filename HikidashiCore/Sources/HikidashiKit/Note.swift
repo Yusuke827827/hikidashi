@@ -110,6 +110,17 @@ public struct Note: Codable, Identifiable, Hashable, Sendable {
     public var savedPlace: Place?
     /// リンク先のページの本文（リンクが切れても読めるように）
     public var archive: PageArchive?
+    /// あとで読む（読んだら readAt）
+    public var readLater: Bool?
+    public var readAt: Date?
+    /// やることボードの列（today / week / someday / done）
+    public var board: String?
+    /// しまい込んだ（一覧には出さず、「しまい込んだ」から見られる）
+    public var archived: Bool?
+    /// 共有フォルダで、このメモを足した人の名前
+    public var addedBy: String?
+    /// 共有フォルダで送る小さな写真（JPEG の base64。端末に保存するときは Images/ に移す）
+    public var photo: String?
     /// 最後に変えた日時（iCloud の同期で新しい方を残すため）
     public var updatedAt: Date?
 
@@ -169,7 +180,7 @@ public struct Note: Codable, Identifiable, Hashable, Sendable {
     }
 
     enum CodingKeys: String, CodingKey {
-        case id, text, url, title, summary, category, tags, situations, remindAt, createdAt, pinned, helpful, lastSeen, example, filed, imageFile, original, file, fileTitle, enriched, place, alarm, plannedDay, sources, folderChosen, checkedAt, linkBroken, review, imageLabels, locked, history, expiresAt, sealed, savedPlace, archive, updatedAt
+        case id, text, url, title, summary, category, tags, situations, remindAt, createdAt, pinned, helpful, lastSeen, example, filed, imageFile, original, file, fileTitle, enriched, place, alarm, plannedDay, sources, folderChosen, checkedAt, linkBroken, review, imageLabels, locked, history, expiresAt, sealed, savedPlace, archive, readLater, readAt, board, archived, addedBy, photo, updatedAt
     }
 
     public init(from decoder: Decoder) throws {
@@ -218,6 +229,12 @@ public struct Note: Codable, Identifiable, Hashable, Sendable {
         sealed = try? c.decodeIfPresent(String.self, forKey: .sealed)
         savedPlace = try? c.decodeIfPresent(Place.self, forKey: .savedPlace)
         archive = try? c.decodeIfPresent(PageArchive.self, forKey: .archive)
+        readLater = try? c.decodeIfPresent(Bool.self, forKey: .readLater)
+        readAt = Self.decodeDate(c, .readAt)
+        board = try? c.decodeIfPresent(String.self, forKey: .board)
+        archived = try? c.decodeIfPresent(Bool.self, forKey: .archived)
+        addedBy = try? c.decodeIfPresent(String.self, forKey: .addedBy)
+        photo = try? c.decodeIfPresent(String.self, forKey: .photo)
         updatedAt = Self.decodeDate(c, .updatedAt)
     }
 
@@ -258,6 +275,12 @@ public struct Note: Codable, Identifiable, Hashable, Sendable {
         try c.encodeIfPresent(sealed, forKey: .sealed)
         try c.encodeIfPresent(savedPlace, forKey: .savedPlace)
         try c.encodeIfPresent(archive, forKey: .archive)
+        try c.encodeIfPresent(readLater, forKey: .readLater)
+        try c.encodeIfPresent(readAt.map(Self.millis), forKey: .readAt)
+        try c.encodeIfPresent(board, forKey: .board)
+        try c.encodeIfPresent(archived, forKey: .archived)
+        try c.encodeIfPresent(addedBy, forKey: .addedBy)
+        try c.encodeIfPresent(photo, forKey: .photo)
         try c.encodeIfPresent(updatedAt.map(Self.millis), forKey: .updatedAt)
     }
 

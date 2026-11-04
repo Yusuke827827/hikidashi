@@ -78,12 +78,12 @@ struct CaptureCard: View {
             }
         }
         .sheet(item: $proposal) { prop in
-            ImageProposalSheet(proposal: prop) { text in
+            ImageProposalSheet(proposal: prop, polish: librarian.hasAI ? { await librarian.tidyOCR(prop.text, image: prop.image, chat: prop.chat) } : nil) { text, raw in
                 proposal = nil
                 // 読み取った文でしまう（画像は付けない。同じ文を二度読まないように）
                 imageData = nil
                 photo = nil
-                commit(text: text, original: nil)
+                commit(text: text, original: raw)
             } onAttach: {
                 proposal = nil
             } onCancel: {
@@ -394,7 +394,10 @@ struct ImageProposal: Identifiable {
 /// 写真・スクショから読み取ったメモの案を確かめて、直してからしまう
 struct ImageProposalSheet: View {
     @State var proposal: ImageProposal
-    var onSave: (String) -> Void
+    /// AI で読みやすいメモにする（AI が無ければ nil）
+    var polish: (() async -> String?)? = nil
+    /// text: しまう文、raw: AI が整える前の読み取った文（整えていなければ nil）
+    var onSave: (_ text: String, _ raw: String?) -> Void
     var onAttach: () -> Void
     var onCancel: () -> Void
 
@@ -407,11 +410,28 @@ struct ImageProposalSheet: View {
                     }
                 }
                 Section {
-                    TextEditor(text: $proposal.text).frame(minHeight: 200)
+                    if polishing {
+                        HStack(spacing: 8) {
+                            ProgressView()
+                            Text(L("AI が読みやすいメモに整えています…", "AI is tidying it into a note…")).font(.footnote).foregroundStyle(.secondary)
+                        }
+                    }
+                    TextEditor(text: $proposal.text).frame(minHeight: 220)
+                        .onChange(of: proposal.text) { _, _ in if !polishing { edited = true } }
+                    if let raw, raw != proposal.text {
+                        Button(L("読み取ったままの文に戻す", "Use the text as read")) { proposal.text = raw; polished = false }
+                            .font(.footnote)
+                    } else if polished == false, raw != nil, polish != nil, !polishing {
+                        Button(L("AI で整え直す", "Tidy with AI again")) { Task { await runPolish(force: true) } }
+                            .font(.footnote)
+                    }
                 } header: {
-                    Text(proposal.chat ? L("トークから読み取ったメモ（直せます）", "Note from the chat (you can edit it)") : L("読み取ったメモ（直せます）", "Note from the image (you can edit it)"))
+                    Text(polished ? L("AI が整えたメモ（直せます）", "AI-tidied note (you can edit it)")
+                         : proposal.chat ? L("トークから読み取ったメモ（直せます）", "Note from the chat (you can edit it)") : L("読み取ったメモ（直せます）", "Note from the image (you can edit it)"))
                 } footer: {
-                    Text(proposal.chat
+                    Text(polished
+                         ? L("読み違いを直し、画面の飾りを外して要点にまとめました。元の文はメモの「原文」に残ります。", "OCR slips fixed, screen clutter removed, essentials kept. The text as read stays with the note.")
+                         : proposal.chat
                          ? L("時刻・既読・入力欄などは外しました。残したいことだけにして、しまってください。", "Times, read marks and the input box were removed. Keep what matters, then save.")
                          : L("いらない部分を消して、しまってください。", "Trim what you don't need, then save."))
                 }
@@ -421,14 +441,37 @@ struct ImageProposalSheet: View {
             }
             .navigationTitle(L("画像からメモを作る", "Note from the image"))
             .navigationBarTitleDisplayMode(.inline)
+            .task { await runPolish(force: false) }
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button(L("キャンセル", "Cancel"), action: onCancel) }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button(L("これでしまう", "Save")) { onSave(proposal.text.trimmingCharacters(in: .whitespacesAndNewlines)) }
+                    Button(L("これでしまう", "Save")) {
+                        let t = proposal.text.trimmingCharacters(in: .whitespacesAndNewlines)
+                        onSave(t, polished && raw != t ? raw : nil)
+                    }
                         .bold()
                         .disabled(proposal.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
             }
+        }
+    }
+
+    @State private var polishing = false
+    @State private var polished = false
+    @State private var edited = false
+    @State private var raw: String?
+
+    /// 読み取った文を AI で整える（自分で直し始めていたら、上書きしない）
+    private func runPolish(force: Bool) async {
+        guard let polish, !polishing, force || !polished else { return }
+        if raw == nil { raw = proposal.text }
+        polishing = true
+        let r = await polish()
+        polishing = false
+        if let r, force || !edited {
+            proposal.text = r
+            polished = true
+            edited = false
         }
     }
 }

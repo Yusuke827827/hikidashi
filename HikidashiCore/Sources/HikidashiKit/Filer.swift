@@ -80,6 +80,23 @@ public enum Prompts {
         "additionalProperties": false,
     ]
 
+    /// スクショ・写真から読み取った文を、読みやすいメモにする
+    public static func ocrMemo(text: String, chat: Bool, hasImage: Bool, language: AppLanguage) -> String {
+        """
+        The user took a screenshot or photo and wants to keep it as a note in a personal tips app. \(hasImage ? "The image is attached; " : "")Below is the text read from it by OCR\(chat ? " (it looks like a chat such as LINE)" : ""). OCR text can have misread characters, broken lines and screen clutter.
+        Turn it into a clean note that is easy to read later:
+        - Fix obvious OCR mistakes (wrong kana or kanji, split words, stray symbols) using context\(hasImage ? " and the image" : "").
+        - Drop screen clutter: status bar, time and battery, buttons, menus, like or view counts, ads, "既読", sender icons, the input box.
+        - Keep every useful fact exactly: names, dates, times, prices, places, addresses, phone numbers, URLs, quantities, steps.
+        - Line 1: a short title (no "#"). Then the essentials as short lines starting with "・"; use "1." "2." for steps of a procedure. For a chat, write what was decided or recommended, not who said what, unless it matters.
+        - Do not add anything that is not in the source. Keep it short.
+        Write in \(language.promptName) unless the source is clearly in another language. Return it as "text".
+
+        OCR text:
+        \(text)
+        """
+    }
+
     /// 長い文をメモ風に整える（保存する前に確かめるとき）
     public static func memo(text: String, language: AppLanguage) -> String {
         """
@@ -234,6 +251,11 @@ public struct Filer: Sendable {
     public func translate(_ text: String, language: AppLanguage = .current) async throws -> String {
         let prompt = "Translate this note from a personal tips app into natural \(language.promptName). Keep URLs, product names, numbers and line breaks as they are. Return JSON with the translation in \"text\".\n\nNote:\n" + text
         return try await client.json(MemoResult.self, prompt: prompt, schema: Prompts.memoSchema, effort: .low).text
+    }
+
+    public func tidyOCR(_ text: String, image: ClaudeClient.Image?, chat: Bool, language: AppLanguage = .current) async throws -> String {
+        try await client.json(MemoResult.self, prompt: Prompts.ocrMemo(text: text, chat: chat, hasImage: image != nil, language: language),
+                              schema: Prompts.memoSchema, images: image.map { [$0] } ?? [], effort: .low).text
     }
 
     public func condense(_ text: String, language: AppLanguage = .current) async throws -> String {

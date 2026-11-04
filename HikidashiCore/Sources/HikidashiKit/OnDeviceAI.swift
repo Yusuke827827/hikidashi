@@ -21,6 +21,15 @@ public protocol NoteAI: Sendable {
     func compose(topic: String, notes: [Note], language: AppLanguage) async throws -> ComposeResult
     /// メモに聞く。query は最後の問い（メモを絞るのに使う）
     func chat(transcript: String, notes: [Note], query: String, today: String, language: AppLanguage) async throws -> RecallResult
+    /// スクショ・写真から読み取った文を、読みやすいメモにする（画像が読める AI には画像も渡す）
+    func tidyOCR(_ text: String, image: ClaudeClient.Image?, chat: Bool, language: AppLanguage) async throws -> String
+}
+
+extension NoteAI {
+    /// 画像を読めない AI は、文だけをメモ風に整える
+    public func tidyOCR(_ text: String, image: ClaudeClient.Image?, chat: Bool, language: AppLanguage) async throws -> String {
+        try await condense(text, language: language)
+    }
 }
 
 extension Filer: NoteAI {

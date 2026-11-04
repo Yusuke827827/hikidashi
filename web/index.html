@@ -929,6 +929,8 @@ body[data-tab="cal"] .hero, body[data-tab="cal"] .main { display: none !importan
   Object.assign(I18N.ja, { voiceOn: "🔊 声で答える", voiceOff: "🔇 声なし", voiceAsk: "声で聞く", archiveH: (d) => `保存したページ（${d}）`, makeChecklist: "チェックリストにする", clearChecked: "済んだ項目を消す", videoPoints: "動画の要点",
     secSaving: "しまうとき", archiveL: "リンク先のページを丸ごと残す", newsletterL: "メールで届いたメルマガは要点だけにする", savePlaceL: "しまった場所を覚える", mapBtn: "地図で見る", mapH: "しまった場所", mapFail: "地図を読み込めませんでした。場所ごとに開けます:",
     savingNote: "リンクを付けてしまうと、そのページの本文も残します（中継サーバーが必要）。YouTube は AI で字幕から要点を足します。メールで届いたメルマガは、役立つところを 1 つずつのメモにします。場所はこのブラウザの中にだけ残ります。", mdExport: "Markdown（Obsidian・Notion）", mdDone: (n) => `${n} 件を Markdown で書き出しました。`, whenL: "使う場面" });
+  Object.assign(I18N.en, { propRaw: "Use the text as read", propPolishing: "AI is tidying it into a note… you can already edit it.", propPolished: "AI fixed OCR slips, removed screen clutter and kept the essentials. Edit if you like, then save." });
+  Object.assign(I18N.ja, { propRaw: "読み取ったままの文に戻す", propPolishing: "AI が読みやすいメモに整えています…（このまま直すこともできます）", propPolished: "AI が読み違いを直し、画面の飾りを外して要点にまとめました。直してからしまえます。" });
   // ---------- storage ----------
   function localStore() {
     const read = () => { try { return JSON.parse(localStorage.getItem(KEY) || "[]"); } catch { return []; } };
@@ -2869,9 +2871,58 @@ Return JSON only: {"answer":"","ids":["ids of the notes you used, max 5"]}`;
       await new Promise((ok, ng) => { const sc = document.createElement("script"); sc.src = "https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js"; sc.onload = ok; sc.onerror = ng; document.head.append(sc); });
       tess = window.Tesseract;
     }
-    const r = await tess.recognize(file, state.lang === "ja" ? "jpn+eng" : "eng");
+    const r = await tess.recognize(await ocrCanvas(file), state.lang === "ja" ? "jpn+eng" : "eng", {}, { preserve_interword_spaces: "1" });
+    const lines = (r?.data?.lines || []).map((l) => ({ text: String(l.text || "").trim(), ...l.bbox })).filter((l) => l.text);
+    const text = lines.length ? arrangeOCR(lines) : String(r?.data?.text || "");
     // 日本語の文字のあいだに入る空白を詰める
-    return String(r?.data?.text || "").replace(/([^\x00-\x7f]) +(?=[^\x00-\x7f])/g, "$1").trim();
+    return text.replace(/([^\x00-\x7f]) +(?=[^\x00-\x7f])/g, "$1").trim();
+  }
+  /** 読み取りやすいよう、小さい画像は大きくし、白黒にしてコントラストを上げる */
+  async function ocrCanvas(file) {
+    try {
+      const bmp = await createImageBitmap(file);
+      const scale = Math.min(3, Math.max(1, 1800 / bmp.width));
+      const c = document.createElement("canvas"); c.width = Math.round(bmp.width * scale); c.height = Math.round(bmp.height * scale);
+      const g = c.getContext("2d"); g.imageSmoothingQuality = "high"; g.drawImage(bmp, 0, 0, c.width, c.height);
+      const img = g.getImageData(0, 0, c.width, c.height), d = img.data;
+      let lo = 255, hi = 0; const gray = new Uint8ClampedArray(d.length / 4);
+      for (let i = 0; i < gray.length; i++) { const v = 0.299 * d[i * 4] + 0.587 * d[i * 4 + 1] + 0.114 * d[i * 4 + 2]; gray[i] = v; if (v < lo) lo = v; if (v > hi) hi = v; }
+      // 暗い背景（ダークモードのスクショ）は白黒を反転する
+      let sum = 0; for (const v of gray) sum += v; const invert = sum / gray.length < 110;
+      const span = Math.max(1, hi - lo);
+      for (let i = 0; i < gray.length; i++) { let v = (gray[i] - lo) * 255 / span; if (invert) v = 255 - v; d[i * 4] = d[i * 4 + 1] = d[i * 4 + 2] = v; }
+      g.putImageData(img, 0, 0);
+      return c;
+    } catch { return file; }
+  }
+  /** 読む順に並べ、折り返しでちぎれた文をつなぐ（スマホ版の TextExtractor.arrange と同じ考え方。座標は上が 0） */
+  function arrangeOCR(lines) {
+    const ls = lines.slice().sort((a, b) => a.y0 - b.y0);
+    const right = Math.max(...ls.map((l) => l.x1)), left = Math.min(...ls.map((l) => l.x0)), width = Math.max(1, right - left);
+    const isW = (c) => /[A-Za-z0-9]/.test(c || "");
+    const out = [];
+    ls.forEach((l, i) => {
+      if (!i) { out.push(l.text); return; }
+      const prev = ls[i - 1], h = Math.max(prev.y1 - prev.y0, l.y1 - l.y0), gap = l.y0 - prev.y1, last = out[out.length - 1];
+      const wrapped = prev.x1 > right - width * 0.08 && gap < h * 0.9 && !/[。．.!?！？」』）):：]$/.test(last) && !/^\s*(?:[・•\-*●◆■□☐☑]|\d+[.)、])/.test(l.text);
+      if (wrapped) out[out.length - 1] = last + (isW(last.slice(-1)) && isW(l.text[0]) ? " " : "") + l.text;
+      else { if (gap > h * 1.6) out.push(""); out.push(l.text); }
+    });
+    return out.join("\n");
+  }
+  /** 読み取った文を、AI で読みやすいメモにする（スマホ版と同じ頼み方） */
+  function ocrMemoPrompt(text, chat, hasImage) {
+    return `The user took a screenshot or photo and wants to keep it as a note in a personal tips app. ${hasImage ? "The image is attached; " : ""}Below is the text read from it by OCR${chat ? " (it looks like a chat such as LINE)" : ""}. OCR text can have misread characters, broken lines and screen clutter.
+Turn it into a clean note that is easy to read later:
+- Fix obvious OCR mistakes (wrong kana or kanji, split words, stray symbols) using context${hasImage ? " and the image" : ""}.
+- Drop screen clutter: status bar, time and battery, buttons, menus, like or view counts, ads, "既読", sender icons, the input box.
+- Keep every useful fact exactly: names, dates, times, prices, places, addresses, phone numbers, URLs, quantities, steps.
+- Line 1: a short title (no "#"). Then the essentials as short lines starting with "・"; use "1." "2." for steps of a procedure. For a chat, write what was decided or recommended, not who said what, unless it matters.
+- Do not add anything that is not in the source. Keep it short.
+Write in ${langName()} unless the source is clearly in another language. Return JSON only: {"text":""}
+
+OCR text:
+${text || "(none — read the image)"}`;
   }
   const CHAT_DROP = /^(?:(?:午前|午後)?\s*\d{1,2}[:：]\d{2}|既読(?:\s*\d+)?|Read(?: \d+)?|\d{4}[./年]\d{1,2}[./月]\d{1,2}日?(?:\s*\([^)]*\))?|(?:今日|昨日|Today|Yesterday)|\d{1,2}\/\d{1,2}\s*\([^)]*\)|メッセージを入力|Aa|トーク|送信取消.*|.*がメッセージの送信を取り消しました|\d+%|[<＜]\s*\d*)$/i;
   /** チャットのスクショの文から、時刻・既読・日付・入力欄を除く（スマホ版の cleanChatText と同じ） */
@@ -2905,25 +2956,34 @@ Return JSON only: {"answer":"","ids":["ids of the notes you used, max 5"]}`;
         saveBtn));
     dlg.onclose = null;
     dlg.showModal();
-    let proposal = "";
+    let proposal = "", raw = "";
+    const revert = el("button", { type: "button", class: "mini", hidden: "" }, t.propRaw);
+    ta.after(revert);
     try {
       if (state.sample && !state.noVision) {
-        const r = await state.sample.json(`Read this screenshot or photo and turn its useful content into a short note for a personal tips app, in ${langName()}.
-If it is a chat (LINE, messages): drop UI chrome (times, "既読"/read marks, names unless they matter, the input box) and write the essence — plans, places, dates, decisions, recommendations, things to remember — as short lines starting with "・".
-Otherwise, transcribe the useful text cleanly. Keep URLs, prices, dates and names.
-Also give "labels": up to 6 short nouns for what is visible (objects, food, places, products).
-Return JSON only: {"text":"","labels":[]}`, { modelTier: "default", images: [file] });
+        // 画像を読める AI: 画像から直接、読みやすいメモにする
+        const r = await state.sample.json(ocrMemoPrompt("", false, true).replace('Return JSON only: {"text":""}', 'Also give "labels": up to 6 short nouns for what is visible (objects, food, places, products).\nReturn JSON only: {"text":"","labels":[]}'), { modelTier: "default", images: [file] });
         proposal = String(r.text || "").trim();
         state.pendingLabels = Array.isArray(r.labels) ? r.labels.map(String).slice(0, 6) : null;
       } else {
-        const raw = await ocrImage(file);
-        proposal = looksLikeChat(raw) ? cleanChatText(raw) : raw;
+        raw = await ocrImage(file);
+        const chat = looksLikeChat(raw);
+        proposal = chat ? cleanChatText(raw) : raw;
+        // 文だけ読める AI: 読み取った文を整える（そのあいだも読み取った文は直せる）
+        if (state.sample && proposal && dlg.open) {
+          ta.disabled = false; ta.value = proposal; saveBtn.disabled = false; note.textContent = t.propPolishing;
+          let edited = false; ta.oninput = () => { edited = true; saveBtn.disabled = !ta.value.trim(); };
+          const r = await state.sample.json(ocrMemoPrompt(proposal, chat, false), { modelTier: "default" }).catch(() => null);
+          const nice = String(r?.text || "").trim();
+          if (nice && !edited && dlg.open) { raw = proposal; proposal = nice; revert.hidden = false; }
+        }
       }
-    } catch { proposal = ""; }
+    } catch { proposal = proposal || ""; }
     if (!dlg.open) return;
     ta.disabled = false; ta.value = proposal; saveBtn.disabled = !proposal;
-    note.textContent = proposal ? t.propNote : t.propFail;
+    note.textContent = proposal ? (revert.hidden ? t.propNote : t.propPolished) : t.propFail;
     ta.oninput = () => { saveBtn.disabled = !ta.value.trim(); };
+    revert.onclick = () => { ta.value = raw; revert.hidden = true; note.textContent = t.propNote; };
     saveBtn.onclick = async () => { const v = ta.value.trim(); if (!v) return; dlg.close(); $("noteText").value = v; await save(); };
     setTimeout(() => ta.focus(), 0);
   }

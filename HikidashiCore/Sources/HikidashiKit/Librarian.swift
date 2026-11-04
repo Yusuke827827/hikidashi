@@ -326,6 +326,26 @@ public final class Librarian {
         }
     }
 
+    /// スクショ・写真から読み取った文を、AI で読みやすいメモにする（使えないときは nil）
+    public func tidyOCR(_ text: String, image: Data?, chat: Bool) async -> String? {
+        guard let ai = ai, !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return nil }
+        var img: ClaudeClient.Image?
+        if ai.readsImages, let image {
+            #if canImport(UIKit)
+            img = ClaudeClient.Image(data: ImageTools.jpeg(data: image) ?? image)
+            #else
+            img = ClaudeClient.Image(data: image)
+            #endif
+        }
+        do {
+            let r = try await ai.tidyOCR(String(text.prefix(8000)), image: img, chat: chat, language: .current).trimmingCharacters(in: .whitespacesAndNewlines)
+            return r.isEmpty ? nil : r
+        } catch {
+            if aiKind == .claude { lastError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription }
+            return nil
+        }
+    }
+
     // MARK: まとめノート・メモに聞く
 
     /// いくつかのメモから、1 枚のまとめノートを作る（AI が無ければ、タイトルと要約を並べるだけ）

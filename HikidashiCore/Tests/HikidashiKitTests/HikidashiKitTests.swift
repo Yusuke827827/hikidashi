@@ -1199,3 +1199,17 @@ final class PageAndChecklistTests: XCTestCase {
         XCTAssertFalse(s.contains("秘密"))
     }
 }
+
+final class OCRArrangeTests: XCTestCase {
+    func testArrangeJoinsWrappedLinesAndOrders() {
+        typealias L = TextExtractor.OCRLine
+        let lines = [
+            L(text: "で集合。", minX: 0.05, maxX: 0.3, minY: 0.80, maxY: 0.84),
+            L(text: "明日は10時に駅の改札前", minX: 0.05, maxX: 0.95, minY: 0.86, maxY: 0.90),
+            L(text: "持ち物", minX: 0.05, maxX: 0.25, minY: 0.60, maxY: 0.64),
+            L(text: "・お弁当", minX: 0.05, maxX: 0.3, minY: 0.54, maxY: 0.58),
+            L(text: "12:30", minX: 0.80, maxX: 0.95, minY: 0.60, maxY: 0.64),
+        ]
+        XCTAssertEqual(TextExtractor.arrange(lines), "明日は10時に駅の改札前で集合。\n\n持ち物  12:30\n・お弁当")
+    }
+}
