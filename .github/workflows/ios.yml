@@ -27,6 +27,9 @@ jobs:
       - run: swift --version
       - run: swift test
         working-directory: HikidashiCore
+        env:
+          # 落ちたときに、どこで落ちたかを表示する
+          SWIFT_BACKTRACE: enable=yes,interactive=no,sanitize=yes,limit=60
 
   app:
     runs-on: macos-latest
