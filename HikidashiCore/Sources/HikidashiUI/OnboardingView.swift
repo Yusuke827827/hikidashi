@@ -1,4 +1,4 @@
-// 初めて開いたときの案内。4 枚で、しまい方・整理・取り出し・始め方を見せる。
+// 初めて開いたときの案内。3 枚だけ（しまう・ひきだす・今日）。ほかの機能は「今日」のヒントで少しずつ。
 
 #if os(iOS)
 import HikidashiKit
@@ -16,24 +16,21 @@ struct OnboardingView: View {
         let body: String
     }
 
+    /// 最初は 3 つだけ（しまう・ひきだす・今日）。ほかの機能は、慣れてきたら「今日」のヒントで 1 つずつ紹介する
     private var pages: [Page] {
         [
             Page(icon: "tray.and.arrow.down",
-                 title: L("しまっておけば、\n必要なときに出てくる", "Save it once.\nIt finds you when it matters."),
-                 body: L("X で見つけた Tips、スクショ、自分用の備忘録。思いついたら、とりあえずここにしまってください。",
-                         "Tips from X, screenshots, notes to self. Whenever you find something useful, just drop it here.")),
-            Page(icon: "square.and.arrow.up",
-                 title: L("共有ボタンから一発で", "Straight from the share sheet"),
-                 body: L("X・Safari・写真などで共有ボタンを押し、「Mindrawer」を選ぶだけ。出てこないときは、アプリの列の右端「その他」から Mindrawer をオンにしてください。",
-                         "Tap Share in X, Safari, Photos and more, and pick Mindrawer. If it isn't listed, scroll the app row to More and turn Mindrawer on.")),
-            Page(icon: "sparkles",
-                 title: L("AI が整理して、\n使う場面を覚えておく", "AI files it and remembers\nwhen it helps"),
-                 body: L("フォルダ・タグ・「役立つ場面」を AI が付けます。写真や PDF の文字も読み取ります。",
-                         "AI adds folders, tags and the moments a note will help. It reads text in photos and PDFs too.")),
+                 title: L("しまう", "Save"),
+                 body: L("Tips・スクショ・リンク・備忘録を、思いついたら上の欄に入れて「しまう」。共有ボタンからも入れられます。AI がフォルダやタグを付けます。",
+                         "Drop tips, screenshots, links or notes to self in the box and tap Save, or use the share sheet. AI adds folders and tags.")),
             Page(icon: "magnifyingglass",
-                 title: L("「これから◯◯する」で\n取り出す", "Say what you're about to do"),
-                 body: L("「ひきだす」に、これからすることや困りごとを書くと、役立つメモが出てきます。予定や通知でも、向こうから知らせます。",
-                         "Type what you're about to do or what's bugging you in Recall, and the helpful notes appear. Events and notifications bring them to you, too.")),
+                 title: L("ひきだす", "Recall"),
+                 body: L("「これから◯◯する」「◯◯で困っている」と書くと、役立つメモが出てきます。言葉が違っても大丈夫です。",
+                         "Write what you're about to do or what's bugging you, and the notes that help come back, even with different words.")),
+            Page(icon: "sun.max",
+                 title: L("今日", "Today"),
+                 body: L("その日に見るメモ・やること・今日のひとつが並びます。ほかの機能は、使っていくうちに少しずつ紹介します。",
+                         "Today shows what's due, your to-dos and a daily pick. Other features are introduced bit by bit as you go.")),
         ]
     }
 

@@ -51,6 +51,8 @@ public struct HikidashiRootView: View {
     @State private var showMap = false
     @State private var showBoard = false
     @State private var showTidy = false
+    @State private var showPalette = false
+    @State private var tipTick = 0
     @State private var usageTick = 0
     @AppStorage("simpleMode") private var simpleMode = false
     @AppStorage("textSize") private var textSizeRaw = TextSize.system.rawValue
@@ -138,6 +140,9 @@ public struct HikidashiRootView: View {
         .sheet(isPresented: $managingFolders, onDismiss: { mergeRefresh += 1 }) {
             FolderManagerView(store: store, librarian: librarian).environment(\.palette, palette).tint(palette.accent)
         }
+        .sheet(isPresented: $showPalette) {
+            CommandPalette(actions: paletteActions, store: store, onOpen: jump).tint(palette.accent)
+        }
         .sheet(isPresented: $showBoard) {
             BoardSheet(store: store, onOpen: jump).environment(\.palette, palette).tint(palette.accent)
         }
@@ -161,7 +166,7 @@ public struct HikidashiRootView: View {
             }
             await refresh()
         }
-        .task { if !DemoMode.isOn { await librarian.checkLinksIfNeeded() } }
+        .task { if !DemoMode.isOn { try? await Task.sleep(for: .seconds(4)); await librarian.checkLinksIfNeeded() } }
         .task { if !DemoMode.isOn { await Subscription.shared.start() } }
         .task { if !DemoMode.isOn, CloudSync.isOn { CloudSync.shared.start(store: store) } }
         // 購読が始まったら、たまっている未整理のメモを整理する
@@ -291,6 +296,8 @@ public struct HikidashiRootView: View {
         }
         let n = librarian.ingestInbox()
         if n > 0 { show(L("共有シートから \(n) 件届きました。", "\(n) items arrived from the share sheet.")) }
+        // 起動を速く: 画面を先に出して、通信や重い処理は少しあとから
+        try? await Task.sleep(for: .milliseconds(700))
         if CloudSync.isOn { await CloudSync.shared.fetch() }
         await librarian.syncShares()
         store.reloadChecks()
@@ -305,6 +312,7 @@ public struct HikidashiRootView: View {
             let n = (try? await librarian.sync(serverURL: Subscription.serverURL)) ?? 0
             if n > 0 { show(L("ほかの端末から \(n) 件そろえました。", "Synced \(n) changes from your other devices.")) }
         }
+        await WeeklyDigestNotice.sync(store.notes)
         let expired = store.purgeExpired()
         if expired > 0 { show(L("期限が過ぎたメモ \(expired) 件をゴミ箱へ移しました。", "Moved \(expired) expired notes to the trash.")) }
         await PlaceKindAlerts.sync(store.notes)
@@ -343,6 +351,12 @@ public struct HikidashiRootView: View {
                 .font(!wide && tab != .today ? .largeTitle.weight(.bold) : Fonts.mincho(26))
                 .foregroundStyle(palette.text)
             Spacer()
+            Button { showPalette = true } label: {
+                Image(systemName: "magnifyingglass").font(.title3).frame(width: 40, height: 44)
+            }
+            .foregroundStyle(palette.text)
+            .keyboardShortcut("k", modifiers: .command)
+            .accessibilityLabel(L("機能やメモを探す", "Find a feature or note"))
             Text(aiLabel)
                 .font(.caption2.weight(.medium))
                 .foregroundStyle(palette.muted)
@@ -709,6 +723,10 @@ public struct HikidashiRootView: View {
         }
         if let e = librarian.lastError { errorBanner(e) }
         if let recall { recallCard(recall) }
+        // ほかの機能は、慣れてきたら 1 つずつ紹介する
+        if !DemoMode.isOn, tipTick >= 0, let tip = FeatureTips.today(noteCount: store.notes.count) {
+            TipCard(tip: tip) { withAnimation { FeatureTips.dismiss(tip.id); tipTick += 1 } }
+        }
         todayListCard
         boardButton
         if !simpleMode {
@@ -848,6 +866,28 @@ public struct HikidashiRootView: View {
             }
             return inFolder && (f.isEmpty || store.haystack(n).contains(f)) && noteFilter.matches(n)
         })
+    }
+
+    /// 「探す」から開ける機能
+    private var paletteActions: [PaletteAction] {
+        [
+            PaletteAction(id: "save", title: L("しまう", "Save"), symbol: "tray.and.arrow.down", keywords: "save memo 入力 書く") { tab = .today; focusSave += 1 },
+            PaletteAction(id: "board", title: L("やることボード", "To-do board"), symbol: "rectangle.split.3x1", keywords: "board todo タスク") { showBoard = true },
+            PaletteAction(id: "ask", title: L("メモに聞く（会話・声）", "Ask your notes (chat, voice)"), symbol: "bubble.left.and.text.bubble.right", keywords: "ask chat voice 声 チャット") { chatting = true },
+            PaletteAction(id: "calendar", title: L("カレンダー", "Calendar"), symbol: "calendar", keywords: "calendar 予定 日付") { tab = .calendar },
+            PaletteAction(id: "notes", title: L("メモの一覧", "All notes"), symbol: "note.text", keywords: "notes list 一覧") { tab = .notes; folder = Self.allKey },
+            PaletteAction(id: "later", title: L("あとで読む", "Read later"), symbol: "bookmark", keywords: "read later リンク") { tab = .notes; folder = Self.laterKey },
+            PaletteAction(id: "archive", title: L("しまい込んだメモ", "Archived notes"), symbol: "archivebox", keywords: "archive アーカイブ") { tab = .notes; folder = Self.archiveKey },
+            PaletteAction(id: "filter", title: L("詳しく絞り込む", "Filters"), symbol: "line.3.horizontal.decrease.circle", keywords: "filter 絞り込み 期間 タグ") { tab = .notes; showFilter = true },
+            PaletteAction(id: "graph", title: L("つながりの図", "Connections"), symbol: "point.3.connected.trianglepath.dotted", keywords: "graph 関連 図") { showGraph = true },
+            PaletteAction(id: "map", title: L("しまった場所の地図", "Where I saved"), symbol: "map", keywords: "map 地図 場所") { showMap = true },
+            PaletteAction(id: "tidy", title: L("使っていないメモの片づけ", "Tidy unused notes"), symbol: "archivebox", keywords: "tidy 整理 片付け 古い") { showTidy = true },
+            PaletteAction(id: "folders", title: L("フォルダの管理", "Manage folders"), symbol: "folder.badge.gearshape", keywords: "folder フォルダ 名前") { managingFolders = true },
+            PaletteAction(id: "print", title: L("今の一覧を印刷・PDF", "Print or PDF this list"), symbol: "printer", keywords: "print pdf 印刷") {
+                NotePrinter.print(Array(shownNotes.filter { !$0.isLocked }.prefix(100)), title: "Mindrawer")
+            },
+            PaletteAction(id: "settings", title: L("設定（同期・バックアップ・見やすさ・AI のまとめ方）", "Settings (sync, backup, display, AI style)"), symbol: "gearshape", keywords: "settings 設定 同期 sync backup バックアップ 文字 大きさ ai まとめ方 シンプル") { showSettings = true },
+        ]
     }
 
     /// やることボードを開く

@@ -89,6 +89,15 @@ body.simple #nowBox, body.simple #reviewBox, body.simple #upkeepBox, body.simple
 .board-row .ck.done .box { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
 .board-t { flex: 1; text-align: left; border: 0; background: none; color: var(--ink); font: inherit; font-weight: 600; cursor: pointer; padding: 6px 0; }
 .board-t small { color: var(--muted); font-weight: 400; }
+.pal-in { width: 100%; box-sizing: border-box; min-height: 44px; border: 1px solid var(--line); border-radius: 12px; padding: 0 12px; font: inherit; background: var(--surface); color: var(--ink); margin: 8px 0; }
+.pal-list { max-height: 60vh; overflow: auto; }
+.pal-ic { display: inline-block; width: 26px; text-align: center; }
+.comments { display: grid; gap: 6px; margin-top: 8px; }
+.comments > small { color: var(--muted); font-weight: 600; letter-spacing: .06em; }
+.cmt { background: var(--surface2, var(--bg)); border-radius: 10px; padding: 6px 10px; }
+.cmt p { margin: 0; }
+.cmt small { color: var(--muted); font-size: 11.5px; }
+.plan-next.tip { border-color: var(--accent); }
 .more-btn { display: block; margin: 8px auto 0; min-height: 44px; padding: 0 22px; border-radius: 12px; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
@@ -617,6 +626,7 @@ body[data-tab="cal"] .hero, body[data-tab="cal"] .main { display: none !importan
     <button class="status" id="status" type="button"></button>
     <div class="top-right">
       <button class="icon-btn desk-only" id="calBtn" type="button"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg></button>
+      <button class="icon-btn" id="palBtn" type="button" aria-label="Find" title="⌘K"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></button>
       <button class="icon-btn" id="chatBtn" type="button"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button>
       <button class="icon-btn" id="helpBtn" type="button"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M9.2 9a3 3 0 0 1 5.7 1c0 2-2.9 2.8-2.9 2.8"/><path d="M12 17h.01"/></svg><span class="sr" id="helpLabel"></span></button>
       <div class="wp">
@@ -821,7 +831,7 @@ body[data-tab="cal"] .hero, body[data-tab="cal"] .main { display: none !importan
     filters: "Filters", fPeriod: "Saved within", periods: { all: "Any time", week: "7 days", month: "1 month", quarter: "3 months", year: "1 year" },
     fFav: "Favorites only", fAttach: "With a file or link", fNotify: "With a notification", fUnfiled: "In Other only", fTagsH: "Tags", fReset: "Clear", fDone: "Done",
     reviewH: "This week's review", reviewAdded: (n) => `You saved ${n} ${n === 1 ? "note" : "notes"} this week.`, reviewNone: "Nothing saved this week.", reviewForgot: "Worth another look:", reviewClose: "Done",
-    onb: [["🗂", "Save it once", "Paste tips, screenshots, files or notes to self. They land in folders on their own."], ["🔎", "It finds you", "Switch to Recall and say what you're about to do. The notes that help come back, even without matching words."], ["☑", "See it when it's due", "Give a note a date, a repeat or a word. It lines up in Today's checklist."], ["⚙", "Make it yours", "In Settings: PIN lock, weekly copies and the trash. Tap the status to use AI with your own key."]],
+    onb: [["🗂", "Save", "Paste tips, screenshots, links or notes to self and tap Save. They land in folders on their own."], ["🔎", "Recall", "Switch to Recall and say what you're about to do. The notes that help come back, even without matching words."], ["☀", "Today", "Today shows what's due, your to-dos and a daily pick. Other features are introduced bit by bit as you go."]],
     onbNext: "Next", onbStart: "Start", onbExamples: "Start with 3 examples", onbSkip: "Skip",
   });
   Object.assign(I18N.en, { choiceH: "Which folder?", choiceKeep: "Keep", choiceNew: "new", choiceType: "✎ Type a name", choiceUse: "Use", choicePh: "Folder name", choiceLearn: "Mindrawer learns how you name folders from what you pick.", choiceSimilarQ: (a, b) => `There's a similar folder, "${b}". Put it there instead?\n(Cancel creates "${a}")`, choiceDone: (f) => `Moved to ${f}.`,
@@ -909,7 +919,7 @@ body[data-tab="cal"] .hero, body[data-tab="cal"] .main { display: none !importan
     filters: "絞り込み", fPeriod: "しまった時期", periods: { all: "すべて", week: "7 日", month: "1 か月", quarter: "3 か月", year: "1 年" },
     fFav: "お気に入りだけ", fAttach: "ファイル・出典あり", fNotify: "通知あり", fUnfiled: "「その他」だけ", fTagsH: "タグ", fReset: "解除", fDone: "決める",
     reviewH: "今週のふりかえり", reviewAdded: (n) => `今週は ${n} 件しまいました。`, reviewNone: "今週しまったメモはありません。", reviewForgot: "もう一度見ておきたいメモ:", reviewClose: "見た",
-    onb: [["🗂", "しまうだけ", "Tips、スクショ、ファイル、備忘録を貼るだけ。自動でフォルダに入ります。"], ["🔎", "必要なときに出てくる", "「ひきだす」でこれからすることを書くと、言葉が違っても役立つメモが出てきます。"], ["☑", "その日に見える", "メモに日付・繰り返し・言葉を決めておくと、「今日の確認リスト」に並びます。"], ["⚙", "安心して使う", "設定から PIN ロック・毎週の控え・ゴミ箱が使えます。右上の表示から自分のキーで AI も使えます。"]],
+    onb: [["🗂", "しまう", "Tips・スクショ・リンク・備忘録を貼って「しまう」。自動でフォルダに入ります。"], ["🔎", "ひきだす", "「ひきだす」でこれからすることを書くと、言葉が違っても役立つメモが出てきます。"], ["☀", "今日", "その日に見るメモ・やること・今日のひとつが並びます。ほかの機能は、使っていくうちに少しずつ紹介します。"]],
     onbNext: "次へ", onbStart: "はじめる", onbExamples: "見本の 3 件で始める", onbSkip: "スキップ",
   });
   I18N.en.helpSteps.push(["Trash, PIN lock and copies", "⚙ Settings → Safety: a PIN lock for shared devices, a weekly copy kept in this browser (export it to keep it safe), and a trash that keeps deleted notes for 30 days."], ["Ask your notes, combined notes", "at the top lets you ask about your notes in a chat. From Recall results, Combine these into one note turns related notes into one page. On Sundays and Mondays a weekly review appears."], ["Filters and quick save", "Filters next to the list narrows by period, tags, favorites, files or notifications. Bookmark this page with #save at the end to open straight into Save."])
@@ -975,6 +985,18 @@ body[data-tab="cal"] .hero, body[data-tab="cal"] .main { display: none !importan
     codeNet: "ネットワーク: ", codePass: "パスワード: ", codeSec: "方式: ", codeContact: "連絡先", codePhone: "電話番号", codeMail: "メール", codeProduct: "商品コード ", codeProductL: "商品コード（JAN）: ",
     shareNameH: "共有で使う名前", shareNameL: "名前", shareNamePh: "例: ママ・たろう", shareNameNote: "家族と共有しているフォルダで、誰が足したメモかがわかるように付けます。",
     extFolder: "外の保存先", extNone: "なし", extPick: "フォルダを選ぶ", extStop: "やめる", extSaved: (n) => `「${n}」にもバックアップします。` });
+  Object.assign(I18N.en, { palH: "Find", palPh: "Find a feature or note (board, sync, print…)", palNone: "Nothing found.", printBtn: "Print or PDF", printNone: "Nothing to print.", printBlocked: "Allow pop-ups to print.",
+    pal: { save: ["Save", "save write"], board: ["To-do board", "board todo"], ask: ["Ask your notes (chat, voice)", "ask chat voice"], cal: ["Calendar", "calendar date"], notes: ["All notes", "notes list"], later: ["Read later", "read later links"], archive: ["Archived notes", "archive"], graph: ["Connections", "graph related"], tidy: ["Tidy unused notes", "tidy old clean"], print: ["Print or PDF this list", "print pdf"], md: ["Export Markdown (Obsidian, Notion)", "markdown export obsidian notion"], settings: ["Settings (sync, backup, display, AI style)", "settings sync backup text size ai style simple pin"] },
+    tips: { share: ["Save from anywhere", "Install the browser extension (extension/) or bookmark this page with #save to save in one step."], recall: ["Say what you're about to do", "Switch to Recall and type what you're about to do to get the notes that help."], palette: ["Find any feature", "Press ⌘K (Ctrl+K) or tap the search icon and type a feature name: board, sync, print…"], board: ["To-do board", "From … → Add to to-do board, sort notes into Today, This week and Someday."], checklist: ["Make a checklist", "Turn shopping or packing notes into tappable checklists from …."], sync: ["Sync your devices", "Settings → Sync with your other devices keeps your iPhone, iPad and Mac in step."], voice: ["Ask by voice", "In Ask, tap the mic and speak; answers are read aloud."] }, tipOk: "Got it",
+    commentsH: "Comments", commentPh: "Add a comment (e.g. Bought it)", commentSend: "Send", me: "Me",
+    digH: "Your week", digDue: (n, x) => `${n} due this week (${x})`, digOpen: (n) => `${n} unfinished checklists`, digLater: (n) => `${n} to read later`,
+    aiStyleH: "AI style", aiFormL: "Writes in", aiForms: { bullets: "Bullets", prose: "Sentences" }, aiLenL: "Length", aiLens: { short: "Short", normal: "Normal", detailed: "Detailed" }, aiStyleNote: "Used when AI condenses notes, reads screenshots, or summarizes videos and newsletters." });
+  Object.assign(I18N.ja, { palH: "探す", palPh: "機能やメモを探す（例: ボード・同期・印刷）", palNone: "見つかりませんでした。", printBtn: "印刷・PDF", printNone: "印刷するメモがありません。", printBlocked: "印刷するには、ポップアップを許可してください。",
+    pal: { save: ["しまう", "save 入力 書く"], board: ["やることボード", "board todo タスク"], ask: ["メモに聞く（会話・声）", "ask chat voice 声 チャット"], cal: ["カレンダー", "calendar 予定 日付"], notes: ["メモの一覧", "notes list 一覧"], later: ["あとで読む", "read later リンク"], archive: ["しまい込んだメモ", "archive アーカイブ"], graph: ["つながりの図", "graph 関連 図"], tidy: ["使っていないメモの片づけ", "tidy 整理 片付け 古い"], print: ["今の一覧を印刷・PDF", "print pdf 印刷"], md: ["Markdown で書き出す（Obsidian・Notion）", "markdown export 書き出し obsidian notion"], settings: ["設定（同期・バックアップ・見やすさ・AI のまとめ方）", "settings 設定 同期 sync バックアップ 文字 大きさ ai まとめ方 シンプル pin"] },
+    tips: { share: ["どこからでもしまう", "ブラウザの拡張機能（extension/）を入れるか、このページを #save 付きでブックマークすると、すぐしまえます。"], recall: ["「これから◯◯する」で取り出す", "「ひきだす」に、これからすることを書くと、役立つメモが出てきます。"], palette: ["機能は「探す」から", "⌘K（Ctrl+K）か上の虫めがねで、機能の名前（ボード・同期・印刷など）からすぐ開けます。"], board: ["やることボード", "メモの「…」→「やることボードへ」で、今日・今週・いつかに分けて片づけられます。"], checklist: ["チェックリストにする", "買い物や持ち物のメモは「…」→「チェックリストにする」で、タップでチェックできます。"], sync: ["ほかの端末とそろえる", "設定の「ほかの端末と同期」で、iPhone・iPad・Mac とメモがそろいます。"], voice: ["声で聞く", "「聞く」でマイクを押して話すと、答えを読み上げます。"] }, tipOk: "わかった",
+    commentsH: "コメント", commentPh: "ひとこと（例: 買っておいたよ）", commentSend: "送る", me: "自分",
+    digH: "今週のまとめ", digDue: (n, x) => `今週のやること ${n} 件（${x}）`, digOpen: (n) => `やり残しのチェック ${n} 件`, digLater: (n) => `あとで読む ${n} 件`,
+    aiStyleH: "AI のまとめ方", aiFormL: "まとめ方", aiForms: { bullets: "箇条書き", prose: "文章" }, aiLenL: "長さ", aiLens: { short: "短め", normal: "ふつう", detailed: "詳しめ" }, aiStyleNote: "メモ風にまとめるとき・スクショを読むとき・動画やメルマガの要点を作るときに使います。" });
   // ---------- storage ----------
   function localStore() {
     const read = () => { try { return JSON.parse(localStorage.getItem(KEY) || "[]"); } catch { return []; } };
@@ -1436,7 +1458,7 @@ Return JSON only:
   const worthMemo = (t) => t.trim().length >= 80 || t.trim().split("\n").length >= 4;
   async function condense(text) {
     if (!state.sample) return null;
-    const prompt = `You help a user keep a personal "tips drawer". Rewrite the text as a concise memo the user can scan in seconds: short lines that each start with "・", keeping every key fact, number, step, name, date and URL, and dropping filler, greetings and repetition. Keep the original language.
+    const prompt = `You help a user keep a personal "tips drawer". Rewrite the text as a concise memo the user can scan in seconds: short lines that each start with "・", keeping every key fact, number, step, name, date and URL, and dropping filler, greetings and repetition. Keep the original language.${aiStyleHint()}
 Return JSON only: {"text":""}
 
 Text:
@@ -1788,6 +1810,10 @@ ${text}`;
         el("div", { class: "set-row" },
           el("button", { class: "mini", onclick: () => { dlg.close(); $("wpBtn").click(); } }, t.wp),
           el("button", { class: "mini", onclick: () => { dlg.close(); $("helpBtn").click(); } }, t.help))),
+      el("div", { class: "set-sec" }, el("h3", {}, t.aiStyleH),
+        (() => { const x = el("select", { "aria-label": t.aiFormL }, ...Object.entries(t.aiForms).map(([k, v]) => el("option", { value: k }, v))); x.value = getJSON("mindrawer.aiForm", "bullets"); x.onchange = () => setJSON("mindrawer.aiForm", x.value); return el("label", { class: "set-row" }, el("span", {}, t.aiFormL), x); })(),
+        (() => { const x = el("select", { "aria-label": t.aiLenL }, ...Object.entries(t.aiLens).map(([k, v]) => el("option", { value: k }, v))); x.value = getJSON("mindrawer.aiLength", "normal"); x.onchange = () => setJSON("mindrawer.aiLength", x.value); return el("label", { class: "set-row" }, el("span", {}, t.aiLenL), x); })(),
+        el("p", { class: "set-note" }, t.aiStyleNote)),
       el("div", { class: "set-sec" }, el("h3", {}, t.secLook),
         check(getJSON("mindrawer.simple", false), t.simpleMode, (v) => { setJSON("mindrawer.simple", v); applyLook(); renderAll(); }),
         (() => { const x = el("select", { "aria-label": t.textSize }, ...Object.entries(t.textSizes).map(([k, v]) => el("option", { value: k }, v))); x.value = String(getJSON("mindrawer.zoom", "1")); x.onchange = () => { setJSON("mindrawer.zoom", x.value); applyLook(); }; return el("label", { class: "set-row" }, el("span", {}, t.textSize), x); })(),
@@ -2432,7 +2458,11 @@ Return JSON only: {"answer":"","ids":["ids of the notes you used, max 5"]}`;
       if (!local) await state.store.add(inc);
       else if ((rn.updatedAt || 0) > (local.updatedAt || local.createdAt || 0)) {
         for (const f of LOCAL_ONLY) if (local[f] !== undefined) inc[f] = local[f];
+        inc.comments = mergeComments(local.comments, rn.comments);
         await state.store.update(rn.id, inc);
+      } else if ((rn.comments || []).some((c) => !(local.comments || []).some((x) => x.id === c.id))) {
+        // 家族が足したコメントだけ受け取る
+        await state.store.update(rn.id, { comments: mergeComments(local.comments, rn.comments), updatedAt: local.updatedAt || local.createdAt });
       }
     }
     for (const id of r.deleted || []) { const n = state.notes.find((x) => x.id === id && x.category === sf.folder); if (n) await trashNote(n); }
@@ -2641,6 +2671,7 @@ Return JSON only: {"answer":"","ids":["ids of the notes you used, max 5"]}`;
         !(n.locked && !unlocked.has(n.id)) && stepsOf(n.text).length >= 2 ? item("check", t.stepsBtn, () => { dlg.close(); recordUse(n.id); openSteps(n); }) : null,
         n.url ? item("today", n.readLater && !n.readAt ? t.readDone : t.readLaterF, () => { dlg.close(); state.store.update(n.id, n.readLater && !n.readAt ? { readAt: Date.now() } : { readLater: true, readAt: null }); }) : null,
         item("today", n.board ? t.boardOut : t.boardIn, () => { dlg.close(); state.store.update(n.id, { board: n.board ? null : "week" }); }),
+        !(n.locked && !unlocked.has(n.id)) ? item("doc", t.printBtn, () => { dlg.close(); printNotes([n]); }) : null,
         item("folder", n.archived ? t.unarchive : t.archive, () => { dlg.close(); state.store.update(n.id, { archived: !n.archived || null }); }),
         !(n.locked && !unlocked.has(n.id)) ? (checkItems(n.text).length
           ? (checkItems(n.text).some((x) => x.done) ? item("check", t.clearChecked, () => { dlg.close(); state.store.update(n.id, { text: clearChecked(n.text) }); }) : null)
@@ -2994,7 +3025,7 @@ Turn it into a clean note that is easy to read later:
 - Drop screen clutter: status bar, time and battery, buttons, menus, like or view counts, ads, "既読", sender icons, the input box.
 - Keep every useful fact exactly: names, dates, times, prices, places, addresses, phone numbers, URLs, quantities, steps.
 - Line 1: a short title (no "#"). Then the essentials as short lines starting with "・"; use "1." "2." for steps of a procedure. For a chat, write what was decided or recommended, not who said what, unless it matters.
-- Do not add anything that is not in the source. Keep it short.
+- Do not add anything that is not in the source. Keep it short.${aiStyleHint()}
 Write in ${langName()} unless the source is clearly in another language. Return JSON only: {"text":""}
 
 OCR text:
@@ -3174,7 +3205,7 @@ ${text || "(none — read the image)"}`;
     for (const k of Object.keys(deleted)) if (deleted[k] < now - 60 * 864e5) delete deleted[k];
     const by = new Map();
     for (const n of remote.notes || []) by.set(n.id, n);
-    for (const n of local.notes) { const r = by.get(n.id); if (r && modAt(r) > modAt(n)) continue; by.set(n.id, n); }
+    for (const n of local.notes) { const r = by.get(n.id); const keep = r && modAt(r) > modAt(n) ? r : n; const cs = mergeComments(r?.comments, n.comments); by.set(n.id, cs ? { ...keep, comments: cs } : keep); }
     const notes = [...by.values()].filter((n) => !(deleted[n.id] >= modAt(n))).sort((a, b) => b.createdAt - a.createdAt);
     return { v: 1, notes, deleted };
   }
@@ -3487,7 +3518,12 @@ ${text || "(none — read the image)"}`;
     if (!state.notes.length) { box.replaceChildren(); return; }
     const b = boardOf(state.notes), simple = document.body.classList.contains("simple");
     const a = state.nextAns, unused = !simple && tidyDue() ? unusedNotes(state.notes) : [];
-    box.replaceChildren(
+    const tip = todayTip(), wk = new Date().getDay() === 1 && getJSON("mindrawer.digestSeen", "") !== todayISO() ? weeklyDigest() : null;
+    fill(box,
+      tip ? el("div", { class: "plan-next tip" }, el("div", { class: "plan-h" }, el("b", {}, "💡 " + t.tips[tip][0]),
+        el("button", { type: "button", class: "help-x", "aria-label": t.tipOk, onclick: () => { setJSON("mindrawer.tipsSeen", [...getJSON("mindrawer.tipsSeen", []), tip]); renderPlan(); } }, "×")), el("p", { class: "muted" }, t.tips[tip][1])) : null,
+      wk ? el("div", { class: "plan-next" }, el("div", { class: "plan-h" }, el("b", {}, "🗓 " + t.digH),
+        el("button", { type: "button", class: "help-x", "aria-label": t.close, onclick: () => { setJSON("mindrawer.digestSeen", todayISO()); renderPlan(); } }, "×")), ...wk.map((x) => el("p", {}, x))) : null,
       el("button", { type: "button", class: "plan-board", onclick: () => openBoard() }, el("b", {}, t.boardH), el("span", {}, t.boardSum(b.today.length, b.week.length)), "›"),
       simple ? null : el("div", { class: "plan-next" }, el("div", { class: "plan-h" }, el("b", {}, "💡 " + t.nextH),
         a?.busy ? el("span", { class: "muted" }, t.chatThinking) : el("button", { type: "button", class: "mini", onclick: suggestNext }, a ? t.nextAgain : t.nextBtn)),
@@ -3548,6 +3584,89 @@ ${text || "(none — read the image)"}`;
       const names = []; for await (const [n] of backupDir.entries()) if (/^mindrawer-.*\.json$/.test(n)) names.push(n);
       for (const n of names.sort().slice(0, -8)) await backupDir.removeEntry(n).catch(() => {});
     } catch {}
+  }
+
+  // ---------- AI のまとめ方の好み（スマホ版と同じ） ----------
+  function aiStyleHint() {
+    const form = getJSON("mindrawer.aiForm", "bullets"), len = getJSON("mindrawer.aiLength", "normal"), parts = [];
+    if (form === "prose") parts.push('Write it as one or two short plain paragraphs instead of "・" lines (keep numbered steps for procedures).');
+    if (len === "short") parts.push("Keep it very short: at most about 3 lines.");
+    if (len === "detailed") parts.push("Be fairly detailed: keep supporting reasons and examples, not just the headline facts.");
+    return parts.length ? " Style preference: " + parts.join(" ") : "";
+  }
+  // ---------- 少しずつ出すヒント ----------
+  const TIPS = [["share", 1], ["recall", 3], ["palette", 5], ["board", 8], ["checklist", 10], ["sync", 15], ["voice", 20]];
+  function todayTip() {
+    const seen = new Set(getJSON("mindrawer.tipsSeen", [])), n = state.notes.filter((x) => !x.example).length;
+    const hit = TIPS.find(([id, min]) => !seen.has(id) && n >= min);
+    return hit ? hit[0] : null;
+  }
+  // ---------- 機能を探す（⌘K / Ctrl+K） ----------
+  function paletteActions() {
+    const t = T(), go = (tab) => () => setTab(tab);
+    return [
+      ["save", "✎", () => { setTab("today"); setMode("save"); $("noteText").focus(); }],
+      ["board", "▦", () => openBoard()],
+      ["ask", "💬", () => openChat()],
+      ["cal", "📅", go("cal")],
+      ["notes", "≡", () => { state.folder = "__all"; setTab("notes"); renderRail(); renderList(); }],
+      ["later", "🔖", () => { state.folder = "__later"; setTab("notes"); renderRail(); renderList(); }],
+      ["archive", "🗃", () => { state.folder = "__archive"; setTab("notes"); renderRail(); renderList(); }],
+      ["graph", "◎", () => openGraph()],
+      ["tidy", "🧹", () => openTidy()],
+      ["print", "🖨", () => printNotes(visibleNotes())],
+      ["md", "⇩", () => exportMarkdown()],
+      ["settings", "⚙", () => openSettings()],
+    ].map(([id, icon, run]) => ({ id, icon, run, title: t.pal[id][0], words: t.pal[id][1] }));
+  }
+  function visibleNotes() { return [...document.querySelectorAll("#slips .slip")].map((x) => state.notes.find((n) => n.id === x.dataset.id)).filter((n) => n && !n.locked); }
+  function openPalette() {
+    const t = T(), dlg = $("xDlg"), acts = paletteActions();
+    const input = el("input", { type: "search", placeholder: t.palPh, "aria-label": t.palPh, class: "pal-in" });
+    const list = el("div", { class: "menu pal-list" });
+    const draw = () => {
+      const q = input.value.trim().toLowerCase();
+      const a = acts.filter((x) => !q || (x.title + " " + x.words).toLowerCase().includes(q));
+      const notes = q ? state.notes.filter((n) => !n.archived && hay(n).includes(q)).slice(0, 8) : [];
+      fill(list, ...a.map((x) => el("button", { type: "button", onclick: () => { dlg.close(); setTimeout(x.run, 50); } }, el("span", { class: "pal-ic" }, x.icon), x.title)),
+        notes.length ? el("hr") : null, ...notes.map((n) => el("button", { type: "button", onclick: () => { dlg.close(); jumpTo(n); } }, el("span", { class: "pal-ic" }, "📝"), n.title)),
+        !a.length && !notes.length ? el("p", { class: "none" }, t.palNone) : null);
+    };
+    input.oninput = draw;
+    input.onkeydown = (e) => { if (e.key === "Enter") { const b = list.querySelector("button"); if (b) b.click(); } if (e.key === "Escape") { e.preventDefault(); dlg.close(); } };
+    fill(dlg, el("div", { class: "help-head" }, el("h2", {}, t.palH), el("button", { type: "button", class: "help-x", "aria-label": t.close, onclick: () => dlg.close() }, "×")), input, list);
+    draw();
+    if (!dlg.open) dlg.showModal();
+    setTimeout(() => input.focus(), 0);
+  }
+  document.addEventListener("keydown", (e) => { if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k" && !isLocked()) { e.preventDefault(); openPalette(); } });
+  // ---------- 印刷・PDF ----------
+  function printNotes(notes) {
+    if (!notes.length) { toast(T().printNone); return; }
+    const esc = (x) => String(x || "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+    const body = notes.map((n) => `<section><h1>${esc(n.title)}</h1>${n.summary ? `<p class="sum">${esc(n.summary)}</p>` : ""}<ul>${String(n.text || "").split("\n").map((l) =>
+      l.startsWith("☐ ") ? `<li class="ck">☐ ${esc(l.slice(2))}</li>` : l.startsWith("☑ ") ? `<li class="ck done">☑ ${esc(l.slice(2))}</li>` : l.trim() ? `<li>${esc(l)}</li>` : `<li class="gap"></li>`).join("")}</ul>${n.category || n.url ? `<p class="meta">${esc([n.category, n.url].filter(Boolean).join(" · "))}</p>` : ""}</section>`).join("");
+    const html = `<!doctype html><html lang="${state.lang}"><head><meta charset="utf-8"><title>Mindrawer</title><style>body{font-family:-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;color:#1c1c1e;margin:28px;font-size:13pt;line-height:1.6}section{page-break-inside:avoid;margin-bottom:28px;padding-bottom:18px;border-bottom:1px solid #ddd}h1{font-size:18pt;margin:0 0 6px}.sum{color:#555;margin:0 0 8px}ul{list-style:none;padding:0;margin:0}li{margin:2px 0;white-space:pre-wrap}li.ck{font-size:14pt}li.done{color:#888;text-decoration:line-through}li.gap{height:8px}.meta{color:#888;font-size:10pt;margin-top:10px}</style></head><body>${body}<script>onload=()=>setTimeout(()=>print(),200)<\/script></body></html>`;
+    const w = window.open(URL.createObjectURL(new Blob([html], { type: "text/html" })), "_blank");
+    if (!w) toast(T().printBlocked);
+  }
+  // ---------- 共有フォルダのコメント ----------
+  function mergeComments(a, b) { const m = new Map([...(a || []), ...(b || [])].map((c) => [c.id, c])); const out = [...m.values()].sort((x, y) => x.at - y.at).slice(-50); return out.length ? out : null; }
+  function commentsBox(n) {
+    const t = T(), input = el("input", { type: "text", placeholder: t.commentPh, "aria-label": t.commentPh });
+    const send = async () => { const v = input.value.trim(); if (!v) return; input.value = ""; await state.store.update(n.id, { comments: [...(n.comments || []), { id: "c" + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), by: getJSON(PREF.shareName, "") || t.me, text: v.slice(0, 500), at: Date.now() }] }); };
+    input.addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.isComposing) send(); });
+    return el("div", { class: "comments" }, el("small", {}, t.commentsH),
+      ...(n.comments || []).map((c) => el("div", { class: "cmt" }, el("p", {}, c.text), el("small", {}, `${c.by} · ${new Date(c.at).toLocaleString(state.lang === "ja" ? "ja-JP" : "en", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}`))),
+      el("div", { class: "choice-in" }, input, el("button", { type: "button", onclick: send }, t.commentSend)));
+  }
+  // ---------- 週のまとめ（月曜に「今日」の上に出す） ----------
+  function weeklyDigest() {
+    const t = T(), b = boardOf(state.notes), due = [...b.today, ...b.week];
+    const open = state.notes.filter((n) => !n.example && !n.locked && !n.archived && checkItems(n.text).some((x) => !x.done));
+    const later = state.notes.filter((n) => n.readLater && !n.readAt);
+    if (!due.length && !open.length && !later.length) return null;
+    return [due.length ? t.digDue(due.length, due.slice(0, 2).map((n) => n.title).join("・")) : null, open.length ? t.digOpen(open.length) : null, later.length ? t.digLater(later.length) : null].filter(Boolean);
   }
 
   // ---------- 読み上げ ----------
@@ -3665,7 +3784,7 @@ ${text || "(none — read the image)"}`;
   function slip(n, isExample) {
     if (n.sealed && opened.has(n.id)) n = { ...n, ...opened.get(n.id) };
     const t = T();
-    const s = el("article", { class: "slip" + (state.hits && state.hits.has(n.id) ? " hit" : "") + (isExample ? " example" : "") + (n.pinned ? " pinned" : ""), style: `--fc:${folderLook(n.category || t.other).color}` },
+    const s = el("article", { "data-id": n.id, class: "slip" + (state.hits && state.hits.has(n.id) ? " hit" : "") + (isExample ? " example" : "") + (n.pinned ? " pinned" : ""), style: `--fc:${folderLook(n.category || t.other).color}` },
       el("div", { class: "slip-meta" }, folderBadge(n.category || t.other), el("span", { class: "f", style: `color:${folderLook(n.category || t.other).color}` }, n.category || t.other),
         isExample ? el("span", { class: "ex" }, t.example) : el("time", {}, fmtDate(n.createdAt))),
       el("h3", {}, n.title),
@@ -3697,6 +3816,7 @@ ${text || "(none — read the image)"}`;
     if (n.addedBy) chips.prepend(el("span", { class: "chip sit" }, "👤 " + n.addedBy));
     if (n.archived) chips.prepend(el("span", { class: "chip sit" }, t.archivedF));
     if (n.readLater) chips.prepend(el("span", { class: "chip rem" }, n.readAt ? "✓ " + t.readDone : "🔖 " + t.readLaterF));
+    if ((n.comments || []).length) chips.prepend(el("span", { class: "chip sit" }, "💬 " + n.comments.length));
     const ser = seriesOf(n, state.notes), si = ser.findIndex((x) => x.id === n.id);
     if (si >= 0) s.append(el("div", { class: "series" }, el("span", {}, "📚 " + t.seriesL(si + 1, ser.length)),
       si > 0 ? el("button", { type: "button", class: "mini", onclick: () => jumpTo(ser[si - 1]) }, t.prevS) : null,
@@ -3707,6 +3827,7 @@ ${text || "(none — read the image)"}`;
       n.original && n.original !== n.text ? el("div", { class: "orig" }, el("small", {}, t.memoBefore), el("p", { class: "raw" }, n.original),
         el("button", { onclick: () => state.store.update(n.id, { text: n.original, original: null }) }, t.memoRestore)) : null,
       n.url ? el("a", { class: "src", href: n.url, target: "_blank", rel: "noopener" }, n.url) : null,
+      (n.comments || []).length || getJSON(PREF.shares, []).some((x) => x.folder === n.category) ? commentsBox(n) : null,
       n.archive?.text ? el("details", { class: "orig" }, el("summary", {}, t.archiveH(new Date(n.archive.at).toLocaleDateString(state.lang === "ja" ? "ja-JP" : "en"))), el("p", { class: "raw" }, String(n.archive.text).slice(0, 6000) + (n.archive.text.length > 6000 ? "…" : ""))) : null,
       (() => { const src = (n.sources || []).map((id) => state.notes.find((m) => m.id === id)).filter(Boolean); return src.length ? el("div", { class: "related" }, el("small", {}, t.sources), src.map((m) => el("button", { onclick: () => jumpTo(m) }, "→ " + m.title))) : null; })(),
       rel.length ? el("div", { class: "related" }, el("small", {}, t.related),
@@ -4025,6 +4146,7 @@ ${text || "(none — read the image)"}`;
   $("helpClose").onclick = () => $("help").close();
   $("help").addEventListener("click", (e) => { if (e.target === $("help")) $("help").close(); });
   $("importInput").onchange = (e) => e.target.files[0] && importNotes(e.target.files[0]);
+  $("palBtn").onclick = () => openPalette();
   $("otherInput").onchange = (e) => e.target.files.length && importOther([...e.target.files]);
   $("setBtn").onclick = openSettings;
   $("graphBtn").onclick = openGraph;
@@ -4073,7 +4195,7 @@ ${text || "(none — read the image)"}`;
     state.store = secureStore(store || localStore());
     state.store.subscribe((arr) => {
       state.notes = arr.slice().sort((a, b) => b.createdAt - a.createdAt); renderAll();
-      if (firstLoad) { firstLoad = false; purgeExpired(); setTimeout(handleAddHash, 0); makeBackup(false); if (!isLocked()) afterUnlock(); setTimeout(() => tidyFolders(), 0); setTimeout(syncShares, 0); setTimeout(pullInbox, 0); }
+      if (firstLoad) { firstLoad = false; purgeExpired(); setTimeout(handleAddHash, 0); makeBackup(false); if (!isLocked()) afterUnlock(); setTimeout(() => tidyFolders(), 1200); setTimeout(syncShares, 800); setTimeout(pullInbox, 900); }
       scheduleShareSync(); scheduleSync();
     });
   })();

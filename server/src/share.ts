@@ -9,6 +9,8 @@ export interface SharedNote {
   [k: string]: unknown;
 }
 
+export interface SharedComment { id: string; by: string; text: string; at: number }
+
 export interface ShareDoc {
   name: string;
   keyHash: string;
@@ -37,6 +39,11 @@ export function cleanNote(n: unknown): SharedNote | null {
   // 家族に見せる小さな写真（base64 の JPEG）と、足した人の名前
   if (typeof x.photo !== "string" || x.photo.length > SHARE_LIMITS.photoChars || !/^[A-Za-z0-9+/=]+$/.test(x.photo)) delete x.photo;
   if (typeof x.addedBy === "string") x.addedBy = x.addedBy.slice(0, 40); else delete x.addedBy;
+  // 家族のコメント（id・名前・ひとこと・日時）。50 件まで
+  if (Array.isArray(x.comments)) {
+    x.comments = (x.comments as unknown[]).filter((c): c is Record<string, unknown> => !!c && typeof c === "object" && typeof (c as Record<string, unknown>).id === "string" && typeof (c as Record<string, unknown>).text === "string")
+      .slice(-50).map((c) => ({ id: String(c.id).slice(0, 60), by: String(c.by ?? "").slice(0, 40), text: String(c.text).slice(0, 500), at: Number(c.at) || 0 }));
+  } else delete x.comments;
   x.updatedAt = Number(x.updatedAt) || Number(x.createdAt) || 0;
   return x as SharedNote;
 }
@@ -55,7 +62,11 @@ export function mergeShare(doc: ShareDoc, incoming: SharedNote[], deleted: strin
     if (t && n.updatedAt <= t) continue; // 消したあとに直したものでなければ戻さない
     if (t) delete tomb[n.id];
     const cur = byId.get(n.id);
-    if (!cur || n.updatedAt >= cur.updatedAt) byId.set(n.id, n);
+    const keep = !cur || n.updatedAt >= cur.updatedAt ? n : cur;
+    // コメントは両方を合わせる（同時に書いても消えないように）
+    const cs = [...((cur?.comments as SharedComment[] | undefined) || []), ...((n.comments as SharedComment[] | undefined) || [])];
+    if (cs.length) { const m = new Map(cs.map((c) => [c.id, c])); byId.set(n.id, { ...keep, comments: [...m.values()].sort((a, b) => a.at - b.at).slice(-50) }); }
+    else byId.set(n.id, keep);
   }
   const cut = now - SHARE_LIMITS.tombstoneDays * 86400_000;
   for (const [id, t] of Object.entries(tomb)) if (t < cut) delete tomb[id];

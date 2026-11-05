@@ -90,6 +90,7 @@ public enum Prompts {
         - Keep every useful fact exactly: names, dates, times, prices, places, addresses, phone numbers, URLs, quantities, steps.
         - Line 1: a short title (no "#"). Then the essentials as short lines starting with "・"; use "1." "2." for steps of a procedure. For a chat, write what was decided or recommended, not who said what, unless it matters.
         - Do not add anything that is not in the source. Keep it short.
+        \(AIStyle.hint)
         Write in \(language.promptName) unless the source is clearly in another language. Return it as "text".
 
         OCR text:
@@ -162,7 +163,8 @@ public enum Prompts {
     ]
 
     /// メモ風に整えるときの書き方
-    static let memoRule = "Rewrite it as a concise memo the user can scan in seconds: short lines that each start with \"・\", keeping every key fact, number, step, name, date and URL, and dropping filler, greetings and repetition. Keep the original language. If the note is already a short memo (about 3 lines or fewer), return it unchanged."
+    static var memoRule: String { memoRuleBase + AIStyle.hint }
+    static let memoRuleBase = "Rewrite it as a concise memo the user can scan in seconds: short lines that each start with \"・\", keeping every key fact, number, step, name, date and URL, and dropping filler, greetings and repetition. Keep the original language. If the note is already a short memo (about 3 lines or fewer), return it unchanged."
 
     /// フォルダ名の候補の出し方
     static let folderOptionsRule = "\"folderOptions\": exactly 3 different folder names for this note, best first, and \"category\" must equal the first. Mix how specific they are and the angle: e.g. for a note about a laundry detergent, \"洗剤\" (specific), \"洗濯用品\" (broader), \"買い物\" (another angle). Use an existing folder name exactly when one fits, and put it first."

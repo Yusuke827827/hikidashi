@@ -149,10 +149,11 @@ struct NoteCard: View {
     }
 
     @ViewBuilder private var chips: some View {
-        let hasChips = note.readLater == true || note.addedBy != nil || note.archived == true || note.savedPlace != nil || note.expiresAt != nil || note.remindAt != nil || note.alarm != nil || note.review != nil || note.linkBroken == true || !note.situations.isEmpty || !note.tags.isEmpty
+        let hasChips = !(note.comments ?? []).isEmpty || note.readLater == true || note.addedBy != nil || note.archived == true || note.savedPlace != nil || note.expiresAt != nil || note.remindAt != nil || note.alarm != nil || note.review != nil || note.linkBroken == true || !note.situations.isEmpty || !note.tags.isEmpty
         if hasChips {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 6) {
+                    if let cs = note.comments, !cs.isEmpty { Chip(text: "\(cs.count)", kind: .situation, symbol: "bubble.left") }
                     if note.readLater == true {
                         Chip(text: note.readAt == nil ? L("あとで読む", "Read later") : L("読んだ", "Read"), kind: .remind, symbol: note.readAt == nil ? "bookmark" : "checkmark")
                     }
@@ -224,6 +225,10 @@ struct NoteCard: View {
                 }
             }
             SeriesNav(note: note, notes: store.notes, onJump: onJump)
+            // 共有フォルダのメモには、家族のひとことを付けられる
+            if librarian.isShared(folderName) || !(note.comments ?? []).isEmpty {
+                CommentsView(note: note, store: store)
+            }
             let related = Heuristics.related(to: note, in: store.notes)
             if !related.isEmpty {
                 Text(L("関連", "Related").uppercased()).font(.caption2.weight(.semibold)).foregroundStyle(p.muted).tracking(1)
@@ -290,6 +295,7 @@ struct NoteCard: View {
                         Label(note.archived == true ? L("しまい込みから戻す", "Unarchive") : L("しまい込む", "Archive"), systemImage: "archivebox")
                     }
                     Button { Speaker.shared.toggle(note) } label: { Label(L("読み上げる", "Read aloud"), systemImage: "speaker.wave.2") }
+                    Button { NotePrinter.print([note], title: note.title) } label: { Label(L("印刷・PDF", "Print or PDF"), systemImage: "printer") }
                     if Heuristics.checkItems(note.text).isEmpty {
                         Button { store.update(note.id) { $0.text = Heuristics.toChecklist($0.text) } } label: {
                             Label(L("チェックリストにする", "Make it a checklist"), systemImage: "checklist")

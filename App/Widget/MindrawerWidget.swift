@@ -283,10 +283,104 @@ struct TodayWidget: Widget {
 }
 
 @main
+// MARK: やることボード・あとで読む
+
+struct ListEntry: TimelineEntry {
+    let date: Date
+    let title: String
+    let summary: String
+    let notes: [Note]
+}
+
+/// やることボード（今日・今週の数と、次にやること）
+struct BoardProvider: TimelineProvider {
+    static func entry(at date: Date = Date()) -> ListEntry {
+        let notes = DrawerProvider.loadNotes()
+        let b = Heuristics.board(notes, now: date)
+        return ListEntry(date: date, title: L("やることボード", "To-do board"),
+                         summary: L("今日 \(b[.today]?.count ?? 0)・今週 \(b[.week]?.count ?? 0)", "Today \(b[.today]?.count ?? 0) · Week \(b[.week]?.count ?? 0)"),
+                         notes: Heuristics.nextActions(notes, now: date))
+    }
+    func placeholder(in context: Context) -> ListEntry {
+        ListEntry(date: Date(), title: L("やることボード", "To-do board"), summary: L("今日 2・今週 3", "Today 2 · Week 3"),
+                  notes: [Note(id: "p1", text: "", title: L("引っ越しの見積もり", "Moving quotes")), Note(id: "p2", text: "", title: L("買い物リスト", "Shopping list"))])
+    }
+    func getSnapshot(in context: Context, completion: @escaping (ListEntry) -> Void) { completion(context.isPreview ? placeholder(in: context) : Self.entry()) }
+    func getTimeline(in context: Context, completion: @escaping (Timeline<ListEntry>) -> Void) {
+        completion(Timeline(entries: [Self.entry()], policy: .after(Date().addingTimeInterval(3 * 3600))))
+    }
+}
+
+/// あとで読む（まだ読んでいないリンク）
+struct LaterProvider: TimelineProvider {
+    static func entry(at date: Date = Date()) -> ListEntry {
+        let later = DrawerProvider.loadNotes().filter { $0.readLater == true && $0.readAt == nil }
+        return ListEntry(date: date, title: L("あとで読む", "Read later"), summary: L("\(later.count) 件", "\(later.count)"), notes: Array(later.prefix(4)))
+    }
+    func placeholder(in context: Context) -> ListEntry {
+        ListEntry(date: Date(), title: L("あとで読む", "Read later"), summary: "3", notes: [Note(id: "p1", text: "", title: L("時短レシピのまとめ", "Quick recipes"))])
+    }
+    func getSnapshot(in context: Context, completion: @escaping (ListEntry) -> Void) { completion(context.isPreview ? placeholder(in: context) : Self.entry()) }
+    func getTimeline(in context: Context, completion: @escaping (Timeline<ListEntry>) -> Void) {
+        completion(Timeline(entries: [Self.entry()], policy: .after(Date().addingTimeInterval(6 * 3600))))
+    }
+}
+
+struct ListWidgetView: View {
+    let entry: ListEntry
+    let symbol: String
+    @Environment(\.widgetFamily) private var family
+    private let accent = Color(red: 0.78, green: 0.33, blue: 0.24)
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                Label(entry.title, systemImage: symbol).font(.caption.weight(.bold)).foregroundStyle(accent)
+                Spacer()
+                Text(entry.summary).font(.caption2).foregroundStyle(.secondary)
+            }
+            if entry.notes.isEmpty {
+                Text(L("今はありません", "Nothing right now")).font(.footnote).foregroundStyle(.secondary)
+            }
+            ForEach(entry.notes.prefix(family == .systemSmall ? 3 : 4)) { n in
+                Link(destination: URL(string: "mindrawer://note/\(n.id)")!) {
+                    Text("・" + n.title).font(.footnote).foregroundStyle(.primary).lineLimit(1)
+                }
+            }
+            Spacer(minLength: 0)
+        }
+        .containerBackground(for: .widget) { Color(red: 0.965, green: 0.96, blue: 0.95) }
+    }
+}
+
+struct BoardWidget: Widget {
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: "MindrawerBoard", provider: BoardProvider()) { entry in
+            ListWidgetView(entry: entry, symbol: "rectangle.split.3x1")
+        }
+        .configurationDisplayName(L("やることボード", "To-do board"))
+        .description(L("今日・今週のやることと、次にやることを出します。", "Shows what's due today and this week, and what's next."))
+        .supportedFamilies([.systemSmall, .systemMedium])
+    }
+}
+
+struct LaterWidget: Widget {
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: "MindrawerLater", provider: LaterProvider()) { entry in
+            ListWidgetView(entry: entry, symbol: "bookmark")
+        }
+        .configurationDisplayName(L("あとで読む", "Read later"))
+        .description(L("まだ読んでいないリンクを出します。", "Shows links you haven't read yet."))
+        .supportedFamilies([.systemSmall, .systemMedium])
+    }
+}
+
 struct MindrawerWidgets: WidgetBundle {
     var body: some Widget {
         DrawerWidget()
         TodayWidget()
+        BoardWidget()
+        LaterWidget()
         if #available(iOS 18.0, *) {
             QuickSaveControl()
         }

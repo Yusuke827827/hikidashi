@@ -28,6 +28,9 @@ struct SettingsView: View {
     @State private var calendarOn = EventReminders.isOn
     @State private var cloudOn = CloudSync.isOn
     @State private var placeKindsOn = PlaceKindAlerts.isOn
+    @State private var weeklyOn = WeeklyDigestNotice.isOn
+    @State private var aiForm = AIStyle.form
+    @State private var aiLength = AIStyle.length
     @State private var managingFolders = false
     @AppStorage("memoPreview") private var memoPreview = true
     @AppStorage("autoBackup") private var autoBackup = true
@@ -50,6 +53,19 @@ struct SettingsView: View {
                     } label: {
                         Label(L("使われ方のまとめ", "Your stats"), systemImage: "chart.bar")
                     }
+                }
+
+                Section {
+                    Picker(selection: Binding(get: { aiForm }, set: { aiForm = $0; AIStyle.form = $0 })) {
+                        ForEach(AIStyle.Form.allCases, id: \.self) { Text(AIStyle.label($0)).tag($0) }
+                    } label: { Label(L("AI のまとめ方", "AI writes in"), systemImage: "text.alignleft") }
+                    Picker(selection: Binding(get: { aiLength }, set: { aiLength = $0; AIStyle.length = $0 })) {
+                        ForEach(AIStyle.Length.allCases, id: \.self) { Text(AIStyle.label($0)).tag($0) }
+                    } label: { Label(L("長さ", "Length"), systemImage: "text.word.spacing") }
+                } header: {
+                    Text(L("AI のまとめ方", "AI style"))
+                } footer: {
+                    Text(L("メモ風にまとめるとき・スクショを読むとき・動画やメルマガの要点を作るときに使います。", "Used when AI condenses notes, reads screenshots, or summarizes videos and newsletters."))
                 }
 
                 Section {
@@ -172,6 +188,12 @@ struct SettingsView: View {
                         }
                     })) {
                         Label(L("予定の前にメモを知らせる", "Hints before events"), systemImage: "calendar.badge.clock")
+                    }
+                    Toggle(isOn: Binding(get: { weeklyOn }, set: { on in
+                        weeklyOn = on
+                        Task { await WeeklyDigestNotice.setOn(on, notes: librarian.store.notes) }
+                    })) {
+                        Label(L("週のまとめを知らせる（月曜の朝）", "Weekly summary (Monday morning)"), systemImage: "calendar.day.timeline.left")
                     }
                     Toggle(isOn: Binding(get: { placeKindsOn }, set: { on in
                         placeKindsOn = on

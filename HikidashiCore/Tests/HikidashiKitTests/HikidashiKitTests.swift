@@ -1283,3 +1283,33 @@ final class PlannerTests: XCTestCase {
         XCTAssertEqual(Importer.parse(Data(html.utf8), filename: "notebook.html").first?.text, "・一つ目\n・二つ目")
     }
 }
+
+final class PolishTests: XCTestCase {
+    func testStyleTipsCommentsDigestPrint() {
+        XCTAssertEqual(AIStyle.hint(form: .bullets, length: .normal), "")
+        XCTAssertTrue(AIStyle.hint(form: .prose, length: .short).contains("paragraph"))
+        XCTAssertEqual(FeatureTips.today(noteCount: 0, seen: []), nil)
+        XCTAssertEqual(FeatureTips.today(noteCount: 4, seen: ["share"])?.id, "recall")
+        let a = NoteComment(id: "1", by: "A", text: "x", at: Date(timeIntervalSince1970: 1))
+        let b = NoteComment(id: "2", by: "B", text: "y", at: Date(timeIntervalSince1970: 2))
+        XCTAssertEqual(NoteComment.merge([b], [a, b])?.map(\.id), ["1", "2"])
+        XCTAssertNil(NoteComment.merge(nil, []))
+        let now = Date(timeIntervalSince1970: 1_800_000_000)
+        XCTAssertNil(Heuristics.weeklyDigest([Note(id: "n", text: "x", title: "X")], now: now))
+        XCTAssertNotNil(Heuristics.weeklyDigest([Note(id: "c", text: "☐ 牛乳", title: "買い物")], now: now))
+        let html = NotePrint.html([Note(id: "p", text: "☐ 牛乳\n☑ <卵>", title: "買い物")])
+        XCTAssertTrue(html.contains("☐ 牛乳"))
+        XCTAssertTrue(html.contains("&lt;卵&gt;"))
+    }
+
+    func testSyncKeepsBothComments() {
+        var a = Note(id: "a", text: "x", title: "A")
+        a.updatedAt = Date(timeIntervalSince1970: 10)
+        a.comments = [NoteComment(id: "1", by: "A", text: "x", at: Date(timeIntervalSince1970: 1))]
+        var b = a
+        b.updatedAt = Date(timeIntervalSince1970: 20)
+        b.comments = [NoteComment(id: "2", by: "B", text: "y", at: Date(timeIntervalSince1970: 2))]
+        let m = SyncPayload.merge(local: SyncPayload(notes: [a], deleted: [:]), remote: SyncPayload(notes: [b], deleted: [:]))
+        XCTAssertEqual(m.notes.first?.comments?.map(\.id), ["1", "2"])
+    }
+}

@@ -121,6 +121,8 @@ public struct Note: Codable, Identifiable, Hashable, Sendable {
     public var addedBy: String?
     /// 共有フォルダで送る小さな写真（JPEG の base64。端末に保存するときは Images/ に移す）
     public var photo: String?
+    /// 共有フォルダのコメント（家族のひとこと）
+    public var comments: [NoteComment]?
     /// 最後に変えた日時（iCloud の同期で新しい方を残すため）
     public var updatedAt: Date?
 
@@ -180,7 +182,7 @@ public struct Note: Codable, Identifiable, Hashable, Sendable {
     }
 
     enum CodingKeys: String, CodingKey {
-        case id, text, url, title, summary, category, tags, situations, remindAt, createdAt, pinned, helpful, lastSeen, example, filed, imageFile, original, file, fileTitle, enriched, place, alarm, plannedDay, sources, folderChosen, checkedAt, linkBroken, review, imageLabels, locked, history, expiresAt, sealed, savedPlace, archive, readLater, readAt, board, archived, addedBy, photo, updatedAt
+        case id, text, url, title, summary, category, tags, situations, remindAt, createdAt, pinned, helpful, lastSeen, example, filed, imageFile, original, file, fileTitle, enriched, place, alarm, plannedDay, sources, folderChosen, checkedAt, linkBroken, review, imageLabels, locked, history, expiresAt, sealed, savedPlace, archive, readLater, readAt, board, archived, addedBy, photo, comments, updatedAt
     }
 
     public init(from decoder: Decoder) throws {
@@ -235,6 +237,7 @@ public struct Note: Codable, Identifiable, Hashable, Sendable {
         archived = try? c.decodeIfPresent(Bool.self, forKey: .archived)
         addedBy = try? c.decodeIfPresent(String.self, forKey: .addedBy)
         photo = try? c.decodeIfPresent(String.self, forKey: .photo)
+        comments = try? c.decodeIfPresent([NoteComment].self, forKey: .comments)
         updatedAt = Self.decodeDate(c, .updatedAt)
     }
 
@@ -281,6 +284,7 @@ public struct Note: Codable, Identifiable, Hashable, Sendable {
         try c.encodeIfPresent(archived, forKey: .archived)
         try c.encodeIfPresent(addedBy, forKey: .addedBy)
         try c.encodeIfPresent(photo, forKey: .photo)
+        try c.encodeIfPresent(comments, forKey: .comments)
         try c.encodeIfPresent(updatedAt.map(Self.millis), forKey: .updatedAt)
     }
 

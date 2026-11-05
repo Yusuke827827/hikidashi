@@ -254,6 +254,8 @@ extension Librarian {
                 if (try? data.write(to: store.imageURL(name), options: .atomic)) != nil { n.imageFile = name }
             }
             n.photo = nil
+            // コメントは両方を合わせる（同時に書いても消えないように）
+            n.comments = NoteComment.merge(store.note(r.id)?.comments, r.comments)
             return n
         }
         store.applyRemote(saved: incoming, deleted: remote.deleted.filter { id in store.note(id)?.category == sf.folder })

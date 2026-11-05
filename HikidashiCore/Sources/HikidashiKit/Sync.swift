@@ -70,7 +70,12 @@ public struct SyncPayload: Codable, Sendable, Equatable {
         var byID: [String: Note] = [:]
         for n in remote.notes { byID[n.id] = n }
         for n in local.notes {
-            if let r = byID[n.id], r.modifiedAt > n.modifiedAt { continue }
+            if let r = byID[n.id] {
+                var newer = r.modifiedAt > n.modifiedAt ? r : n
+                newer.comments = NoteComment.merge(r.comments, n.comments)
+                byID[n.id] = newer
+                continue
+            }
             byID[n.id] = n
         }
         let notes = byID.values.filter { n in

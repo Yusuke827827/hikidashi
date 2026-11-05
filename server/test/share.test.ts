@@ -62,3 +62,13 @@ describe("共有の写真と名前", () => {
     expect(cleanNote({ id: "c", text: "t", photo: "<script>" })!.photo).toBeUndefined();
   });
 });
+
+describe("共有のコメント", () => {
+  it("両方の端末のコメントを合わせる", async () => {
+    const { mergeShare, cleanNote } = await import("../src/share");
+    const doc = { name: "家", keyHash: "", notes: [cleanNote({ id: "a", text: "t", updatedAt: 1, comments: [{ id: "c1", by: "ママ", text: "買った", at: 1 }] })!], deleted: {}, updatedAt: 0 };
+    const out = mergeShare(doc, [cleanNote({ id: "a", text: "t2", updatedAt: 2, comments: [{ id: "c2", by: "パパ", text: "ありがとう", at: 2 }] })!], [], 10);
+    expect((out.notes[0].comments as { id: string }[]).map((c) => c.id)).toEqual(["c1", "c2"]);
+    expect(out.notes[0].text).toBe("t2");
+  });
+});
