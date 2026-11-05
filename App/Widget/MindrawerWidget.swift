@@ -282,7 +282,6 @@ struct TodayWidget: Widget {
     }
 }
 
-@main
 // MARK: やることボード・あとで読む
 
 struct ListEntry: TimelineEntry {
@@ -375,6 +374,7 @@ struct LaterWidget: Widget {
     }
 }
 
+@main
 struct MindrawerWidgets: WidgetBundle {
     var body: some Widget {
         DrawerWidget()
