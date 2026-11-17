@@ -98,6 +98,8 @@ body.simple #nowBox, body.simple #reviewBox, body.simple #upkeepBox, body.simple
 .cmt p { margin: 0; }
 .cmt small { color: var(--muted); font-size: 11.5px; }
 .plan-next.tip { border-color: var(--accent); }
+.sync-qr img { display: block; margin: 8px auto; image-rendering: pixelated; border-radius: 8px; background: #fff; padding: 6px; }
+.warn { color: var(--accent); font-size: 13.5px; margin: 4px 0; }
 .more-btn { display: block; margin: 8px auto 0; min-height: 44px; padding: 0 22px; border-radius: 12px; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
@@ -955,9 +957,11 @@ body[data-tab="cal"] .hero, body[data-tab="cal"] .main { display: none !importan
     document.documentElement.style.setProperty("--zoom", String(getJSON("mindrawer.zoom", "1")));
   }
 
-  Object.assign(I18N.en, { secSync: "Sync with your other devices", syncStart: "Start syncing (new code)", syncCodePh: "Sync code from another device", syncJoin: "Join", syncNow: "Sync now", syncStop: "Stop syncing here", syncLastL: "Last synced: ", syncBad: "That sync code isn't valid.", syncNoServer: "Set the relay server address under Shared folders first.", syncFail: "Couldn't sync. Check the connection and try again.", syncDone: (n) => n ? `Synced (${n} changes).` : "Synced.", syncGot: (n) => `Synced ${n} changes from your other devices.`,
+  Object.assign(I18N.en, { syncServerL: "Relay server", syncNeedServer: "Sync needs the relay server. Once it's published to Cloudflare, its address (https://….workers.dev) goes here.", syncLinkNote: "On your phone, scan this with the camera (or open the link) to connect sync in one step.", syncLinkCopy: "Copy link", syncLinkSend: "Send link", syncJoined: "Connected to sync. Bringing your notes together…" });
+  Object.assign(I18N.ja, { syncServerL: "中継サーバー", syncNeedServer: "同期には中継サーバーが必要です。Cloudflare に公開すると出てくる住所（https://….workers.dev）をここに入れてください。", syncLinkNote: "スマホのカメラでこの QR コードを読む（またはリンクを開く）と、同期がそのままつながります。", syncLinkCopy: "リンクをコピー", syncLinkSend: "リンクを送る", syncJoined: "同期をつなぎました。メモをそろえています…" });
+  Object.assign(I18N.en, { secSync: "Sync with your other devices", syncStart: "Start syncing (new code)", syncCodePh: "Sync code from another device", syncJoin: "Join", syncNow: "Sync now", syncStop: "Stop syncing here", syncLastL: "Last synced: ", syncBad: "That sync code isn't valid.", syncNoServer: "Enter the relay server address under Sync with your other devices in Settings.", syncFail: "Couldn't sync. Check the connection and try again.", syncDone: (n) => n ? `Synced (${n} changes).` : "Synced.", syncGot: (n) => `Synced ${n} changes from your other devices.`,
     syncNote: "Enter the same code on your iPhone, iPad, Mac and here to keep notes in step. Notes are encrypted in this browser with a key made from the code, so even the relay server can't read them. Keep the code private. Photos and files stay on each device." });
-  Object.assign(I18N.ja, { secSync: "ほかの端末と同期", syncStart: "同期を始める（新しいコードを作る）", syncCodePh: "ほかの端末の同期コード", syncJoin: "つなぐ", syncNow: "今すぐ同期", syncStop: "ここでの同期をやめる", syncLastL: "最後に同期: ", syncBad: "同期コードが正しくありません。", syncNoServer: "先に「共有フォルダ」で中継サーバーの住所を入れてください。", syncFail: "同期できませんでした。つながりを確かめて、もう一度試してください。", syncDone: (n) => n ? `同期しました（${n} 件）。` : "同期しました。", syncGot: (n) => `ほかの端末から ${n} 件そろえました。`,
+  Object.assign(I18N.ja, { secSync: "ほかの端末と同期", syncStart: "同期を始める（新しいコードを作る）", syncCodePh: "ほかの端末の同期コード", syncJoin: "つなぐ", syncNow: "今すぐ同期", syncStop: "ここでの同期をやめる", syncLastL: "最後に同期: ", syncBad: "同期コードが正しくありません。", syncNoServer: "設定の「ほかの端末と同期」で、中継サーバーの住所を入れてください。", syncFail: "同期できませんでした。つながりを確かめて、もう一度試してください。", syncDone: (n) => n ? `同期しました（${n} 件）。` : "同期しました。", syncGot: (n) => `ほかの端末から ${n} 件そろえました。`,
     syncNote: "iPhone・iPad・Mac とここで同じ同期コードを入れると、メモがそろいます。中身はこのブラウザで同期コードから作った鍵で暗号にしてから送るので、中継サーバーでも読めません。コードは人に教えないでください。写真やファイルの中身は送りません。" });
   Object.assign(I18N.en, { voiceOn: "🔊 Speak answers", voiceOff: "🔇 Silent", voiceAsk: "Ask by voice", archiveH: (d) => `Saved page (${d})`, makeChecklist: "Make it a checklist", clearChecked: "Clear checked items", videoPoints: "Key points",
     secSaving: "When saving", archiveL: "Keep a copy of linked pages", newsletterL: "Turn emailed newsletters into key points", savePlaceL: "Remember where I saved", mapBtn: "Show on a map", mapH: "Where I saved", mapFail: "Couldn't load the map. Open each place below:",
@@ -1415,6 +1419,9 @@ Return JSON only:
 
   // ---------- この端末の設定 ----------
   const PREF = { memo: "mindrawer.memoMode", memoPreview: "mindrawer.memoPreview", checks: "mindrawer.checks", folders: "mindrawer.folders", dismissed: "mindrawer.mergeDismissed", notified: "mindrawer.notified", trash: "mindrawer.trash", usage: "mindrawer.usage", sort: "mindrawer.sort", templates: "mindrawer.templates", pubLinks: "mindrawer.publicLinks", translate: "mindrawer.translate", inbox: "mindrawer.inbox", shares: "mindrawer.shares", shareServer: "mindrawer.shareServer", shareName: "mindrawer.shareName", tidyShown: "mindrawer.tidyShown", archive: "mindrawer.archivePages", newsletter: "mindrawer.newsletterTips", savePlace: "mindrawer.savePlace", sync: "mindrawer.sync", syncDeleted: "mindrawer.syncDeleted", syncLast: "mindrawer.syncLast", smart: "mindrawer.smartFolders", dupDismissed: "mindrawer.dupDismissed", pin: "mindrawer.pinHash", backups: "mindrawer.backups", onboarded: "mindrawer.onboarded", reviewSeen: "mindrawer.reviewSeen", fprefs: "mindrawer.folderPrefs", choices: "mindrawer.folderChoices" };
+  /** 中継サーバーの URL（Cloudflare に公開したら、ここに入れると全員の既定になる） */
+  const DEFAULT_SERVER = "";
+  const relayServer = () => { try { return JSON.parse(localStorage.getItem("mindrawer.shareServer") || "null") || DEFAULT_SERVER; } catch { return DEFAULT_SERVER; } };
   const getJSON = (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch { return d; } };
   const setJSON = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
   state.memoMode = getJSON(PREF.memo, false);
@@ -1863,7 +1870,7 @@ ${text}`;
         (() => { const i = el("input", { type: "text", placeholder: t.shareNamePh, value: getJSON(PREF.shareName, "") }); i.onchange = () => setJSON(PREF.shareName, i.value.trim().slice(0, 40)); return el("label", { class: "ef" }, el("span", {}, t.shareNameL), i); })(),
         el("p", { class: "set-note" }, t.shareNameNote)),
       el("div", { class: "set-sec" }, el("h3", {}, t.secShare),
-        (() => { const i = el("input", { type: "text", placeholder: "https://….workers.dev", value: getJSON(PREF.shareServer, "") }); i.onchange = () => setJSON(PREF.shareServer, i.value.trim().replace(/\/+$/, "")); return el("label", { class: "ef" }, el("span", {}, t.shareServerL), i); })(),
+        (() => { const i = el("input", { type: "text", placeholder: "https://….workers.dev", value: relayServer() }); i.onchange = () => setJSON(PREF.shareServer, i.value.trim().replace(/\/+$/, "")); return el("label", { class: "ef" }, el("span", {}, t.shareServerL), i); })(),
         el("div", { class: "set-row" }, el("button", { class: "mini", onclick: () => { $("setDlg").close(); openJoin(""); } }, t.joinBtn)),
         el("p", { class: "set-note" }, t.shareSetNote)),
       el("div", { class: "set-sec" }, el("h3", {}, t.secSafe),
@@ -2507,7 +2514,7 @@ Return JSON only: {"answer":"","ids":["ids of the notes you used, max 5"]}`;
   async function shareFolder(folder) {
     const t = T();
     if (isSharedFolder(folder)) return showShareCode(folder);
-    let server = getJSON(PREF.shareServer, "");
+    let server = relayServer();
     if (!server) { server = (prompt(t.shareServerQ) || "").trim().replace(/\/+$/, ""); if (!server) return; setJSON(PREF.shareServer, server); }
     try {
       const mine = state.notes.filter((n) => n.category === folder);
@@ -2690,7 +2697,7 @@ Return JSON only: {"answer":"","ids":["ids of the notes you used, max 5"]}`;
     const t = T(), dlg = $("xDlg");
     let link = pubLinks()[n.id];
     if (!link) {
-      let server = getJSON(PREF.shareServer, "");
+      let server = relayServer();
       if (!server) { server = (prompt(t.shareServerQ) || "").trim().replace(/\/+$/, ""); if (!server) return; setJSON(PREF.shareServer, server); }
       try {
         const res = await fetch(server + "/p", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ title: n.title, text: n.text, url: n.url || undefined, category: n.category }) });
@@ -2758,7 +2765,7 @@ Return JSON only: {"answer":"","ids":["ids of the notes you used, max 5"]}`;
         !box.email && !box.line ? el("p", {}, t.inboxNone) : null,
         el("div", { class: "set-row" }, el("button", { class: "mini", onclick: () => { setJSON(PREF.inbox, null); openSettings(); } }, t.inboxOff)),
       ] : [el("div", { class: "set-row" }, el("button", { class: "mini", onclick: async () => {
-        let server = getJSON(PREF.shareServer, "");
+        let server = relayServer();
         if (!server) { server = (prompt(t.shareServerQ) || "").trim().replace(/\/+$/, ""); if (!server) return; setJSON(PREF.shareServer, server); }
         try {
           const res = await fetch(server + "/inbox", { method: "POST" });
@@ -3214,7 +3221,7 @@ ${text || "(none — read the image)"}`;
   function noteSyncDeleted(id) { if (!getJSON(PREF.sync, null)) return; const d = getJSON(PREF.syncDeleted, {}); d[id] = Date.now(); setJSON(PREF.syncDeleted, d); }
   let devSyncing = null;
   async function runSync(manual) {
-    const cfg = getJSON(PREF.sync, null), server = getJSON(PREF.shareServer, "");
+    const cfg = getJSON(PREF.sync, null), server = relayServer();
     if (!cfg || !state.store || !crypto.subtle) return;
     if (!server) { if (manual) toast(T().syncNoServer); return; }
     if (devSyncing) return devSyncing;
@@ -3254,11 +3261,21 @@ ${text || "(none — read the image)"}`;
   let syncTimer = 0;
   const scheduleSync = () => { if (!getJSON(PREF.sync, null)) return; clearTimeout(syncTimer); syncTimer = setTimeout(() => runSync(false), 4000); };
   function syncSection(t) {
-    const cfg = getJSON(PREF.sync, null), last = getJSON(PREF.syncLast, 0);
+    const cfg = getJSON(PREF.sync, null), last = getJSON(PREF.syncLast, 0), server = relayServer();
     const input = el("input", { type: "text", placeholder: t.syncCodePh, "aria-label": t.syncCodePh, autocapitalize: "characters", autocomplete: "off" });
+    const srv = el("input", { type: "url", placeholder: "https://mindrawer-server.….workers.dev", value: server, "aria-label": t.shareServerL });
+    srv.onchange = () => { setJSON(PREF.shareServer, srv.value.trim().replace(/\/+$/, "")); openSettings(); };
+    const link = cfg && server ? `${location.origin}${location.pathname}#sync=${encodeURIComponent(cfg.code)}&s=${encodeURIComponent(server)}` : "";
+    const qr = el("div", { class: "sync-qr" });
+    if (link) drawQR(qr, link);
     return el("div", { class: "set-sec" }, el("h3", {}, t.secSync),
+      !server ? el("p", { class: "warn" }, t.syncNeedServer) : null,
+      el("label", { class: "ef" }, el("span", {}, t.syncServerL), srv),
       cfg ? el("div", {},
         el("div", { class: "set-row" }, el("b", { class: "mono" }, cfg.code), el("button", { class: "mini", onclick: () => navigator.clipboard?.writeText(cfg.code).then(() => toast(t.shareCopied)) }, t.shareCopy)),
+        link ? el("div", { class: "sync-link" }, el("p", { class: "set-note" }, t.syncLinkNote), qr,
+          el("div", { class: "set-row" }, el("button", { class: "mini", onclick: () => navigator.clipboard?.writeText(link).then(() => toast(t.shareCopied)) }, t.syncLinkCopy),
+            navigator.share ? el("button", { class: "mini", onclick: () => navigator.share({ title: "Mindrawer", url: link }).catch(() => {}) }, t.syncLinkSend) : null)) : null,
         el("div", { class: "set-row" }, el("button", { class: "mini", onclick: () => runSync(true).then(() => openSettings()) }, t.syncNow),
           el("button", { class: "mini", onclick: () => { setJSON(PREF.sync, null); openSettings(); } }, t.syncStop)),
         last ? el("p", { class: "set-note" }, t.syncLastL + new Date(last).toLocaleString(state.lang === "ja" ? "ja-JP" : "en")) : null)
@@ -3266,6 +3283,27 @@ ${text || "(none — read the image)"}`;
         el("div", { class: "set-row" }, el("button", { class: "mini", onclick: () => { setJSON(PREF.sync, { code: makeSyncCode() }); setJSON(PREF.syncDeleted, {}); runSync(true).then(() => openSettings()); openSettings(); } }, t.syncStart)),
         el("div", { class: "choice-in" }, input, el("button", { type: "button", onclick: () => { if (normCode(input.value).length < 20) { toast(t.syncBad); return; } setJSON(PREF.sync, { code: input.value.trim().toUpperCase() }); setJSON(PREF.syncDeleted, {}); runSync(true).then(() => openSettings()); } }, t.syncJoin))),
       el("p", { class: "set-note" }, t.syncNote));
+  }
+  /** QR コード（qrcode-generator を必要なときだけ読み込む） */
+  let qrLib = null;
+  async function drawQR(box, text) {
+    try {
+      if (!qrLib) { await new Promise((ok, ng) => { const sc = document.createElement("script"); sc.src = "https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"; sc.onload = ok; sc.onerror = ng; document.head.append(sc); }); qrLib = window.qrcode; }
+      const q = qrLib(0, "M"); q.addData(text); q.make();
+      box.replaceChildren(el("img", { src: q.createDataURL(5, 8), alt: "QR", width: "200", height: "200" }));
+    } catch { box.replaceChildren(); }
+  }
+  /** 同期のリンク（#sync=コード&s=サーバー）から開いたら、そのままつなぐ */
+  async function handleSyncHash() {
+    const m = location.hash.match(/^#sync=([^&]+)(?:&s=(.+))?$/);
+    if (!m || !state.store || isLocked()) return;
+    history.replaceState(null, "", location.pathname + location.search);
+    const code = decodeURIComponent(m[1]), server = m[2] ? decodeURIComponent(m[2]) : "";
+    if (normCode(code).length < 20) return;
+    if (/^https:\/\/[^\s/]+(\/[^\s]*)?$/.test(server)) setJSON(PREF.shareServer, server.replace(/\/+$/, ""));
+    setJSON(PREF.sync, { code: code.toUpperCase() }); setJSON(PREF.syncDeleted, {});
+    toast(T().syncJoined);
+    await runSync(true);
   }
 
   // ---------- しまったあと: 場所・ページの保存・動画の要点 ----------
@@ -3287,7 +3325,7 @@ ${text || "(none — read the image)"}`;
   }
   const isYouTube = (u) => /^https?:\/\/((www|m)\.)?(youtube\.com\/(watch|shorts|live|embed)|youtu\.be\/)/i.test(u || "");
   async function archivePage(id, url) {
-    const server = getJSON(PREF.shareServer, "");
+    const server = relayServer();
     if (!server) return;
     try {
       const res = await fetch(`${server}/page?url=${encodeURIComponent(url)}`);
@@ -4195,7 +4233,7 @@ ${text || "(none — read the image)"}`;
     state.store = secureStore(store || localStore());
     state.store.subscribe((arr) => {
       state.notes = arr.slice().sort((a, b) => b.createdAt - a.createdAt); renderAll();
-      if (firstLoad) { firstLoad = false; purgeExpired(); setTimeout(handleAddHash, 0); makeBackup(false); if (!isLocked()) afterUnlock(); setTimeout(() => tidyFolders(), 1200); setTimeout(syncShares, 800); setTimeout(pullInbox, 900); }
+      if (firstLoad) { firstLoad = false; purgeExpired(); setTimeout(handleAddHash, 0); setTimeout(handleSyncHash, 0); makeBackup(false); if (!isLocked()) afterUnlock(); setTimeout(() => tidyFolders(), 1200); setTimeout(syncShares, 800); setTimeout(pullInbox, 900); }
       scheduleShareSync(); scheduleSync();
     });
   })();
